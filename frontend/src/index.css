@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  --clinical-blue: #1e6bff;
+  --clinical-blue-dark: #0a47cc;
+  --clinical-blue-soft: #e8f0ff;
+  --surface-canvas: #f2f6ff;
+  --surface-card: #ffffff;
+  --ink-primary: #0b1426;
+  --ink-secondary: #5b677d;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--surface-canvas);
+  color: var(--ink-primary);
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Signature Outlined Numbers (01, 02, 03...) from Reference Design */
+.outline-number {
+  font-family: var(--font-display);
+  color: transparent;
+  -webkit-text-stroke: 1.35px #cbd8f0;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  user-select: none;
+  transition: -webkit-text-stroke-color 0.3s ease;
+}
+
+.group:hover .outline-number {
+  -webkit-text-stroke-color: #1e6bff;
+}
+
+/* Glossy 3D Clinical Sphere Accent */
+.orb-3d {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #93c5fd 0%,
+    #3b82f6 35%,
+    #1d4ed8 75%,
+    #1e3a8a 100%
+  );
+  box-shadow:
+    inset -4px -4px 10px rgba(10, 30, 90, 0.55),
+    inset 3px 3px 8px rgba(255, 255, 255, 0.7),
+    0 8px 20px -4px rgba(30, 107, 255, 0.45);
+}
+
+/* Subtle Medical Hexagonal Watermark Background */
+.hex-pattern {
+  background-image: radial-gradient(#dbe7ff 1.25px, transparent 1.25px),
+    radial-gradient(#e6eeff 1.25px, transparent 1.25px);
+  background-size: 36px 36px;
+  background-position: 0 0, 18px 18px;
+}
+
+/* Accessibility Mode Modifiers (PRD Modul F) */
+html.a11y-large-text {
+  font-size: 112.5%;
+}
+
+html.a11y-high-contrast body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.a11y-high-contrast .a11y-card {
+  background-color: #0d1322 !important;
+  color: #ffffff !important;
+  border: 2px solid #facc15 !important;
+}
