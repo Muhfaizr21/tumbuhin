@@ -1,83 +1,108 @@
-import { Activity, ArrowUpRight, Database, ShieldCheck, Sparkles } from 'lucide-react'
 import { BRAND_INFO, NAV_LINKS } from '../../constants/landingData'
-import PillButton from '../ui/PillButton'
+import { SurgicalEnvelopeIcon } from '../ui/LettersIcons'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
 export default function Footer() {
   return (
-    <footer className="max-w-7xl mx-auto px-3 sm:px-6 mt-10 sm:mt-14 pb-20">
-      <div className="rounded-[32px] sm:rounded-[40px] bg-gradient-to-br from-[#1C64F2] via-[#1351D8] to-[#09329E] p-8 sm:p-12 text-white shadow-[0_24px_60px_-15px_rgba(19,81,216,0.45)] relative overflow-hidden">
-        {/* Decorative 3D Orbs */}
-        <div
-          aria-hidden="true"
-          className="orb-3d absolute -top-12 -right-10 w-36 h-36 rounded-full opacity-80"
-        />
-        <div
-          aria-hidden="true"
-          className="orb-3d absolute bottom-8 right-1/3 w-12 h-12 rounded-full opacity-50"
-        />
+    <footer className="w-full pt-10">
+      {/* Last-CTA Atmospheric Sky Cloud Section with Multi-Device Preview (Matches letters.app Last-CTA) */}
+      <div className="w-full px-2.5 sm:px-3">
+        <div className="letters-sky-hero relative w-full rounded-[36px] sm:rounded-[48px] pt-20 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden flex flex-col items-center text-center">
+          {/* Cloud Atmospheric Overlay from letters.app */}
+          <img
+            src="/letters/AWpFQZVt9LgBCWegzj8BjzNbFMI.webp"
+            alt=""
+            width={3109}
+            height={1696}
+            loading="lazy"
+            className="absolute inset-x-0 bottom-0 w-full h-auto object-cover opacity-55 pointer-events-none select-none"
+          />
 
-        {/* Top Call-to-Action Banner */}
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-10 border-b border-white/15">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-100 mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Generasi Desa Bebas Stunting • SDG 3 Indonesia</span>
-            </div>
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight leading-[1.12]">
-              Siap Modernisasi Posyandu & Cegah Stunting Sejak Dini?
+          <div className="relative z-10 max-w-[680px] mx-auto flex flex-col items-center gap-6">
+            <h2 className="font-runde font-semibold text-[40px] sm:text-[56px] lg:text-[64px] leading-[0.94] tracking-[-0.04em] text-white">
+              Mulai dari meja Posyandu,
+              <br />
+              terhubung ke Puskesmas
             </h2>
-            <p className="mt-3 text-xs sm:text-sm text-blue-100/85 leading-relaxed">
-              Mulai transformasi layanan gizi desa dengan perhitungan Z-Score WHO LMS yang
-              presisi, prediksi ML, dan rekomendasi resep MPASI lokal Kemenkes.
+            <p className="font-runde text-[16px] sm:text-[18px] leading-[1.45] text-white/95 max-w-[500px]">
+              Hitung Z-Score dengan ketelitian standar WHO LMS dan susun resep MPASI
+              pangan lokal Kemenkes dalam hitungan detik.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="#letters"
+                className="letters-pill-btn min-h-[48px] inline-flex items-center justify-center px-7 py-3.5 text-[15px]"
+              >
+                Coba Simulasi Sekarang
+              </a>
+              <a
+                href="http://localhost:8080/api/v1/health"
+                target="_blank"
+                rel="noreferrer"
+                className="min-h-[48px] inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-white/90 hover:bg-white text-[#070709] font-runde font-medium text-[14px] transition-colors"
+              >
+                Status API Golang
+              </a>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <PillButton href="#simulasi" variant="secondary" iconType="arrow">
-              Coba Simulasi Sekarang
-            </PillButton>
-            <a
-              href="http://localhost:8080/api/v1/health"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-semibold text-white transition-all"
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>Cek Golang API Health</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
+          {/* Multi-Device Product Preview (Scraped from letters.app Last-CTA) */}
+          <div className="relative z-10 mt-12 sm:mt-16 max-w-[820px] w-full mx-auto flex items-end justify-center gap-4 sm:gap-6 px-4">
+            <div className="w-1/2 sm:w-5/12">
+              <img
+                src="/letters/kZTcFdYZoCpXkqrX7IpAsdVPQ4.webp"
+                alt="Pratinjau antarmuka tablet SigapGizi"
+                width={1684}
+                height={1337}
+                loading="lazy"
+                className="w-full h-auto object-contain drop-shadow-xl"
+              />
+            </div>
+            <div className="w-1/2 sm:w-6/12">
+              <img
+                src="/letters/pBWOqpZ9ZeyR8aI9MXLjgMHDLiY.webp"
+                alt="Pratinjau antarmuka desktop dan seluler SigapGizi"
+                width={2438}
+                height={2308}
+                loading="lazy"
+                className="w-full h-auto object-contain drop-shadow-xl"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Footer Info Grid */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 pt-8 text-xs text-blue-100/85">
+      {/* Monochrome Clean Footer (Matches letters.app Footer 2) */}
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-16 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-black/8">
           <div className="md:col-span-5">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 rounded-full bg-white text-[#1E6BFF] flex items-center justify-center font-bold">
-                <Activity className="w-4 h-4 stroke-[2.5]" />
-              </div>
-              <span className="font-display font-bold text-lg text-white">
-                {BRAND_INFO.name} ({BRAND_INFO.productTag})
+            <a href="#top" className="inline-flex items-center gap-2.5 mb-3">
+              <span className="w-8 h-8 rounded-[10px] bg-[#f5f5f5] border border-black/10 flex items-center justify-center">
+                <SurgicalEnvelopeIcon className="w-4 h-4" />
               </span>
-            </div>
-            <p className="leading-relaxed max-w-sm">
+              <span className="font-runde font-semibold text-[18px] tracking-[-0.02em] text-[#070709]">
+                {BRAND_INFO.name}
+              </span>
+            </a>
+            <p className="font-runde text-[14px] leading-[1.48] text-[#60606c] max-w-sm">
               Platform Smart Posyandu & Stunting Early-Warning System berbasis React Vite
-              PWA, Golang Clean Architecture, PostgreSQL pgvector, dan Google Gemini
-              Multimodal AI.
+              PWA, Golang Clean Code MVC, PostgreSQL pgvector, dan Google Gemini Multimodal.
             </p>
           </div>
 
           <div className="md:col-span-3">
-            <p className="font-semibold text-white mb-3 uppercase tracking-wider text-[11px]">
+            <p className="font-runde font-semibold text-[14px] text-[#070709] mb-3">
               Navigasi Sistem
             </p>
             <ul className="space-y-2">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <a href={link.href} className="hover:text-white transition-colors">
-                    {link.label}
+              {NAV_LINKS.map((item) => (
+                <li key={item.href}>
+                  <a
+                    href={item.href}
+                    className="font-inter text-[14px] text-[#60606c] hover:text-[#070709] transition-colors"
+                  >
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -85,36 +110,24 @@ export default function Footer() {
           </div>
 
           <div className="md:col-span-4">
-            <p className="font-semibold text-white mb-3 uppercase tracking-wider text-[11px]">
-              Standar & Kepatuhan Klinis
+            <p className="font-runde font-semibold text-[14px] text-[#070709] mb-3">
+              Standar Klinis & Regulasi
             </p>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>Permenkes RI No. 2 Tahun 2020 (Antropometri Anak)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>WHO Multicentre Growth Reference Study (LMS)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>Pedoman MPASI Pangan Lokal Kemenkes RI</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>Enkripsi Privasi NIK Balita (SHA-256 Hash)</span>
-              </li>
+            <ul className="space-y-2 font-inter text-[13.5px] text-[#60606c]">
+              <li>Permenkes RI No. 2 Tahun 2020 (Antropometri Anak)</li>
+              <li>WHO Multicentre Growth Reference Study (Metode LMS)</li>
+              <li>Pedoman Pemberian MPASI Pangan Lokal Kemenkes RI</li>
+              <li>Enkripsi Satu Arah NIK Balita (SHA-256 Hash)</li>
             </ul>
           </div>
         </div>
 
-        <div className="relative z-10 mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-blue-200/75">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 font-inter text-[13px] text-[#8b8b8b]">
           <p>
-            &copy; {CURRENT_YEAR} Tumbuhin (SigapGizi) — SEVENT X Software
-            Development Competition.
+            &copy; {CURRENT_YEAR} {BRAND_INFO.name} ({BRAND_INFO.parentBrand}). Seluruh hak
+            cipta dilindungi.
           </p>
-          <p>React 19 + Tailwind CSS v4 + Golang Clean Code MVC</p>
+          <p>Dirancang untuk Posyandu & Tenaga Gizi Indonesia (SDG 3)</p>
         </div>
       </div>
     </footer>

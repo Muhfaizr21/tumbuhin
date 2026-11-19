@@ -1,210 +1,258 @@
-/**
- * Clean Data Layer — Marketing & Product Copywriting for Tumbuhin (SigapGizi)
- * Aligned with Product Requirements Document (PRD) & System Architecture Specification
- */
+// Copywriting and clinical data structured around letters.app & DESIGN.md specification
 
 export const BRAND_INFO = {
-  name: 'Tumbuhin',
-  productTag: 'SigapGizi',
-  tagline: 'Smart Posyandu & Stunting Early-Warning System',
-  complianceLabel: 'Permenkes RI No. 2 Tahun 2020 • SDG 3 Indonesia',
-  locationBadge: 'Ekosistem Posyandu & Puskesmas Desa Digital',
+  name: 'SigapGizi',
+  parentBrand: 'Tumbuhin',
+  tagline: 'Balita sehat, bukan tumpukan berkas',
   speechOverview:
-    'Selamat datang di Tumbuhin SigapGizi. Platform Posyandu Pintar dan Sistem Peringatan Dini Stunting berbasis empat lapisan kecerdasan buatan Hybrid AI. Kami membantu kader posyandu, bidan desa, dan orang tua balita mendeteksi risiko pelambatan pertumbuhan dua bulan lebih awal dengan akurasi medis seratus persen sesuai standar WHO dan Kementerian Kesehatan Republik Indonesia.',
+    'Selamat datang di SigapGizi Tumbuhin. Sistem informasi Posyandu pintar dan peringatan dini stunting. Hitung Z-Score antropometri instan yang seratus persen akurat sesuai standar WHO LMS, deteksi risiko growth faltering dengan regresi linier, dan susun resep MPASI pangan lokal sesuai pedoman Kementerian Kesehatan Republik Indonesia.',
 }
 
 export const NAV_LINKS = [
-  { label: 'Tentang Sistem', href: '#manifesto' },
-  { label: 'Layanan & AI', href: '#layanan' },
-  { label: 'Simulasi Klinis', href: '#simulasi' },
-  { label: 'Keunggulan', href: '#keunggulan' },
-  { label: 'Ekosistem Role', href: '#ekosistem' },
+  { label: 'Kasus Penggunaan', href: '#for-practice' },
+  { label: 'Fitur Klinis', href: '#save-hours' },
+  { label: 'Simulasi KMS', href: '#letters' },
+  { label: 'Keamanan Data', href: '#safety' },
 ]
 
 export const HERO_CONTENT = {
-  titleLine1: 'Posyandu',
-  titleLine2: 'Pintar',
-  miniSubtext:
-    'Kami tidak sekadar mencatat angka timbangan — kami mengawal setiap fase emas tumbuh kembang anak desa.',
-  techHeading: 'Dengan 4 Lapisan Hybrid AI',
-  techDescription:
-    'Kombinasi kalkulasi deterministik standar WHO LMS, prediksi regresi arah pertumbuhan, AI Nutri-Chef berbasis RAG Kemenkes, serta Vision OCR Buku KIA — dirancang tangguh meski tanpa sinyal internet.',
-  primaryCta: 'Mulai Simulasi Gizi',
-  floatingPills: [
-    { id: 'reliability', label: 'Akurasi WHO LMS', position: 'left' },
-    { id: 'experience', label: 'Prediksi Dini ML', position: 'right-top' },
-    { id: 'professional', label: 'RAG Kemenkes RI', position: 'right-bottom' },
-  ],
-  stats: [
-    {
-      value: '100%',
-      label: 'kepatuhan rumus antropometri WHO & Permenkes',
-    },
-    {
-      value: '4 Lapis',
-      label: 'arsitektur Hybrid AI bebas halusinasi klinis',
-    },
-    {
-      value: '<200ms',
-      label: 'kecepatan deteksi dini & klasifikasi Z-Score',
-    },
-  ],
-  approachTitle: 'Pendekatan proaktif berbasis bukti:',
-  approachSubtitle:
-    'Intervensi nutrisi dilakukan sebelum kurva anak jatuh ke zona merah stunting.',
+  headlineLine1: 'Balita sehat,',
+  headlineLine2: 'bukan beban berkas',
+  primaryCta: 'Mulai Simulasi Gratis',
+  beforeNote: {
+    greeting: 'Catatan KMS Posyandu RW 04,',
+    body: 'Ananda Bima Saputra usia 14 bulan datang timbang rutin. BB 8.4 kg, TB 74.2 cm. Bulan lalu BB 8.3 kg, kenaikan lambat perlu cek tabel Z-Score manual dan susun saran menu PMT...',
+  },
+  afterNote: {
+    greeting: 'Evaluasi Klinis SigapGizi (14 Bulan):',
+    body: 'Z-Score TB/U: -1.92 SD, BB/U: -1.85 SD. Peringatan Regresi: Risiko Growth Faltering Tinggi (78%). Menu RAG Kemenkes: Nasi Tim Lele Sari Kelor (Rp 13.500/hari, 24.6g protein hewani).',
+  },
 }
 
-export const MANIFESTO_CONTENT = {
-  sectionLabel: 'Visi Transformasi Kesehatan Desa',
-  part1: 'Kami memadukan presisi',
-  highlight1: 'teknologi Hybrid AI',
-  part2: 'dengan pendekatan humanis bagi',
-  highlight2: 'kader, bidan, & ibu balita',
-  part3: 'agar pencegahan stunting terasa',
-  highlight3: 'tenang, terarah, dan tepat sasaran.',
-  subDescription:
-    'Tumbuhin adalah ruang kolaborasi gizi tingkat desa — menggabungkan perhitungan klinis bebas bias, resep pangan lokal sesuai anggaran keluarga, dan pemetaan spasial RT/RW dalam satu antarmuka progresif.',
-  ctaLabel: 'Pelajari Arsitektur Sistem',
+export const SAVE_HOURS_CONTENT = {
+  cardLeft: {
+    tag: 'Antropometri & RAG',
+    title: 'Susun laporan gizi & resep MPASI personal secara instan',
+    beforePreview:
+      'Catatan Buku KIA fisik Ananda Bima Saputra, kurva kenaikan berat badan mulai mendatar dalam tiga bulan terakhir dan perlu dihitung indeks simpangan baku serta saran menu pangan lokal',
+    afterPreview:
+      'Z-Score TB/U -1.92 SD (Normal Waspada Faltering). Resep Lokal: Nasi Tim Ikan Lele Telur Sari Kelor (485 kkal, Rp 13.500/3 porsi).',
+  },
+  cardRight: {
+    tag: 'OCR & Edukasi Suara',
+    title: 'Digitalisasi Buku KIA, konsultasi bidan, & pembaca suara',
+    audioTranscript:
+      'Ananda Bima membutuhkan tambahan protein hewani 24.6 gram per hari dari ikan lele dan telur ayam sesuai pedoman MPASI lokal Kemenkes.',
+    audioDuration: '00:42',
+  },
 }
 
-export const BENTO_SERVICES = [
-  {
-    number: '01',
-    iconName: 'Activity',
-    title: 'Kalkulator Antropometri WHO LMS',
-    description:
-      'Perhitungan deterministik Z-Score (BB/U, TB/U, BB/TB) menggunakan parameter Box-Cox (L, M, S) sesuai Permenkes No. 2 Tahun 2020 tanpa risiko halusinasi AI.',
-    actionLabel: 'Uji Kalkulator',
-    actionHref: '#simulasi',
-    badge: 'Layer 1 • Math',
+export const LETTERS_DEEP_DIVE = {
+  tag: 'Antropometri & RAG',
+  headingLine1: 'Rekomendasi gizi klinis yang',
+  headingLine2: 'sesuai kondisi dapur desa',
+  leftCard: {
+    title: 'Mengacu penuh pada pedoman resmi',
+    subtitle:
+      'Unggah foto tabel Buku KIA atau pilih ketersediaan bahan pangan lokal desa untuk menyusun intervensi.',
+    dropzone1Label: 'Unggah foto halaman KMS Buku KIA',
+    dropzone1Action: 'Pilih dokumen gambar',
+    dropzone2Label: 'Muat daftar harga pangan lokal desa',
+    dropzone2Action: 'Pilih sumber pangan',
   },
-  {
-    number: '02',
-    iconName: 'TrendingUp',
-    title: 'Predictive Growth Trajectory',
-    description:
-      'Model regresi linier terbobot (gonum ML) menganalisis laju kenaikan berat bulanan (weight velocity) untuk mendeteksi risiko growth faltering 2 bulan lebih awal.',
-    actionLabel: 'Lihat Proyeksi Kurva',
-    actionHref: '#simulasi',
-    badge: 'Layer 2 • ML',
+  rightCard: {
+    title: 'Gabungkan berbagai parameter klinis',
+    subtitle:
+      'Padukan usia bulan, indeks LMS WHO, riwayat alergi, dan batas anggaran harian keluarga.',
   },
-  {
-    number: '03',
-    iconName: 'Utensils',
-    title: 'AI Nutri-Chef (RAG Kemenkes)',
-    description:
-      'Generator menu MPASI berbahan pangan lokal desa yang disesuaikan otomatis dengan usia anak, alergi, dan anggaran harian keluarga berbasis vektor pgvector.',
-    actionLabel: 'Susun Menu MPASI',
-    actionHref: '#simulasi',
-    badge: 'Layer 3 • RAG',
-  },
-  {
-    number: '04',
-    iconName: 'ScanLine',
-    title: 'Smart KMS Vision OCR',
-    description:
-      'Digitalisasi instan catatan penimbangan fisik dari foto halaman Buku KIA lama menjadi deretan data terstruktur menggunakan ekstraksi Multimodal Vision AI.',
-    actionLabel: 'Cara Kerja OCR',
-    actionHref: '#ekosistem',
-    badge: 'Layer 4 • Vision',
-  },
-  {
-    number: '05',
-    iconName: 'MapPin',
-    title: 'GIS Heatmap & Intervensi Bidan',
-    description:
-      'Pemetaan klaster risiko stunting tingkat RT/RW berbasis Leaflet & daftar prioritas kunjungan rumah (home visit) beserta ekspor laporan Puskesmas (.xlsx / .pdf).',
-    actionLabel: 'Peta Epidemiologi',
-    actionHref: '#keunggulan',
-    badge: 'Modul Bidan',
-  },
-]
-
-export const WHY_CHOOSE_US = {
-  heading: 'Mengapa memilih Tumbuhin',
-  subheading: 'Dirancang khusus untuk realitas operasional Posyandu di Indonesia.',
-  visualBadges: [
-    { label: 'Bidan & Tenaga Gizi Terintegrasi', position: 'top-left' },
-    { label: 'Kader Posyandu Tangguh Offline', position: 'bottom-left' },
-    { label: 'Standar Klinis Kemenkes RI', position: 'right' },
-  ],
-  metrics: [
+  subFeatures: [
     {
-      value: '100%',
-      title: 'Validitas Standar Medis',
+      title: 'Koreksi & Verifikasi Kader',
       description:
-        'Seluruh indeks antropometri merujuk penuh pada tabel referensi WHO MGRS dan Permenkes RI No. 2 Tahun 2020 dengan waktu eksekusi di bawah 200 milidetik.',
+        'Tinjau dan sesuaikan hasil ekstraksi angka timbangan sebelum disimpan. Sistem mencatat riwayat perubahan secara rapi.',
     },
     {
-      value: '2 Bulan',
-      title: 'Lebih Awal Mendeteksi Risiko',
+      title: 'Templat Intervensi Cepat',
       description:
-        'Tidak menunggu anak berstatus Stunted. Algoritma trajectory slope memberi peringatan dini saat laju kenaikan berat badan mulai melambat (Weight Faltering).',
+        'Gunakan format standar catatan Pemberian Makanan Tambahan (PMT) dan rujukan Puskesmas untuk menghemat waktu di meja layanan.',
     },
     {
-      value: '0 Login',
-      title: 'Kemudahan Akses Orang Tua',
+      title: 'Personalisasi Anggaran & Alergi',
       description:
-        'Melalui terobosan WhatsApp Magic Link terenkripsi dan pembaca suara (Text-to-Speech Bahasa Indonesia), ibu balita dapat memantau grafik KMS & resep tanpa instal aplikasi.',
-    },
-    {
-      value: '24/7',
-      title: 'Ketahanan Offline-First PWA',
-      description:
-        'Didukung IndexedDB & Service Worker Sync Engine agar kader tetap lancar mencatat penimbangan di wilayah minim sinyal dan sinkron otomatis saat kembali online.',
+        'Dari perhitungan Z-Score Box-Cox hingga filter alergi bahan makanan dan batas belanja harian keluarga, seluruhnya dapat dikustomisasi.',
     },
   ],
-  bottomFact:
-    'FAKTA OPERASIONAL: Mengurangi waktu rekapitulasi laporan bulanan Posyandu & Bidan Desa hingga 75% sekaligus meningkatkan akurasi sasaran pemberian PMT.',
 }
 
-export const ROLE_ECOSYSTEM = [
+export const DICTIONARY_CONTENT = {
+  headingLine1: 'Basis pengetahuan klinis yang',
+  headingLine2: 'menjamin ketepatan analisis.',
+  subtitle:
+    'Mengeksekusi perhitungan antropometri dengan rumus deterministik WHO LMS dan mengambil referensi dokumen resmi Kemenkes RI melalui basis data vektor pgvector.',
+  terms: [
+    {
+      term: 'Metode Box-Cox LMS (WHO)',
+      definition:
+        'Rumus matematis deterministik Z = ((y/M)^L - 1) / (L x S) untuk menghitung simpangan baku BB/U, TB/U, dan BB/TB anak usia 0-60 bulan sesuai Permenkes No. 2 Tahun 2020.',
+    },
+    {
+      term: 'Growth Faltering (Weight Velocity)',
+      definition:
+        'Kondisi ketika laju kenaikan berat badan bulanan anak berada di bawah standar kenaikan minimal WHO, dideteksi melalui regresi linier terbobot (gonum) sebelum jatuh ke status stunted.',
+    },
+    {
+      term: 'RAG Pangan Lokal (pgvector 768-d)',
+      definition:
+        'Pencarian kemiripan vektor pada dokumen Buku KIA dan Pedoman MPASI Kemenkes untuk menghasilkan resep kaya protein hewani beserta sitasi halaman resmi.',
+    },
+  ],
+}
+
+export const TRANSCRIBE_DEEP_DIVE = {
+  tag: 'Lapangan & Luring',
+  heading: 'Catat tanpa hambatan sinyal',
+  subtitle:
+    'Pencatatan meja penimbangan yang tetap beroperasi saat luring (offline) dan tersinkronisasi otomatis ke dashboard bidan desa.',
+  leftCard: {
+    title: 'Antrean luring otomatis',
+    subtitle: 'Simpan hasil timbang di IndexedDB saat posyandu berada di area minim sinyal.',
+    timer: '00:12:50',
+    queueLabel: '3 data penimbangan Posyandu RW 04 tersimpan aman di penyimpanan lokal.',
+  },
+  rightCard: {
+    title: 'Jembatan komunikasi bidan & ibu',
+    subtitle: 'Kirim ringkasan hasil ukur dan panduan suara MPASI langsung ke WhatsApp keluarga.',
+    messages: [
+      {
+        role: 'Bidan Desa',
+        time: '08:12:50',
+        isClinician: true,
+        text: 'Dari hasil timbang hari ini, laju berat badan Bima perlu didorong dengan menu tim ikan lele dan telur tiga kali sehari. Tautan resep sudah kami kirim ke WhatsApp Ibu.',
+      },
+      {
+        role: 'Ibu Balita',
+        time: '08:13:24',
+        isClinician: false,
+        text: 'Baik Bu Bidan, kartu gizi digitalnya langsung terbuka tanpa harus login akun. Langkah memasaknya juga bisa saya putar lewat tombol suara.',
+      },
+    ],
+  },
+  subFeatures: [
+    {
+      title: 'Validasi Rentang Pengukuran',
+      description:
+        'Menyaring kesalahan ketik ekstrem pada input berat, tinggi badan, dan usia bulan sebelum masuk ke rekapitulasi gizi desa.',
+    },
+    {
+      title: 'Komputasi Cepat <200ms',
+      description:
+        'Kalkulasi indeks antropometri dijalankan langsung oleh paket matematika murni di backend Golang tanpa jeda pemanggilan layanan luar.',
+    },
+    {
+      title: 'Kartu Gizi Ramah Keluarga',
+      description:
+        'Menyajikan grafik kurva KMS, takaran bahan rumah tangga, dan pembaca suara Bahasa Indonesia melalui tautan Magic Link.',
+    },
+  ],
+}
+
+export const FOR_PRACTICE_CONTENT = {
+  tag: 'Untuk Posyandu & Desa',
+  heading: 'Hubungkan seluruh Posyandu desa',
+  subtitle:
+    'Koordinasikan kader RW, bidan desa, dan orang tua balita dalam satu alur pemantauan epidemiologi yang terukur.',
+  cards: [
+    {
+      roleKey: 'kader',
+      badge: 'Meja Layanan RW',
+      title: 'Kemudahan orientasi kader baru',
+      description:
+        'Antarmuka mobile-first dengan panduan langkah demi langkah di setiap kolom input timbangan dan pemindaian foto Buku KIA.',
+      metaTitle: 'Kader Posyandu Melati 04',
+      metaRole: 'Pencatatan & OCR KMS',
+    },
+    {
+      roleKey: 'bidan',
+      badge: 'Epidemiologi Desa',
+      title: 'Peta GIS klaster risiko RT/RW',
+      description:
+        'Identifikasi kantong kerawanan stunting secara spasial menggunakan peta interaktif Leaflet dan daftar prioritas kunjungan rumah (home visit).',
+      metaTitle: 'Bidan Koordinator Puskesmas',
+      metaRole: 'Supervisi Klinis & PMT',
+    },
+    {
+      roleKey: 'dampak',
+      badge: 'Pelaporan Puskesmas',
+      title: 'Pantau dampak intervensi gizi desa',
+      description:
+        'Lacak tingkat partisipasi penimbangan bulanan antar-Posyandu dan ekspor laporan rekapitulasi langsung ke format Excel (.xlsx) atau PDF.',
+      metaTitle: 'Rekapitulasi Bulanan Desa',
+      metaRole: 'Ekspor .xlsx & .pdf',
+    },
+  ],
+}
+
+export const SAFETY_CONTENT = {
+  heading: 'Data kesehatan balita terjaga aman',
+  pillars: [
+    {
+      title: 'Penyamaran NIK Satu Arah (SHA-256)',
+      description:
+        'Nomor Induk Kependudukan balita diubah menggunakan fungsi cryptographic hash satu arah beserta salt sehingga identitas mentah tidak terekspos.',
+    },
+    {
+      title: 'Isolasi Akses Tingkat Wilayah (RBAC)',
+      description:
+        'Pembatasan baris data memastikan kader hanya dapat melihat balita di Posyandu tugasnya, sementara bidan memantau agregasi tingkat desa.',
+    },
+    {
+      title: 'Magic Link Baca-Saja Terenkripsi',
+      description:
+        'Tautan kartu gizi orang tua diamankan dengan token acak 64 karakter yang hanya mengizinkan pembacaan kurva KMS dan resep tanpa akses ubah data.',
+    },
+  ],
+}
+
+export const DEPLOYMENT_TIERS = [
   {
-    roleKey: 'kader',
-    badge: 'Garda Depan Lapangan',
-    title: 'Kader Posyandu',
-    subtitle: 'Mobile-First PWA • Tangguh Tanpa Sinyal',
-    highlights: [
-      'Input timbangan cepat dengan kalkulasi Z-Score & peringatan faltering instan.',
-      'Potret tabel Buku KIA fisik menggunakan Smart KMS OCR tanpa ketik manual.',
-      'Buat rekomendasi resep MPASI sesuai bahan dapur desa & kirim via WhatsApp.',
-      'Antrean data tersimpan aman di IndexedDB saat posyandu berada di area blank-spot.',
+    name: 'Posyandu Mandiri',
+    price: 'Terbuka',
+    period: 'Unit Posyandu RW',
+    description: 'Untuk operasional penimbangan bulanan kader dan edukasi gizi keluarga.',
+    ctaLabel: 'Gunakan Modul Kader',
+    features: [
+      'Kalkulator Z-Score WHO LMS (0-60 bulan)',
+      'Antrean penimbangan luring (IndexedDB)',
+      'Kartu gizi orang tua via WhatsApp Magic Link',
+      'Pembaca suara (Text-to-Speech Bahasa Indonesia)',
     ],
   },
   {
-    roleKey: 'bidan',
-    badge: 'Pengambil Keputusan Klinis',
-    title: 'Bidan Desa & Tenaga Gizi',
-    subtitle: 'Desktop & Tablet GIS Epidemiologi',
-    highlights: [
-      'Pantau peta sebaran klaster RT/RW rawan stunting dengan indikator warna risiko.',
-      'Daftar Prioritas Intervensi otomatis untuk balita Stunted, Wasted, atau High-Risk Faltering.',
-      'Pencatatan jadwal kunjungan rumah (home visit), evaluasi klinis, dan distribusi PMT.',
-      'Unduh rekapitulasi laporan gizi bulanan desa dalam format Excel (.xlsx) & PDF.',
+    name: 'Puskesmas & Bidan Desa',
+    price: 'Terpadu',
+    period: 'Cakupan Satu Desa',
+    description: 'Untuk bidan desa dan tenaga gizi yang memantau tren serta intervensi lapangan.',
+    ctaLabel: 'Buka Simulasi Klinis',
+    highlighted: true,
+    features: [
+      'Seluruh fitur Posyandu Mandiri',
+      'Prediksi regresi risiko growth faltering (gonum)',
+      'AI Nutri-Chef RAG pedoman MPASI Kemenkes',
+      'Smart KMS Vision OCR dari foto Buku KIA',
+      'Peta GIS klaster RT/RW & ekspor laporan .xlsx',
     ],
   },
   {
-    roleKey: 'ortu',
-    badge: 'Inklusif & Bebas Hambatan',
-    title: 'Orang Tua Balita',
-    subtitle: 'Public Magic Link • Tanpa Registrasi Akun',
-    highlights: [
-      'Buka kartu pertumbuhan digital anak langsung dari tautan WhatsApp kader.',
-      'Panduan memasak MPASI langkah demi langkah sesuai tekstur usia & anggaran harian.',
-      'Fitur tombol Suara (Text-to-Speech Bahasa Indonesia) untuk kemudahan literasi.',
-      'Mode Kontras Tinggi & ukuran teks adaptif yang ramah bagi seluruh lapisan masyarakat.',
-    ],
-  },
-  {
-    roleKey: 'admin',
-    badge: 'Tata Kelola Data Desa',
-    title: 'Super Admin Desa',
-    subtitle: 'Manajemen Wilayah & Knowledge Base AI',
-    highlights: [
-      'Kelola cakupan wilayah Posyandu, hak akses RBAC kader, serta penugasan bidan.',
-      'Perbarui harga master pangan lokal desa agar estimasi biaya MPASI selalu akurat.',
-      'Unggah dokumen PDF pedoman gizi terbaru Kemenkes ke vector database pgvector.',
-      'Perlindungan privasi warga dengan penyamaran NIK menggunakan SHA-256 cryptographic hash.',
+    name: 'Dinas Kesehatan',
+    price: 'Kustom',
+    period: 'Multi-Desa & Kabupaten',
+    description: 'Untuk integrasi lintas Puskesmas dan pengelolaan basis pengetahuan daerah.',
+    ctaLabel: 'Pelajari Arsitektur',
+    features: [
+      'Manajemen dokumen RAG pgvector terpusat',
+      'Basis data master harga pangan lokal daerah',
+      'Opsi deployment server mandiri (On-Premise)',
+      'Integrasi API Golang Clean Architecture',
     ],
   },
 ]
@@ -212,9 +260,10 @@ export const ROLE_ECOSYSTEM = [
 export const SIMULATION_PRESETS = [
   {
     id: 'faltering-case',
+    label: 'Kasus Peringatan Dini (Faltering)',
     childName: 'Ananda Bima Saputra',
     ageMonths: 14,
-    gender: 'Laki-laki (L)',
+    gender: 'Laki-laki',
     weightKg: 8.4,
     heightCm: 74.2,
     budgetIdr: 15000,
@@ -222,53 +271,54 @@ export const SIMULATION_PRESETS = [
     zScoreWFA: '-1.85 SD',
     zScoreHFA: '-1.92 SD',
     zScoreWFH: '-1.40 SD',
-    nutritionStatus: 'Normal — Waspada Pelambatan Tumbuh (Growth Faltering)',
+    nutritionStatus: 'Normal (Waspada Pelambatan Laju Tumbuh / Growth Faltering)',
     riskScore: 78,
-    riskLevel: 'HIGH',
+    riskLevel: 'TINGGI',
     trajectoryInsight:
-      'Kenaikan berat badan 3 bulan terakhir (+100g/bulan) berada di bawah ambang Minimum Weight Gain WHO (+200g/bulan). Tanpa intervensi protein hewani, anak berisiko jatuh ke status Stunted dalam 6–8 minggu.',
+      'Kenaikan berat badan 3 bulan terakhir (+100g/bulan) berada di bawah ambang kenaikan minimal WHO (+200g/bulan). Diperlukan intervensi protein hewani harian agar kurva tidak turun melewati batas -2.0 SD.',
     mpasiRecipe: {
-      menuName: 'Bubur Tim Lele Telur Puyuh Sari Kelor',
-      texture: 'Cincang Kasar / Makanan Keluarga Lunak (Usia 12–23 Bulan)',
-      estimatedCost: 'Rp 13.500 / 3 Porsi Harian',
+      menuName: 'Nasi Tim Ikan Lele Telur Sari Daun Kelor',
+      texture: 'Cincang Kasar / Makanan Keluarga Lunak (12-23 Bulan)',
+      estimatedCost: 'Rp 13.500 / 3 Porsi',
       calories: '485 kkal',
-      animalProtein: '24.6 gram (Ikan Lele & Telur)',
+      animalProtein: '24.6 g (Lele & Telur)',
       citation: 'Pedoman MPASI Pangan Lokal Kemenkes RI Bab 4 Hal. 32 & Permenkes No. 2/2020',
       steps: [
-        'Kukus 75g daging ikan lele segar bersama bawang putih dan jahe hingga matang, lalu suwir halus bebas duri.',
-        'Masak nasi tim lunak dengan kaldu ayam/tulang, masukkan suwiran lele, 1 butir telur kocok, dan potongan tempe.',
-        'Tambahkan pucuk daun kelor cincang dan 1 sendok teh minyak kelapa/margarin sebagai penambah densitas energi sebelum disajikan.',
+        'Kukus 75 gram daging ikan lele segar bersama bawang putih dan jahe hingga matang, kemudian suwir halus pastikan bebas duri.',
+        'Masak nasi tim lunak dengan kaldu ayam, masukkan suwiran lele, satu butir telur kocok, dan potongan dadu kecil tempe.',
+        'Masukkan daun kelor cincang dan satu sendok teh minyak kelapa menjelang diangkat untuk menambah densitas kalori.',
       ],
     },
   },
   {
     id: 'optimal-case',
+    label: 'Kasus Pertumbuhan Optimal',
     childName: 'Ananda Citra Lestari',
     ageMonths: 9,
-    gender: 'Perempuan (P)',
+    gender: 'Perempuan',
     weightKg: 8.6,
     heightCm: 71.0,
     budgetIdr: 12000,
-    ingredients: ['Hati Ayam', 'Telur Ayam', 'Bayam', 'Kentang', 'Tahu'],
+    ingredients: ['Hati Ayam', 'Telur Ayam', 'Bayam', 'Kentang', 'Tahu Putih'],
     zScoreWFA: '+0.15 SD',
     zScoreHFA: '+0.08 SD',
     zScoreWFH: '+0.22 SD',
-    nutritionStatus: 'Gizi Baik & Pertumbuhan Optimal',
+    nutritionStatus: 'Gizi Baik & Laju Pertumbuhan Sesuai Kurva Median WHO',
     riskScore: 12,
-    riskLevel: 'LOW',
+    riskLevel: 'RENDAH',
     trajectoryInsight:
-      'Laju kenaikan berat badan (+350g/bulan) dan panjang badan konsisten mengikuti garis median hijau KMS WHO. Pertahankan variasi protein hewani harian.',
+      'Laju penambahan berat badan (+350g/bulan) dan panjang badan mengikuti jalur hijau median KMS WHO secara konsisten. Pertahankan jadwal makan utama tiga kali sehari.',
     mpasiRecipe: {
-      menuName: 'Puree Kentang Hati Ayam Lumat Bayam',
-      texture: 'Lumat / Cincang Halus (Usia 9–11 Bulan)',
-      estimatedCost: 'Rp 10.500 / 3 Porsi Harian',
+      menuName: 'Bubur Kentang Hati Ayam Lumat Bayam',
+      texture: 'Lumat / Cincang Halus (9-11 Bulan)',
+      estimatedCost: 'Rp 10.500 / 3 Porsi',
       calories: '390 kkal',
-      animalProtein: '19.8 gram + Tinggi Zat Besi (Hati Ayam)',
-      citation: 'Buku KIA Kemenkes RI Revisi 2024 — Standar MPASI Kaya Zat Besi',
+      animalProtein: '19.8 g + Zat Besi Tinggi',
+      citation: 'Buku KIA Kemenkes RI Revisi 2024: Standar MPASI Kaya Zat Besi',
       steps: [
-        'Rebus 60g hati ayam dan 100g kentang hingga empuk, kemudian cincang halus atau saring kasar sesuai tekstur 9 bulan.',
-        'Tumis bumbu aromatik dengan sedikit minyak kanola/kelapa, masukkan tahu lumat dan daun bayam muda cincang.',
-        'Campurkan seluruh bahan dengan air kaldu hangat hingga mencapai konsistensi kental yang tidak mudah tumpah dari sendok.',
+        'Rebus 60 gram hati ayam segar dan 100 gram kentang hingga empuk, lalu lumatkan atau cincang halus sesuai tekstur usia sembilan bulan.',
+        'Tumis bumbu aromatik dengan sedikit minyak, masukkan tahu putih lumat serta pucuk daun bayam cincang hingga matang.',
+        'Campurkan seluruh bahan bersama kaldu hangat hingga mencapai tekstur kental yang tidak langsung tumpah dari sendok.',
       ],
     },
   },

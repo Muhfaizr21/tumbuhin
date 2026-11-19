@@ -1,40 +1,44 @@
 import Footer from './components/layout/Footer'
+import Navbar from './components/layout/Navbar'
 import HeroSection from './components/sections/HeroSection'
 import InteractiveSimulationSection from './components/sections/InteractiveSimulationSection'
 import ManifestoSection from './components/sections/ManifestoSection'
 import RoleEcosystemSection from './components/sections/RoleEcosystemSection'
-import ServicesBentoSection from './components/sections/ServicesBentoSection'
+import SaveHoursSection from './components/sections/SaveHoursSection'
 import WhyChooseUsSection from './components/sections/WhyChooseUsSection'
-import AccessibilityToolbar from './components/ui/AccessibilityToolbar'
 import { useTextToSpeech } from './hooks/useTextToSpeech'
 
 export default function App() {
   const tts = useTextToSpeech()
 
   const handleScrollToSimulation = () => {
-    const el = document.getElementById('simulasi')
+    const el = document.getElementById('letters')
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F2F6FF] text-[#0B1426] selection:bg-[#1E6BFF] selection:text-white">
-      {/* Main Content Sections */}
-      <main>
-        <HeroSection onOpenSimulation={handleScrollToSimulation} tts={tts} />
-        <ManifestoSection />
-        <ServicesBentoSection />
+    <div className="min-h-screen bg-white text-[#070709] selection:bg-[#2597d0] selection:text-white">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-full focus:bg-[#070709] focus:text-white focus:text-xs focus:font-semibold"
+      >
+        Lewati ke konten utama
+      </a>
+
+      <Navbar onOpenSimulation={handleScrollToSimulation} />
+
+      <main id="main-content">
+        <HeroSection />
+        <SaveHoursSection tts={tts} />
         <InteractiveSimulationSection tts={tts} />
-        <WhyChooseUsSection />
+        <ManifestoSection />
         <RoleEcosystemSection />
+        <WhyChooseUsSection />
       </main>
 
-      {/* Footer & Final CTA */}
       <Footer />
-
-      {/* Floating Accessibility & Offline-First PWA Status Bar (PRD Modul F) */}
-      <AccessibilityToolbar tts={tts} />
     </div>
   )
 }

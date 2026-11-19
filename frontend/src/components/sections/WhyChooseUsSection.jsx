@@ -1,124 +1,130 @@
-import { CheckCircle2, ShieldAlert } from 'lucide-react'
-import { WHY_CHOOSE_US } from '../../constants/landingData'
+import { Lock, Server, Shield } from 'lucide-react'
+import { DEPLOYMENT_TIERS, SAFETY_CONTENT } from '../../constants/landingData'
+import { SurgicalCheckIcon } from '../ui/LettersIcons'
 
 export default function WhyChooseUsSection() {
   return (
-    <section id="keunggulan" className="max-w-7xl mx-auto px-3 sm:px-6 mt-10 sm:mt-14">
-      <div className="a11y-card bg-white rounded-[32px] sm:rounded-[40px] p-4 sm:p-6 lg:p-8 shadow-[0_20px_50px_-15px_rgba(18,45,105,0.07)] border border-white">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* LEFT COLUMN: Royal Blue Visual Card with Floating Pointers (Matches Reference "Why Choose Us") */}
-          <div className="lg:col-span-5 relative rounded-[28px] bg-gradient-to-br from-[#2573FF] via-[#195DF0] to-[#0B42BE] p-6 sm:p-8 text-white flex flex-col justify-between min-h-[400px] overflow-hidden shadow-lg">
-            {/* Ambient Light Rings */}
-            <div
-              aria-hidden="true"
-              className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-2xl"
+    <>
+      {/* PART 1: Safety & Data Privacy Section (Matches letters.app 'Your data is safe' with 3D Glass Padlock) */}
+      <section
+        id="safety"
+        className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-20 sm:py-28"
+      >
+        <div className="max-w-[640px] mx-auto text-center">
+          <h2 className="font-runde font-semibold text-[32px] sm:text-[44px] leading-[1.10] tracking-[-0.04em] text-[#070709]">
+            {SAFETY_CONTENT.heading}
+          </h2>
+        </div>
+
+        {/* Center 3D Glass Padlock Illustration */}
+        <div className="my-10 sm:my-12 flex justify-center">
+          <div className="w-44 sm:w-52 h-auto select-none">
+            <img
+              src="/letters/security-padlock.png"
+              alt="Enkripsi keamanan dan pelindungan privasi data medis balita"
+              width={665}
+              height={899}
+              loading="lazy"
+              className="w-full h-auto object-contain mx-auto drop-shadow-[0_18px_36px_rgba(16,55,132,0.08)]"
             />
-            <div
-              aria-hidden="true"
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-cyan-300/15 blur-2xl"
-            />
-
-            {/* Top Heading inside Blue Card */}
-            <div className="relative z-20">
-              <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.08]">
-                Mengapa
-                <br />
-                memilih kami
-              </h2>
-              <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-blue-200/90">
-                DIDUKUNG OLEH:
-              </p>
-            </div>
-
-            {/* Healthcare Team Portrait & Floating Pointer Badges */}
-            <div className="relative z-10 my-4 flex justify-center items-end">
-              {/* Floating Tag 1 */}
-              <div className="absolute left-0 top-10 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 text-[#0B1426] text-[11px] font-semibold shadow-md">
-                <span>Bidan & Kader Terpadu</span>
-                <span className="w-2 h-2 rounded-full bg-[#0B1426]" />
-              </div>
-
-              {/* Floating Tag 2 */}
-              <div className="absolute right-0 top-1/2 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 text-[#0B1426] text-[11px] font-semibold shadow-md">
-                <span className="w-2 h-2 rounded-full bg-[#1E6BFF]" />
-                <span>Standar Klinis Valid</span>
-              </div>
-
-              {/* Floating Tag 3 */}
-              <div className="absolute left-4 bottom-4 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 text-[#0B1426] text-[11px] font-semibold shadow-md">
-                <span>Teknologi Hybrid AI</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              </div>
-
-              <div className="w-64 sm:w-72 h-64 sm:h-72 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl bg-[#164EC9]">
-                <img
-                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80"
-                  alt="Tim Medis dan Tenaga Gizi Tumbuhin"
-                  className="w-full h-full object-cover object-top"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-
-            {/* Bottom Caption inside Blue Card */}
-            <div className="relative z-20 flex items-center justify-between text-[11px] text-blue-100/90 pt-2 border-t border-white/15">
-              <span className="font-semibold tracking-wider uppercase">
-                TERASA SEPERTI → POSYANDU MASA DEPAN
-              </span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: 2x2 Big Metrics Grid & Clinical Proof */}
-          <div className="lg:col-span-7 flex flex-col justify-between py-2 sm:px-4">
-            {/* Top Header Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-slate-100">
-              <span className="text-xs font-medium text-[#7A88A1]">
-                {'{ Keunggulan Sistem }'}
-              </span>
-              <p className="text-xs text-[#5B677D] max-w-md">
-                <strong className="font-bold text-[#0B1426] uppercase tracking-wide">
-                  PRESISI MEDIS:
-                </strong>{' '}
-                dirancang khusus untuk menjawab keterbatasan deteksi manual dan kendala
-                konektivitas desa.
-              </p>
-            </div>
-
-            {/* 2x2 Metrics Grid (Matches Reference 10+, 15+, 95%, 98% Grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 my-8">
-              {WHY_CHOOSE_US.metrics.map((metric) => (
-                <div key={metric.value} className="group">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-[#0B1426] group-hover:text-[#1E6BFF] transition-colors">
-                      {metric.value}
-                    </span>
-                  </div>
-                  <h3 className="mt-2 font-display text-sm sm:text-base font-bold text-[#0B1426]">
-                    {metric.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-[#5B677D] leading-relaxed">
-                    {metric.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Bottom Operational Fact Bar */}
-            <div className="pt-5 border-t border-slate-100 flex items-start sm:items-center gap-3">
-              <span className="w-7 h-7 rounded-full bg-[#E8F0FF] text-[#1E6BFF] flex items-center justify-center shrink-0">
-                <ShieldAlert className="w-4 h-4" />
-              </span>
-              <p className="text-xs text-[#5B677D] leading-relaxed">
-                <strong className="font-bold text-[#0B1426]">
-                  {WHY_CHOOSE_US.bottomFact.split(':')[0]}:
-                </strong>
-                {WHY_CHOOSE_US.bottomFact.split(':')[1]}
-              </p>
-            </div>
           </div>
         </div>
-      </div>
-    </section>
+
+        {/* 3-Column Security Pillars */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+          {SAFETY_CONTENT.pillars.map((pillar, idx) => (
+            <div key={pillar.title} className="flex flex-col items-start">
+              <div className="w-9 h-9 rounded-[10px] bg-[#f5f5f5] border border-black/6 flex items-center justify-center mb-3.5">
+                {idx === 0 && (
+                  <Lock aria-hidden="true" className="w-4 h-4 text-[#2597d0]" />
+                )}
+                {idx === 1 && (
+                  <Server aria-hidden="true" className="w-4 h-4 text-[#2597d0]" />
+                )}
+                {idx === 2 && (
+                  <Shield aria-hidden="true" className="w-4 h-4 text-[#2597d0]" />
+                )}
+              </div>
+              <h3 className="font-runde font-semibold text-[18px] tracking-[-0.02em] text-[#070709]">
+                {pillar.title}
+              </h3>
+              <p className="mt-1.5 font-runde text-[14px] leading-[1.48] text-[#60606c]">
+                {pillar.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PART 2: Deployment Modules Section (Mirrors letters.app 'Flexible pricing' 3-card monochrome grid) */}
+      <section
+        id="pricing"
+        className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
+        <div className="max-w-[640px] mx-auto text-center mb-14">
+          <h2 className="font-runde font-semibold text-[32px] sm:text-[44px] leading-[1.10] tracking-[-0.04em] text-[#070709]">
+            Skema implementasi fleksibel
+          </h2>
+          <p className="mt-3 font-runde text-[16px] text-[#60606c]">
+            Dapat dijalankan mulai dari satu unit Posyandu RW hingga jaringan Puskesmas
+            tingkat Kabupaten.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          {DEPLOYMENT_TIERS.map((tier) => (
+            <article
+              key={tier.name}
+              className={`rounded-[24px] p-8 sm:p-10 flex flex-col justify-between ${
+                tier.highlighted
+                  ? 'bg-white border-2 border-[#070709] shadow-[0_17px_37px_rgba(16,55,132,0.05)]'
+                  : 'bg-[#f5f5f5] border border-black/6'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-runde font-semibold text-[20px] tracking-[-0.02em] text-[#070709]">
+                    {tier.name}
+                  </h3>
+                  <span className="px-3 py-1 rounded-full bg-white border border-black/10 font-runde text-[11px] font-medium text-[#60606c]">
+                    {tier.period}
+                  </span>
+                </div>
+
+                <p className="mt-5 font-runde font-semibold text-[36px] tracking-[-0.04em] text-[#070709] leading-none">
+                  {tier.price}
+                </p>
+                <p className="mt-3 font-runde text-[14px] leading-[1.45] text-[#60606c]">
+                  {tier.description}
+                </p>
+
+                <ul className="mt-7 pt-6 border-t border-black/8 space-y-3">
+                  {tier.features.map((feat) => (
+                    <li
+                      key={feat}
+                      className="flex items-start gap-2.5 font-runde text-[13.5px] text-[#070709]"
+                    >
+                      <SurgicalCheckIcon className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-8 pt-4">
+                <a
+                  href="#letters"
+                  className={`w-full min-h-[46px] inline-flex items-center justify-center px-6 py-3 text-[14px] ${
+                    tier.highlighted ? 'letters-pill-btn' : 'letters-ghost-btn bg-white'
+                  }`}
+                >
+                  {tier.ctaLabel}
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
   )
 }

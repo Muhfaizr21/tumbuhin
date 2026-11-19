@@ -1,129 +1,108 @@
-import { useState } from 'react'
-import {
-  Activity,
-  LayoutGrid,
-  MapPin,
-  Menu,
-  PhoneCall,
-  User,
-  Volume2,
-  X,
-} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Menu, X } from 'lucide-react'
 import { BRAND_INFO, NAV_LINKS } from '../../constants/landingData'
+import { SurgicalEnvelopeIcon } from '../ui/LettersIcons'
 
-export default function Navbar({ onOpenSimulation, tts }) {
+export default function Navbar({ onOpenSimulation }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
   return (
-    <header className="relative z-30 flex items-center justify-between gap-4 py-2">
-      {/* Left Side: Brand Logo + Pill Navigation Links */}
-      <div className="flex items-center gap-4 lg:gap-8">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xs border-b border-black/8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Wordmark + Surgical Blue Icon */}
         <a
-          href="#"
-          className="flex items-center gap-2.5 group focus:outline-none"
-          aria-label="Tumbuhin SigapGizi Home"
+          href="#top"
+          className="inline-flex items-center gap-2.5 min-h-[44px] pr-2 group"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#1E6BFF] to-[#60A5FA] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(30,107,255,0.35)] transition-transform duration-300 group-hover:scale-105">
-            <Activity className="w-4 h-4 stroke-[2.5]" />
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-display font-bold text-base tracking-tight text-[#0B1426]">
-                {BRAND_INFO.name}
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#E8F0FF] text-[#1E6BFF]">
-                {BRAND_INFO.productTag}
-              </span>
-            </div>
-          </div>
+          <span className="w-8 h-8 rounded-[10px] bg-[#f5f5f5] border border-black/10 flex items-center justify-center">
+            <SurgicalEnvelopeIcon className="w-4 h-4" />
+          </span>
+          <span className="font-runde font-semibold text-[18px] tracking-[-0.02em] text-[#070709]">
+            {BRAND_INFO.name}
+          </span>
         </a>
 
-        {/* Desktop Pill Nav Cluster (Matches Reference Header Pills) */}
-        <nav aria-label="Navigasi Utama" className="hidden md:flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="w-8 h-8 rounded-full border border-slate-200/90 bg-white flex items-center justify-center text-slate-500 mr-1"
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-          </span>
+        {/* Center: 4 Navigation Links in Inter 14px weight 500 (#070709) */}
+        <nav aria-label="Navigasi Utama" className="hidden md:flex items-center gap-7">
           {NAV_LINKS.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#0B1426] bg-white border border-slate-200/90 hover:border-[#1E6BFF] hover:text-[#1E6BFF] transition-all"
+              className="min-h-[44px] inline-flex items-center font-inter text-[14px] font-medium tracking-[-0.022em] text-[#070709] hover:text-[#60606c] transition-colors"
             >
               {item.label}
             </a>
           ))}
         </nav>
-      </div>
 
-      {/* Right Side: Compliance Location Info + Circular Action Buttons (Sits over Blue Panel on Desktop) */}
-      <div className="flex items-center gap-4 lg:gap-6">
-        <div className="hidden xl:flex items-center gap-2 text-white/90">
-          <MapPin className="w-4 h-4 text-blue-200 shrink-0" />
-          <div className="text-[11px] leading-tight">
-            <p className="font-semibold text-white">Permenkes No. 2 / 2020</p>
-            <p className="text-blue-100/80">SDG 3 • Posyandu Digital</p>
-          </div>
-        </div>
-
-        {/* 3 Circular Action Icons from Reference */}
-        <div className="flex items-center gap-2">
+        {/* Right: Outlined Ghost Login Button + Filled Obsidian Pill Button (100% letters.app match) */}
+        <div className="flex items-center gap-2.5">
           <a
-            href="#simulasi"
-            title="Coba WhatsApp Magic Link Orang Tua"
-            className="w-9 h-9 rounded-full bg-[#0B1426] text-white flex items-center justify-center hover:bg-slate-800 transition-transform hover:scale-105 shadow-md"
+            href="#letters"
+            className="letters-ghost-btn min-h-[40px] px-4 py-2 text-[14px] hidden sm:inline-flex items-center"
           >
-            <PhoneCall className="w-3.5 h-3.5" />
+            Masuk Kader
           </a>
 
           <button
             type="button"
-            onClick={() =>
-              tts?.isSpeaking ? tts.stop() : tts?.speak(BRAND_INFO.speechOverview)
-            }
-            title="Dengarkan Penjelasan Sistem (TTS Bahasa Indonesia)"
-            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[#0B1426] lg:text-white flex items-center justify-center hover:bg-white/30 transition-transform hover:scale-105 cursor-pointer"
-          >
-            <Volume2 className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
             onClick={onOpenSimulation}
-            title="Masuk Portal Kader / Bidan"
-            className="w-9 h-9 rounded-full bg-[#0B1426] text-white flex items-center justify-center hover:bg-slate-800 transition-transform hover:scale-105 shadow-md cursor-pointer"
+            className="letters-pill-btn min-h-[40px] px-5 py-2 text-[14px] inline-flex items-center"
           >
-            <User className="w-3.5 h-3.5" />
+            Mulai Gratis
           </button>
 
-          {/* Mobile Hamburger Trigger */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-label="Buka Menu Navigasi"
-            className="md:hidden w-9 h-9 rounded-full bg-slate-100 text-[#0B1426] flex items-center justify-center"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="letters-mobile-menu"
+            aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
+            className="md:hidden letters-ghost-btn min-h-[44px] px-3.5 py-2 text-[13px] inline-flex items-center gap-1.5"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? (
+              <>
+                <X aria-hidden="true" className="w-4 h-4" />
+                <span>Tutup</span>
+              </>
+            ) : (
+              <>
+                <Menu aria-hidden="true" className="w-4 h-4" />
+                <span>Menu</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Dropdown Sheet */}
       {mobileMenuOpen && (
-        <div className="absolute top-14 left-0 right-0 md:hidden rounded-2xl bg-white p-4 shadow-xl border border-slate-100 flex flex-col gap-2 z-50">
+        <nav
+          id="letters-mobile-menu"
+          aria-label="Navigasi Seluler"
+          className="md:hidden bg-white border-b border-black/10 px-4 py-4 flex flex-col gap-1"
+        >
           {NAV_LINKS.map((item) => (
             <a
               key={item.href}
               href={item.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0B1426] hover:bg-[#F2F6FF] hover:text-[#1E6BFF]"
+              className="min-h-[44px] flex items-center px-3 py-2 rounded-xl font-inter text-[14px] font-medium text-[#070709] hover:bg-[#f5f5f5]"
             >
               {item.label}
             </a>
           ))}
-        </div>
+        </nav>
       )}
     </header>
   )
