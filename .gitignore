@@ -1,0 +1,13 @@
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.oxlint-cache
+.DS_Store
+
+# Golang / Backend
+backend/bin/
+backend/.env
+*.exe
+*.test
+*.out
