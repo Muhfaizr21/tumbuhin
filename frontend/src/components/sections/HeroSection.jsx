@@ -6,13 +6,13 @@ import {
   SurgicalEnvelopeIcon,
 } from '../ui/LettersIcons'
 
-export default function HeroSection({ onOpenSimulation }) {
+export default function HeroSection({ onOpenSimulation, onOpenAuth }) {
   return (
     <section id="top" className="w-full p-2.5 sm:p-3">
       {/* Exact letters.app Sky Gradient Hero Container (.framer-1xinbaf) with top rounded corners */}
       <div className="letters-sky-hero relative w-full rounded-t-[28px] sm:rounded-t-[32px] rounded-b-[48px] sm:rounded-b-[56px] pt-3 sm:pt-4 px-4 sm:px-6 overflow-hidden flex flex-col items-center justify-between min-h-[720px] sm:min-h-[840px]">
         {/* Exact letters.app In-Hero Transparent Navbar */}
-        <Navbar onOpenSimulation={onOpenSimulation} />
+        <Navbar onOpenSimulation={onOpenSimulation} onOpenAuth={onOpenAuth} />
 
         {/* Centered Headline, Subtext & Obsidian Pill Button */}
         <div className="relative z-20 max-w-[780px] mx-auto mt-10 sm:mt-16 lg:mt-20 flex flex-col items-center text-center gap-6">

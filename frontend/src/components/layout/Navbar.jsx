@@ -3,7 +3,7 @@ import { Menu, X } from 'lucide-react'
 import { BRAND_INFO, NAV_LINKS } from '../../constants/landingData'
 import { LettersStethoscopeIcon } from '../ui/LettersIcons'
 
-export default function Navbar({ onOpenSimulation }) {
+export default function Navbar({ onOpenSimulation, onOpenAuth }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -25,6 +25,22 @@ export default function Navbar({ onOpenSimulation }) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileMenuOpen])
+
+  const handleLoginClick = (e) => {
+    if (onOpenAuth) {
+      e.preventDefault()
+      onOpenAuth('login')
+    }
+  }
+
+  const handleRegisterClick = (e) => {
+    if (onOpenAuth) {
+      e.preventDefault()
+      onOpenAuth('register')
+    } else if (onOpenSimulation) {
+      onOpenSimulation()
+    }
+  }
 
   return (
     <>
@@ -75,7 +91,8 @@ export default function Navbar({ onOpenSimulation }) {
         {/* Right: Plain Text Login + White Capsule Sign-up Button */}
         <div className="flex items-center gap-4 sm:gap-6">
           <a
-            href="#letters"
+            href="#/login"
+            onClick={handleLoginClick}
             className="text-white hover:text-white/80 font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
           >
             Masuk Kader
@@ -83,7 +100,7 @@ export default function Navbar({ onOpenSimulation }) {
 
           <button
             type="button"
-            onClick={onOpenSimulation}
+            onClick={handleRegisterClick}
             className="bg-white text-[#070709] min-h-[38px] px-5 py-2 rounded-full font-runde font-medium text-[14px] inline-flex items-center shadow-sm hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
             Mulai Gratis
@@ -124,12 +141,25 @@ export default function Navbar({ onOpenSimulation }) {
             ))}
             <div className="pt-2 mt-1 border-t border-white/15 flex flex-col gap-2">
               <a
-                href="#letters"
-                onClick={() => setMobileMenuOpen(false)}
+                href="#/login"
+                onClick={(e) => {
+                  setMobileMenuOpen(false)
+                  handleLoginClick(e)
+                }}
                 className="min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium border border-white/30 text-white"
               >
                 Masuk Kader
               </a>
+              <button
+                type="button"
+                onClick={(e) => {
+                  setMobileMenuOpen(false)
+                  handleRegisterClick(e)
+                }}
+                className="min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium bg-white text-[#070709]"
+              >
+                Daftar Akun Baru
+              </button>
             </div>
           </nav>
         )}
@@ -185,7 +215,8 @@ export default function Navbar({ onOpenSimulation }) {
 
           <div className="flex items-center gap-3 sm:gap-4">
             <a
-              href="#letters"
+              href="#/login"
+              onClick={handleLoginClick}
               className="text-[#070709] hover:text-[#60606c] font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
             >
               Masuk Kader
@@ -193,7 +224,7 @@ export default function Navbar({ onOpenSimulation }) {
 
             <button
               type="button"
-              onClick={onOpenSimulation}
+              onClick={handleRegisterClick}
               className="letters-pill-btn min-h-[40px] px-5 py-2 text-[14px] inline-flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
             >
               Mulai Gratis

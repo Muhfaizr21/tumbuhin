@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import AuthPage from './components/auth/AuthPage'
 import Footer from './components/layout/Footer'
 import HeroSection from './components/sections/HeroSection'
 import InteractiveSimulationSection from './components/sections/InteractiveSimulationSection'
@@ -9,12 +11,52 @@ import { useTextToSpeech } from './hooks/useTextToSpeech'
 
 export default function App() {
   const tts = useTextToSpeech()
+  const [authMode, setAuthMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      if (hash === '#/login' || hash === '#login') return 'login'
+      if (hash === '#/register' || hash === '#register') return 'register'
+    }
+    return null
+  })
+
+  useEffect(() => {
+    const checkHash = () => {
+      const hash = window.location.hash
+      if (hash === '#/login' || hash === '#login') {
+        setAuthMode('login')
+      } else if (hash === '#/register' || hash === '#register') {
+        setAuthMode('register')
+      } else if (hash === '' || hash === '#top' || hash === '#letters' || hash === '#for-practice' || hash === '#save-hours' || hash === '#safety') {
+        setAuthMode(null)
+      }
+    }
+
+    checkHash()
+    window.addEventListener('hashchange', checkHash)
+    return () => window.removeEventListener('hashchange', checkHash)
+  }, [])
+
+  const handleOpenAuth = (mode) => {
+    setAuthMode(mode)
+    window.location.hash = `#/${mode}`
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleCloseAuth = () => {
+    setAuthMode(null)
+    window.history.pushState(null, '', window.location.pathname)
+  }
 
   const handleScrollToSimulation = () => {
     const el = document.getElementById('letters')
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' })
     }
+  }
+
+  if (authMode) {
+    return <AuthPage initialMode={authMode} onClose={handleCloseAuth} />
   }
 
   return (
@@ -27,7 +69,10 @@ export default function App() {
       </a>
 
       <main id="main-content">
-        <HeroSection onOpenSimulation={handleScrollToSimulation} />
+        <HeroSection
+          onOpenSimulation={handleScrollToSimulation}
+          onOpenAuth={handleOpenAuth}
+        />
         <SaveHoursSection tts={tts} />
         <InteractiveSimulationSection tts={tts} />
         <ManifestoSection />
@@ -35,7 +80,7 @@ export default function App() {
         <WhyChooseUsSection />
       </main>
 
-      <Footer />
+      <Footer onOpenAuth={handleOpenAuth} />
     </div>
   )
 }

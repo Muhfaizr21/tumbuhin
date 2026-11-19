@@ -1,5 +1,5 @@
 import { BRAND_INFO, NAV_LINKS } from '../../constants/landingData'
-import { SurgicalEnvelopeIcon } from '../ui/LettersIcons'
+import { LettersStethoscopeIcon } from '../ui/LettersIcons'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -78,8 +78,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-black/8">
           <div className="md:col-span-5">
             <a href="#top" className="inline-flex items-center gap-2.5 mb-3">
-              <span className="w-8 h-8 rounded-[10px] bg-[#f5f5f5] border border-black/10 flex items-center justify-center">
-                <SurgicalEnvelopeIcon className="w-4 h-4" />
+              <span className="w-8 h-8 rounded-[10px] bg-[#f5f5f5] border border-black/10 flex items-center justify-center text-[#2597d0]">
+                <LettersStethoscopeIcon className="w-4 h-4" />
               </span>
               <span className="font-runde font-semibold text-[18px] tracking-[-0.02em] text-[#070709]">
                 {BRAND_INFO.name}
@@ -106,6 +106,22 @@ export default function Footer() {
                   </a>
                 </li>
               ))}
+              <li>
+                <a
+                  href="#/login"
+                  className="font-inter text-[14px] text-[#2597d0] hover:underline transition-colors"
+                >
+                  Portal Masuk Kader →
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#/register"
+                  className="font-inter text-[14px] text-[#2597d0] hover:underline transition-colors"
+                >
+                  Daftar Akun Posyandu →
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -124,7 +140,7 @@ export default function Footer() {
 
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 font-inter text-[13px] text-[#8b8b8b]">
           <p>
-            &copy; {CURRENT_YEAR} {BRAND_INFO.name} ({BRAND_INFO.parentBrand}). Seluruh hak
+            &copy; {CURRENT_YEAR} {BRAND_INFO.name}. Seluruh hak
             cipta dilindungi.
           </p>
           <p>Dirancang untuk Posyandu & Tenaga Gizi Indonesia (SDG 3)</p>
