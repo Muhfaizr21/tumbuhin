@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  AlertCircle,
   ArrowLeft,
   Building2,
   Check,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 import { BRAND_INFO } from '../../constants/landingData'
 import { LettersStethoscopeIcon } from '../ui/LettersIcons'
+import { isMockEnabled, isSupabaseConfigured, supabase } from '../../lib/supabaseClient'
 
 export default function AuthPage({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode) // 'login' | 'register'
@@ -30,34 +32,129 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
   const [submittedMessage, setSubmittedMessage] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!agreed) {
-      alert('Harap setujui Ketentuan Layanan & Kebijakan Privasi Data Medis.')
+      setSubmittedMessage({
+        type: 'error',
+        title: 'Persetujuan Diperlukan',
+        desc: 'Harap setujui Ketentuan Layanan & Kebijakan Privasi Data Medis.',
+      })
       return
     }
 
+    setSubmittedMessage(null)
     setIsLoading(true)
+
+    // Mode Live: Supabase Auth
+    if (!isMockEnabled && isSupabaseConfigured && supabase) {
+      try {
+        if (mode === 'login') {
+          let res
+          if (loginMethod === 'phone') {
+            const formattedPhone = phone.startsWith('0')
+              ? `+62${phone.slice(1)}`
+              : phone.startsWith('+')
+                ? phone
+                : `+62${phone}`
+            res = await supabase.auth.signInWithPassword({
+              phone: formattedPhone,
+              password,
+            })
+          } else {
+            res = await supabase.auth.signInWithPassword({
+              email: email.trim(),
+              password,
+            })
+          }
+
+          if (res.error) {
+            setSubmittedMessage({
+              type: 'error',
+              title: 'Login Gagal',
+              desc: res.error.message || 'Periksa kembali data akun dan kata sandi Anda.',
+            })
+          } else {
+            setSubmittedMessage({
+              type: 'success',
+              title: 'Autentikasi Berhasil',
+              desc: `Selamat datang kembali di Portal Tumbuhin. Sesi terverifikasi untuk ${
+                res.data?.user?.email || phone
+              }.`,
+            })
+          }
+        } else {
+          // Register
+          const formattedPhone = phone
+            ? phone.startsWith('0')
+              ? `+62${phone.slice(1)}`
+              : phone.startsWith('+')
+                ? phone
+                : `+62${phone}`
+            : undefined
+
+          const res = await supabase.auth.signUp({
+            email: email.trim(),
+            password,
+            options: {
+              data: {
+                full_name: name || 'Kader Posyandu',
+                role,
+                posyandu_name: posyanduName,
+                phone: formattedPhone,
+              },
+            },
+          })
+
+          if (res.error) {
+            setSubmittedMessage({
+              type: 'error',
+              title: 'Pendaftaran Gagal',
+              desc: res.error.message || 'Terjadi kesalahan saat pendaftaran akun.',
+            })
+          } else {
+            setSubmittedMessage({
+              type: 'success',
+              title: 'Pendaftaran Berhasil',
+              desc: res.data?.session
+                ? `Akun atas nama ${name || 'Kader'} berhasil dibuat dan sesi langsung aktif.`
+                : `Pendaftaran berhasil. Silakan cek kotak masuk email ${email} untuk verifikasi akun Anda.`,
+            })
+          }
+        }
+      } catch (err) {
+        setSubmittedMessage({
+          type: 'error',
+          title: 'Gagal Menghubungi Server',
+          desc: err?.message || 'Koneksi ke Supabase terputus. Silakan coba lagi.',
+        })
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
+
+    // Fallback Mode Mock / Demo
     setTimeout(() => {
       setIsLoading(false)
       if (mode === 'login') {
         setSubmittedMessage({
           type: 'success',
-          title: 'Autentikasi Berhasil',
-          desc: `Selamat datang kembali di Portal Tumbuhin. Sesi terverifikasi untuk ${
+          title: 'Autentikasi Berhasil (Mode Simulasi)',
+          desc: `Selamat datang kembali di Portal Tumbuhin. Sesi simulasi terverifikasi untuk ${
             loginMethod === 'phone' ? phone : email
           }.`,
         })
       } else {
         setSubmittedMessage({
           type: 'success',
-          title: 'Pendaftaran Terverifikasi',
+          title: 'Pendaftaran Terverifikasi (Mode Simulasi)',
           desc: `Akun atas nama ${
             name || 'Kader Posyandu'
-          } telah berhasil dibuat. Kode aktivasi telah dikirim ke nomor WhatsApp Anda.`,
+          } telah berhasil dibuat dalam mode simulasi.`,
         })
       }
-    }, 800)
+    }, 600)
   }
 
   const handleQuickDemo = (demoRole) => {
@@ -223,17 +320,30 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
           <div className="lg:col-span-5 flex justify-center lg:justify-end w-full py-4">
             <div className="w-full max-w-[430px] rounded-[24px] bg-white/95 backdrop-blur-xl p-8 sm:p-9 shadow-[0_24px_64px_rgba(25,90,165,0.12)] border border-white">
               {/* Card Title */}
-              <div>
-                <h2 className="font-runde font-bold text-[22px] tracking-[-0.02em] text-[#070709]">
-                  {mode === 'login'
-                    ? 'Masuk Akun Tumbuhin'
-                    : 'Registrasi Petugas Posyandu'}
-                </h2>
-                <p className="font-runde text-[13px] text-[#60606c] mt-1">
-                  {mode === 'login'
-                    ? 'Akses dasbor antropometri & buku KIA digital'
-                    : 'Daftarkan unit Posyandu untuk sinkronisasi Puskesmas'}
-                </p>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="font-runde font-bold text-[22px] tracking-[-0.02em] text-[#070709]">
+                    {mode === 'login'
+                      ? 'Masuk Akun Tumbuhin'
+                      : 'Registrasi Petugas Posyandu'}
+                  </h2>
+                  <p className="font-runde text-[13px] text-[#60606c] mt-1">
+                    {mode === 'login'
+                      ? 'Akses dasbor antropometri & buku KIA digital'
+                      : 'Daftarkan unit Posyandu untuk sinkronisasi Puskesmas'}
+                  </p>
+                </div>
+                {!isMockEnabled && isSupabaseConfigured ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Supabase Live
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    Demo Mock
+                  </span>
+                )}
               </div>
 
               {/* Method Tabs (Phone vs Email) matching reference tabs */}
@@ -242,11 +352,10 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
                   <button
                     type="button"
                     onClick={() => setLoginMethod('phone')}
-                    className={`pb-2.5 transition-colors relative cursor-pointer ${
-                      loginMethod === 'phone'
+                    className={`pb-2.5 transition-colors relative cursor-pointer ${loginMethod === 'phone'
                         ? 'text-[#070709] font-semibold'
                         : 'text-[#8b8b8b] hover:text-[#070709]'
-                    }`}
+                      }`}
                   >
                     <span>Login Nomor HP</span>
                     {loginMethod === 'phone' && (
@@ -257,11 +366,10 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
                   <button
                     type="button"
                     onClick={() => setLoginMethod('email')}
-                    className={`pb-2.5 transition-colors relative cursor-pointer ${
-                      loginMethod === 'email'
+                    className={`pb-2.5 transition-colors relative cursor-pointer ${loginMethod === 'email'
                         ? 'text-[#070709] font-semibold'
                         : 'text-[#8b8b8b] hover:text-[#070709]'
-                    }`}
+                      }`}
                   >
                     <span>Login Email / NIK</span>
                     {loginMethod === 'email' && (
@@ -397,22 +505,46 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
 
                 {/* Feedback Message */}
                 {submittedMessage && (
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[13px] font-runde">
-                    <div className="flex items-center gap-1.5 font-semibold text-emerald-800">
-                      <Check className="w-4 h-4 text-emerald-600" />
+                  <div
+                    className={`p-3.5 rounded-xl border text-[13px] font-runde ${
+                      submittedMessage.type === 'error'
+                        ? 'bg-rose-50 border-rose-200 text-rose-900'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center gap-1.5 font-semibold ${
+                        submittedMessage.type === 'error'
+                          ? 'text-rose-800'
+                          : 'text-emerald-800'
+                      }`}
+                    >
+                      {submittedMessage.type === 'error' ? (
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      ) : (
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      )}
                       <span>{submittedMessage.title}</span>
                     </div>
-                    <p className="mt-1 text-emerald-700 leading-snug">
+                    <p
+                      className={`mt-1 leading-snug ${
+                        submittedMessage.type === 'error'
+                          ? 'text-rose-700'
+                          : 'text-emerald-700'
+                      }`}
+                    >
                       {submittedMessage.desc}
                     </p>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium text-[12px] hover:bg-emerald-700 transition-colors cursor-pointer"
-                    >
-                      <span>Buka Beranda Posyandu</span>
-                      <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                    </button>
+                    {submittedMessage.type === 'success' && (
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 text-white font-medium text-[12px] hover:bg-emerald-700 transition-colors cursor-pointer"
+                      >
+                        <span>Buka Beranda Posyandu</span>
+                        <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                      </button>
+                    )}
                   </div>
                 )}
 
