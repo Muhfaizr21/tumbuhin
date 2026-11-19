@@ -37,6 +37,16 @@ func BadRequest(c *gin.Context, message string, errDetails any) {
 	Error(c, http.StatusBadRequest, message, errDetails)
 }
 
+// Unauthorized renders a 401 Unauthorized error
+func Unauthorized(c *gin.Context, message string) {
+	Error(c, http.StatusUnauthorized, message, nil)
+}
+
+// Forbidden renders a 403 Forbidden error
+func Forbidden(c *gin.Context, message string) {
+	Error(c, http.StatusForbidden, message, nil)
+}
+
 // NotFound renders a 404 Not Found error
 func NotFound(c *gin.Context, message string) {
 	Error(c, http.StatusNotFound, message, nil)

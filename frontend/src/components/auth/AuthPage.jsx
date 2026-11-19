@@ -14,19 +14,20 @@ import {
 } from 'lucide-react'
 import { BRAND_INFO } from '../../constants/landingData'
 import { LettersStethoscopeIcon } from '../ui/LettersIcons'
+import { loginWithBackend, registerWithBackend } from '../../lib/authApi'
 import { isMockEnabled, isSupabaseConfigured, supabase } from '../../lib/supabaseClient'
 
-export default function AuthPage({ initialMode = 'login', onClose }) {
+export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess }) {
   const [mode, setMode] = useState(initialMode) // 'login' | 'register'
   const [loginMethod, setLoginMethod] = useState('phone') // 'phone' | 'email'
 
-  // Form states
-  const [phone, setPhone] = useState('081234567890')
-  const [email, setEmail] = useState('kader.posyandu@tumbuhin.id')
-  const [password, setPassword] = useState('posyandu2026')
+  // Form states pre-populated with seeded Kader account for instant testing
+  const [phone, setPhone] = useState('081288990011')
+  const [email, setEmail] = useState('kader@tumbuhin.id')
+  const [password, setPassword] = useState('kadersehat2026')
   const [name, setName] = useState('')
   const [role, setRole] = useState('kader')
-  const [posyanduName, setPosyanduName] = useState('')
+  const [posyanduName, setPosyanduName] = useState('Posyandu Melati 04')
   const [agreed, setAgreed] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [submittedMessage, setSubmittedMessage] = useState(null)
@@ -46,127 +47,143 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
     setSubmittedMessage(null)
     setIsLoading(true)
 
-    // Mode Live: Supabase Auth
-    if (!isMockEnabled && isSupabaseConfigured && supabase) {
-      try {
-        if (mode === 'login') {
-          let res
-          if (loginMethod === 'phone') {
-            const formattedPhone = phone.startsWith('0')
-              ? `+62${phone.slice(1)}`
-              : phone.startsWith('+')
-                ? phone
-                : `+62${phone}`
-            res = await supabase.auth.signInWithPassword({
-              phone: formattedPhone,
-              password,
-            })
-          } else {
-            res = await supabase.auth.signInWithPassword({
+    try {
+      if (mode === 'login') {
+        const identifier = loginMethod === 'phone' ? phone.trim() : email.trim()
+        const authData = await loginWithBackend({
+          identifier,
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+        })
+
+        setSubmittedMessage({
+          type: 'success',
+          title: 'Autentikasi Berhasil',
+          desc: `Mengarahkan ke Dasbor Role (${authData.user.role.toUpperCase()})...`,
+        })
+
+        if (onAuthSuccess) {
+          onAuthSuccess(authData)
+        }
+        return
+      } else {
+        const authData = await registerWithBackend({
+          fullName: name.trim() || 'Petugas Posyandu',
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          role,
+          posyanduName: posyanduName.trim() || 'Posyandu Melati 04',
+        })
+
+        setSubmittedMessage({
+          type: 'success',
+          title: 'Registrasi Berhasil',
+          desc: `Akun ${authData.user.full_name} terdaftar sebagai ${authData.user.role.toUpperCase()}. Mengarahkan ke dasbor...`,
+        })
+
+        if (onAuthSuccess) {
+          onAuthSuccess(authData)
+        }
+        return
+      }
+    } catch (backendErr) {
+      // Optional secondary fallback to Supabase Auth if backend is offline
+      if (!isMockEnabled && isSupabaseConfigured && supabase) {
+        try {
+          if (mode === 'login') {
+            const res = await supabase.auth.signInWithPassword({
               email: email.trim(),
               password,
             })
+            if (!res.error && res.data?.user) {
+              const userObj = {
+                full_name: res.data.user.user_metadata?.full_name || res.data.user.email,
+                email: res.data.user.email,
+                role: res.data.user.user_metadata?.role || 'kader',
+              }
+              if (onAuthSuccess) {
+                onAuthSuccess({
+                  token: res.data.session?.access_token,
+                  user: userObj,
+                  redirect_to: `/${userObj.role}/dashboard`,
+                })
+              }
+              return
+            }
           }
-
-          if (res.error) {
-            setSubmittedMessage({
-              type: 'error',
-              title: 'Login Gagal',
-              desc: res.error.message || 'Periksa kembali data akun dan kata sandi Anda.',
-            })
-          } else {
-            setSubmittedMessage({
-              type: 'success',
-              title: 'Autentikasi Berhasil',
-              desc: `Selamat datang kembali di Portal Tumbuhin. Sesi terverifikasi untuk ${
-                res.data?.user?.email || phone
-              }.`,
-            })
-          }
-        } else {
-          // Register
-          const formattedPhone = phone
-            ? phone.startsWith('0')
-              ? `+62${phone.slice(1)}`
-              : phone.startsWith('+')
-                ? phone
-                : `+62${phone}`
-            : undefined
-
-          const res = await supabase.auth.signUp({
-            email: email.trim(),
-            password,
-            options: {
-              data: {
-                full_name: name || 'Kader Posyandu',
-                role,
-                posyandu_name: posyanduName,
-                phone: formattedPhone,
-              },
-            },
-          })
-
-          if (res.error) {
-            setSubmittedMessage({
-              type: 'error',
-              title: 'Pendaftaran Gagal',
-              desc: res.error.message || 'Terjadi kesalahan saat pendaftaran akun.',
-            })
-          } else {
-            setSubmittedMessage({
-              type: 'success',
-              title: 'Pendaftaran Berhasil',
-              desc: res.data?.session
-                ? `Akun atas nama ${name || 'Kader'} berhasil dibuat dan sesi langsung aktif.`
-                : `Pendaftaran berhasil. Silakan cek kotak masuk email ${email} untuk verifikasi akun Anda.`,
-            })
-          }
+        } catch {
+          // ignore fallback error and report main backend error
         }
-      } catch (err) {
-        setSubmittedMessage({
-          type: 'error',
-          title: 'Gagal Menghubungi Server',
-          desc: err?.message || 'Koneksi ke Supabase terputus. Silakan coba lagi.',
-        })
-      } finally {
-        setIsLoading(false)
       }
-      return
-    }
 
-    // Fallback Mode Mock / Demo
-    setTimeout(() => {
+      setSubmittedMessage({
+        type: 'error',
+        title: mode === 'login' ? 'Autentikasi Gagal' : 'Registrasi Gagal',
+        desc: backendErr?.message || 'Periksa kembali kredensial atau pastikan server backend Go berjalan di port 8080.',
+      })
+    } finally {
       setIsLoading(false)
-      if (mode === 'login') {
-        setSubmittedMessage({
-          type: 'success',
-          title: 'Autentikasi Berhasil (Mode Simulasi)',
-          desc: `Selamat datang kembali di Portal Tumbuhin. Sesi simulasi terverifikasi untuk ${
-            loginMethod === 'phone' ? phone : email
-          }.`,
-        })
-      } else {
-        setSubmittedMessage({
-          type: 'success',
-          title: 'Pendaftaran Terverifikasi (Mode Simulasi)',
-          desc: `Akun atas nama ${
-            name || 'Kader Posyandu'
-          } telah berhasil dibuat dalam mode simulasi.`,
-        })
-      }
-    }, 600)
+    }
   }
 
-  const handleQuickDemo = (demoRole) => {
+  const handleQuickDemo = async (demoRole) => {
     setMode('login')
-    if (demoRole === 'kader') {
-      setLoginMethod('phone')
-      setPhone('081288990011')
-      setPassword('kadersehat2026')
-    } else {
-      setLoginMethod('email')
-      setEmail('bidan.desa@puskesmas.go.id')
-      setPassword('bidansiaga2026')
+    setSubmittedMessage(null)
+
+    const presets = {
+      kader: {
+        method: 'phone',
+        phone: '081288990011',
+        email: 'kader@tumbuhin.id',
+        pass: 'kadersehat2026',
+      },
+      bidan: {
+        method: 'email',
+        phone: '081288990022',
+        email: 'bidan@tumbuhin.id',
+        pass: 'bidansiaga2026',
+      },
+      admin: {
+        method: 'email',
+        phone: '081288990033',
+        email: 'admin@tumbuhin.id',
+        pass: 'adminsehat2026',
+      },
+      ortu: {
+        method: 'email',
+        phone: '081288990044',
+        email: 'ortu@tumbuhin.id',
+        pass: 'ortusehat2026',
+      },
+    }
+
+    const chosen = presets[demoRole] || presets.kader
+    setLoginMethod(chosen.method)
+    setPhone(chosen.phone)
+    setEmail(chosen.email)
+    setPassword(chosen.pass)
+
+    setIsLoading(true)
+    try {
+      const authData = await loginWithBackend({
+        identifier: chosen.method === 'phone' ? chosen.phone : chosen.email,
+        email: chosen.email,
+        phone: chosen.phone,
+        password: chosen.pass,
+      })
+      if (onAuthSuccess) {
+        onAuthSuccess(authData)
+      }
+    } catch (err) {
+      setSubmittedMessage({
+        type: 'error',
+        title: 'Gagal Login Demo',
+        desc: err?.message || 'Pastikan server Golang berjalan di port 8080.',
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -268,7 +285,7 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
               {/* Cascading Floating Speech Bubbles (Direct match to reference image) */}
               <div className="mt-6 flex flex-col items-start gap-2.5">
                 <div className="px-3.5 py-1.5 rounded-full bg-white/55 backdrop-blur-md border border-white/70 text-[12px] font-runde text-[#4a6585] shadow-2xs">
-                  Halo Kader & Bidan Desa,
+                  Halo Petugas Posyandu & Bidan Desa,
                 </div>
                 <div className="px-4 py-2 rounded-full bg-white/75 backdrop-blur-md border border-white/80 text-[12.5px] font-runde text-[#1e3a5f] shadow-xs">
                   Kalkulasi Z-Score balita siap diproses otomatis.
@@ -402,10 +419,10 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
                         aria-label="Pilih Peran Pelayanan"
                         className="w-full h-11 px-3.5 rounded-xl bg-[#f5f7fa] border border-transparent focus:border-[#2597d0] focus:bg-white text-[14px] font-runde text-[#070709] outline-none transition-all"
                       >
-                        <option value="kader">Kader Posyandu (Pelaksana Timbang)</option>
-                        <option value="bidan">Bidan Desa / Koordinator Gizi</option>
-                        <option value="puskesmas">Petugas Gizi Puskesmas</option>
-                        <option value="dokter">Dokter Puskesmas / Spesialis Anak</option>
+                        <option value="kader">1. Kader Posyandu (Pelaksana Timbang RW)</option>
+                        <option value="bidan">2. Bidan Desa / Tenaga Gizi Puskesmas</option>
+                        <option value="admin">3. Super Admin Desa / Pengelola Sistem</option>
+                        <option value="ortu">4. Orang Tua Balita (Kartu Gizi & MPASI)</option>
                       </select>
                     </div>
 
@@ -597,23 +614,39 @@ export default function AuthPage({ initialMode = 'login', onClose }) {
                 )}
               </div>
 
-              {/* Quick Demo Switcher */}
-              <div className="mt-5 pt-3.5 border-t border-dashed border-black/8 flex items-center justify-between gap-2">
-                <span className="font-inter text-[11px] text-[#8b8b8b]">Akun Demo:</span>
-                <div className="flex items-center gap-2">
+              {/* Quick Demo Switcher for all 4 Seeded Roles */}
+              <div className="mt-5 pt-3.5 border-t border-dashed border-black/8">
+                <p className="font-inter text-[11px] text-[#8b8b8b] mb-2">
+                  Masuk Instan Akun Seeder (4 Role):
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   <button
                     type="button"
                     onClick={() => handleQuickDemo('kader')}
-                    className="px-2.5 py-1 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-medium text-[#2597d0] transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#2597d0] transition-colors cursor-pointer text-center"
                   >
-                    Kader Posyandu
+                    1. Petugas
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickDemo('bidan')}
-                    className="px-2.5 py-1 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-medium text-[#2597d0] transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#0f766e] transition-colors cursor-pointer text-center"
                   >
-                    Bidan Desa
+                    2. Bidan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('admin')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#1e3a8a] transition-colors cursor-pointer text-center"
+                  >
+                    3. Super Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('ortu')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#7c3aed] transition-colors cursor-pointer text-center"
+                  >
+                    4. Ortu
                   </button>
                 </div>
               </div>
