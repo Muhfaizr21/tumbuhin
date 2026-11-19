@@ -88,14 +88,14 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
           ))}
         </nav>
 
-        {/* Right: Plain Text Login + White Capsule Sign-up Button */}
+        {/* Right: Plain Text Login + White Capsule Register Button */}
         <div className="flex items-center gap-4 sm:gap-6">
           <a
             href="#/login"
             onClick={handleLoginClick}
             className="text-white hover:text-white/80 font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
           >
-            Masuk Kader
+            Login
           </a>
 
           <button
@@ -103,7 +103,7 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
             onClick={handleRegisterClick}
             className="bg-white text-[#070709] min-h-[38px] px-5 py-2 rounded-full font-runde font-medium text-[14px] inline-flex items-center shadow-sm hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
-            Mulai Gratis
+            Register
           </button>
 
           <button
@@ -148,7 +148,7 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
                 }}
                 className="min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium border border-white/30 text-white"
               >
-                Masuk Kader
+                Login
               </a>
               <button
                 type="button"
@@ -158,7 +158,7 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
                 }}
                 className="min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium bg-white text-[#070709]"
               >
-                Daftar Akun Baru
+                Register
               </button>
             </div>
           </nav>
@@ -219,7 +219,7 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
               onClick={handleLoginClick}
               className="text-[#070709] hover:text-[#60606c] font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
             >
-              Masuk Kader
+              Login
             </a>
 
             <button
@@ -227,7 +227,7 @@ export default function Navbar({ onOpenSimulation, onOpenAuth }) {
               onClick={handleRegisterClick}
               className="letters-pill-btn min-h-[40px] px-5 py-2 text-[14px] inline-flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
             >
-              Mulai Gratis
+              Register
             </button>
           </div>
         </div>
