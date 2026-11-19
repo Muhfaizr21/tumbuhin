@@ -5,47 +5,105 @@ import (
 
 	"tumbuhin-backend/config"
 	"tumbuhin-backend/controllers"
+	adminDashCtrl "tumbuhin-backend/controllers/admin/dashboard"
+	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
+	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
+	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
+	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
+	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
+	"tumbuhin-backend/middlewares"
+	"tumbuhin-backend/models"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-// SetupRouter initializes and configures the Gin engine with all routes and middlewares
-func SetupRouter(cfg *config.Config, healthCtrl *controllers.HealthController, userCtrl *controllers.UserController) *gin.Engine {
+// RouteDependencies bundles all role-based controllers for clean dependency injection
+type RouteDependencies struct {
+	HealthCtrl       *controllers.HealthController
+	UserCtrl         *controllers.UserController
+	AuthLoginCtrl    *authLoginCtrl.Controller
+	AuthRegisterCtrl *authRegisterCtrl.Controller
+	KaderDashCtrl    *kaderDashCtrl.Controller
+	BidanDashCtrl    *bidanDashCtrl.Controller
+	AdminDashCtrl    *adminDashCtrl.Controller
+	OrtuDashCtrl     *ortuDashCtrl.Controller
+}
+
+// SetupRouter initializes and configures the Gin engine with all routes and RBAC middlewares
+func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.New()
-
-	// Global middlewares
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Configure CORS for frontend communication
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.CorsOrigin, "http://localhost:5173", "http://localhost:3000"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "Cache-Control"},
+		ExposeHeaders:    []string{"Content-Length", "Authorization"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// API version 1 route group
+	router.GET("/health", deps.HealthCtrl.Check)
+
 	v1 := router.Group("/api/v1")
 	{
-		// Health check
-		v1.GET("/health", healthCtrl.Check)
+		v1.GET("/health", deps.HealthCtrl.Check)
 
-		// User resource routes
+		// Public Auth Routes
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/login", deps.AuthLoginCtrl.HandleLogin)
+			authGroup.POST("/register", deps.AuthRegisterCtrl.HandleRegister)
+			authGroup.GET("/me", middlewares.RequireAuth(cfg.JWTSecret), deps.AuthLoginCtrl.HandleMe)
+		}
+
+		// Public Magic Link Route for Orang Tua Balita (Zero-Login Portal)
+		v1.GET("/public/child/:magicToken", deps.OrtuDashCtrl.HandleGetPortal)
+
+		// Role 1: Kader Posyandu Routes (/api/v1/kader/...)
+		kaderGroup := v1.Group("/kader")
+		kaderGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleKader, models.RoleBidan, models.RoleAdmin))
+		{
+			kaderGroup.GET("/dashboard", deps.KaderDashCtrl.HandleGetOverview)
+		}
+
+		// Role 2: Bidan Desa Routes (/api/v1/bidan/...)
+		bidanGroup := v1.Group("/bidan")
+		bidanGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleBidan, models.RoleAdmin))
+		{
+			bidanGroup.GET("/dashboard", deps.BidanDashCtrl.HandleGetOverview)
+		}
+
+		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)
+		adminGroup := v1.Group("/admin")
+		adminGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleAdmin))
+		{
+			adminGroup.GET("/dashboard", deps.AdminDashCtrl.HandleGetOverview)
+		}
+
+		// Role 4: Orang Tua Balita Routes (/api/v1/ortu/...)
+		ortuGroup := v1.Group("/ortu")
+		ortuGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleOrtu, models.RoleKader, models.RoleBidan, models.RoleAdmin))
+		{
+			ortuGroup.GET("/dashboard", deps.OrtuDashCtrl.HandleGetPortal)
+		}
+
+		// Legacy User CRUD Routes
 		users := v1.Group("/users")
 		{
-			users.GET("", userCtrl.GetAll)
-			users.GET("/:id", userCtrl.GetByID)
-			users.POST("", userCtrl.Create)
-			users.PUT("/:id", userCtrl.Update)
-			users.DELETE("/:id", userCtrl.Delete)
+			users.GET("", deps.UserCtrl.GetAll)
+			users.GET("/:id", deps.UserCtrl.GetByID)
+			users.POST("", deps.UserCtrl.Create)
+			users.PUT("/:id", deps.UserCtrl.Update)
+			users.DELETE("/:id", deps.UserCtrl.Delete)
 		}
 	}
 
