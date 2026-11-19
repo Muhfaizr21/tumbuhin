@@ -7,9 +7,9 @@ import {
 
 export default function HeroSection() {
   return (
-    <section id="top" className="w-full p-2.5 sm:p-3">
-      {/* Exact letters.app Sky Gradient Hero Container (.framer-1xinbaf) */}
-      <div className="letters-sky-hero relative w-full rounded-t-[28px] rounded-b-[48px] pt-16 sm:pt-24 lg:pt-28 px-4 sm:px-6 overflow-hidden flex flex-col items-center justify-between min-h-[700px] sm:min-h-[820px]">
+    <section id="top" className="w-full">
+      {/* Exact letters.app Sky Gradient Hero Container (.framer-1xinbaf) with seamless top bleed */}
+      <div className="letters-sky-hero relative w-full rounded-b-[44px] sm:rounded-b-[56px] pt-24 sm:pt-32 lg:pt-36 px-4 sm:px-6 overflow-hidden flex flex-col items-center justify-between min-h-[720px] sm:min-h-[840px]">
         {/* Centered Headline, Subtext & Obsidian Pill Button */}
         <div className="relative z-20 max-w-[780px] mx-auto flex flex-col items-center text-center gap-6">
           <h1 className="font-runde font-semibold text-[48px] sm:text-[68px] lg:text-[80px] leading-[0.90] tracking-[-0.04em] text-white">
