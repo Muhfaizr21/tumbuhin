@@ -1,5 +1,4 @@
 import Footer from './components/layout/Footer'
-import Navbar from './components/layout/Navbar'
 import HeroSection from './components/sections/HeroSection'
 import InteractiveSimulationSection from './components/sections/InteractiveSimulationSection'
 import ManifestoSection from './components/sections/ManifestoSection'
@@ -27,10 +26,8 @@ export default function App() {
         Lewati ke konten utama
       </a>
 
-      <Navbar onOpenSimulation={handleScrollToSimulation} />
-
       <main id="main-content">
-        <HeroSection />
+        <HeroSection onOpenSimulation={handleScrollToSimulation} />
         <SaveHoursSection tts={tts} />
         <InteractiveSimulationSection tts={tts} />
         <ManifestoSection />

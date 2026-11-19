@@ -1,5 +1,49 @@
 // Exact SVG icons and 3D Envelope Before/After illustration scraped from letters.app
 
+export function LettersStethoscopeIcon({ className = 'w-5 h-5' }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 19 20"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M 5.466 10.115 C 6.954 10.115 8.161 8.908 8.161 7.419 L 8.161 5.315 C 8.161 3.826 6.954 2.619 5.466 2.619 C 3.977 2.619 2.77 3.826 2.77 5.315 L 2.77 7.419 C 2.77 8.908 3.977 10.115 5.466 10.115 Z"
+        fill="transparent"
+        strokeWidth="1.72"
+        stroke="currentColor"
+        strokeMiterlimit="10"
+      />
+      <path
+        d="M 1.667 11.993 C 2.56 13.173 3.979 13.771 5.405 13.801 M 5.405 13.801 C 6.831 13.771 8.25 13.173 9.142 11.993 M 5.405 13.801 L 5.405 17.262"
+        fill="transparent"
+        strokeWidth="1.72"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 8.883 17.201 C 11.346 17.201 12.511 17.201 13.921 14.9 M 13.921 14.9 C 13.921 14.9 16.479 10.215 16.479 8.821 C 16.479 7.426 15.359 6.295 13.978 6.295 C 12.596 6.295 11.477 7.426 11.477 8.821 C 11.477 10.215 13.921 14.9 13.921 14.9 Z M 13.921 14.9 C 15.331 17.201 16.496 17.201 18.959 17.201"
+        fill="transparent"
+        strokeWidth="1.72"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 12.45 2.619 L 15.391 2.619"
+        fill="transparent"
+        strokeWidth="1.72"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function SurgicalEnvelopeIcon({ className = 'w-5 h-5' }) {
   return (
     <svg

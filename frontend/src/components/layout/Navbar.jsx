@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { BRAND_INFO, NAV_LINKS } from '../../constants/landingData'
-import { SurgicalEnvelopeIcon } from '../ui/LettersIcons'
+import { LettersStethoscopeIcon } from '../ui/LettersIcons'
 
 export default function Navbar({ onOpenSimulation }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -9,7 +9,7 @@ export default function Navbar({ onOpenSimulation }) {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
+      setIsScrolled(window.scrollY > 300)
     }
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -27,63 +27,56 @@ export default function Navbar({ onOpenSimulation }) {
   }, [mobileMenuOpen])
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white/85 backdrop-blur-md border-b border-black/8 shadow-xs'
-          : 'bg-transparent border-b border-transparent'
-      }`}
-    >
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4 transition-all duration-300">
-        {/* Left: Brand Wordmark + Surgical Icon Tile */}
+    <>
+      {/* 1. In-Hero Navbar (Static inside top of blue hero card, 100% matches letters.app reference screenshot) */}
+      <header className="relative z-30 w-full max-w-[1200px] mx-auto px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-4">
+        {/* Left: Bare Stethoscope Icon + Tumbuhin Wordmark (No background box) */}
         <a
           href="#top"
-          className="inline-flex items-center gap-2.5 min-h-[44px] pr-2 group"
+          className="inline-flex items-center gap-2 min-h-[44px] group"
         >
-          <span
-            className={`w-8 h-8 rounded-[10px] flex items-center justify-center transition-colors duration-300 ${
-              isScrolled
-                ? 'bg-[#f5f5f5] border border-black/10'
-                : 'bg-white/95 border border-white/40 shadow-xs'
-            }`}
-          >
-            <SurgicalEnvelopeIcon className="w-4 h-4" />
-          </span>
-          <span
-            className={`font-runde font-semibold text-[18px] tracking-[-0.02em] transition-colors duration-300 ${
-              isScrolled ? 'text-[#070709]' : 'text-white'
-            }`}
-          >
+          <LettersStethoscopeIcon className="w-5 h-5 text-white" />
+          <span className="font-runde font-semibold text-[17px] tracking-[-0.02em] text-white">
             {BRAND_INFO.name}
           </span>
         </a>
 
-        {/* Center: 4 Navigation Links */}
-        <nav aria-label="Navigasi Utama" className="hidden md:flex items-center gap-7">
+        {/* Center: Navigation Links in White with Chevron on dropdowns */}
+        <nav aria-label="Navigasi Utama" className="hidden md:flex items-center gap-6 lg:gap-8">
           {NAV_LINKS.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className={`min-h-[44px] inline-flex items-center font-inter text-[14px] font-medium tracking-[-0.022em] transition-colors duration-300 ${
-                isScrolled
-                  ? 'text-[#070709] hover:text-[#60606c]'
-                  : 'text-white/85 hover:text-white'
-              }`}
+              className="min-h-[44px] inline-flex items-center gap-1.5 font-inter text-[14px] font-medium tracking-[-0.01em] text-white/90 hover:text-white transition-colors"
             >
-              {item.label}
+              <span>{item.label}</span>
+              {item.hasDropdown && (
+                <svg
+                  width="10"
+                  height="6"
+                  viewBox="0 0 10 6"
+                  fill="none"
+                  className="w-2.5 h-2.5 opacity-80"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1 1L5 5L9 1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
             </a>
           ))}
         </nav>
 
-        {/* Right: Outlined Ghost Login Button + Filled Obsidian Pill Button */}
-        <div className="flex items-center gap-2.5">
+        {/* Right: Plain Text Login + White Capsule Sign-up Button */}
+        <div className="flex items-center gap-4 sm:gap-6">
           <a
             href="#letters"
-            className={`min-h-[40px] px-4 py-2 text-[14px] font-runde font-medium rounded-full hidden sm:inline-flex items-center transition-all duration-300 ${
-              isScrolled
-                ? 'letters-ghost-btn'
-                : 'border border-white/40 text-white hover:bg-white/10 hover:border-white/70'
-            }`}
+            className="text-white hover:text-white/80 font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
           >
             Masuk Kader
           </a>
@@ -91,7 +84,7 @@ export default function Navbar({ onOpenSimulation }) {
           <button
             type="button"
             onClick={onOpenSimulation}
-            className="letters-pill-btn min-h-[40px] px-5 py-2 text-[14px] inline-flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+            className="bg-white text-[#070709] min-h-[38px] px-5 py-2 rounded-full font-runde font-medium text-[14px] inline-flex items-center shadow-sm hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
             Mulai Gratis
           </button>
@@ -100,69 +93,114 @@ export default function Navbar({ onOpenSimulation }) {
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-expanded={mobileMenuOpen}
-            aria-controls="letters-mobile-menu"
-            aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
-            className={`md:hidden min-h-[44px] px-3.5 py-2 text-[13px] rounded-full inline-flex items-center gap-1.5 transition-colors duration-300 ${
-              isScrolled
-                ? 'letters-ghost-btn'
-                : 'border border-white/40 text-white hover:bg-white/10'
-            }`}
+            aria-controls="hero-mobile-menu"
+            aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
+            className="md:hidden text-white min-h-[44px] px-2 py-2 inline-flex items-center"
           >
             {mobileMenuOpen ? (
-              <>
-                <X aria-hidden="true" className="w-4 h-4" />
-                <span>Tutup</span>
-              </>
+              <X aria-hidden="true" className="w-5 h-5" />
             ) : (
-              <>
-                <Menu aria-hidden="true" className="w-4 h-4" />
-                <span>Menu</span>
-              </>
+              <Menu aria-hidden="true" className="w-5 h-5" />
             )}
           </button>
         </div>
-      </div>
 
-      {/* Mobile Dropdown Sheet */}
-      {mobileMenuOpen && (
-        <nav
-          id="letters-mobile-menu"
-          aria-label="Navigasi Seluler"
-          className={`md:hidden mx-4 mb-3 p-3 rounded-2xl flex flex-col gap-1 shadow-xl transition-all duration-300 ${
-            isScrolled
-              ? 'bg-white/95 backdrop-blur-md border border-black/10 text-[#070709]'
-              : 'bg-[#406a92]/95 backdrop-blur-md border border-white/20 text-white'
-          }`}
-        >
-          {NAV_LINKS.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`min-h-[44px] flex items-center px-3.5 py-2 rounded-xl font-inter text-[14px] font-medium transition-colors ${
-                isScrolled
-                  ? 'text-[#070709] hover:bg-[#f5f5f5]'
-                  : 'text-white hover:bg-white/10'
-              }`}
-            >
-              {item.label}
-            </a>
-          ))}
-          <div className="pt-2 mt-1 border-t border-black/5 flex flex-col gap-2">
+        {/* Mobile Dropdown Menu for In-Hero state */}
+        {mobileMenuOpen && (
+          <nav
+            id="hero-mobile-menu"
+            aria-label="Navigasi Seluler"
+            className="absolute top-full left-2 right-2 mt-2 p-3 rounded-2xl bg-[#366088]/95 backdrop-blur-md border border-white/20 text-white shadow-xl flex flex-col gap-1 md:hidden z-40"
+          >
+            {NAV_LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[44px] flex items-center px-3.5 py-2 rounded-xl font-inter text-[14px] font-medium text-white hover:bg-white/10 transition-colors"
+              >
+                {item.label}
+              </a>
+            ))}
+            <div className="pt-2 mt-1 border-t border-white/15 flex flex-col gap-2">
+              <a
+                href="#letters"
+                onClick={() => setMobileMenuOpen(false)}
+                className="min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium border border-white/30 text-white"
+              >
+                Masuk Kader
+              </a>
+            </div>
+          </nav>
+        )}
+      </header>
+
+      {/* 2. Floating Sticky Navbar (Appears smoothly when scrolled past hero) */}
+      <header
+        aria-hidden={!isScrolled}
+        className={`fixed top-0 left-0 right-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-black/8 shadow-xs transition-transform duration-300 ${
+          isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <a
+            href="#top"
+            className="inline-flex items-center gap-2 min-h-[44px] group"
+          >
+            <LettersStethoscopeIcon className="w-5 h-5 text-[#2597d0]" />
+            <span className="font-runde font-semibold text-[17px] tracking-[-0.02em] text-[#070709]">
+              {BRAND_INFO.name}
+            </span>
+          </a>
+
+          <nav aria-label="Navigasi Melayang" className="hidden md:flex items-center gap-6 lg:gap-8">
+            {NAV_LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="min-h-[44px] inline-flex items-center gap-1.5 font-inter text-[14px] font-medium tracking-[-0.01em] text-[#070709] hover:text-[#60606c] transition-colors"
+              >
+                <span>{item.label}</span>
+                {item.hasDropdown && (
+                  <svg
+                    width="10"
+                    height="6"
+                    viewBox="0 0 10 6"
+                    fill="none"
+                    className="w-2.5 h-2.5 opacity-60"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M1 1L5 5L9 1"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3 sm:gap-4">
             <a
               href="#letters"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`min-h-[42px] flex items-center justify-center rounded-full text-[14px] font-runde font-medium ${
-                isScrolled
-                  ? 'border border-black/20 text-[#070709]'
-                  : 'border border-white/40 text-white'
-              }`}
+              className="text-[#070709] hover:text-[#60606c] font-runde font-medium text-[14px] min-h-[40px] hidden sm:inline-flex items-center transition-colors cursor-pointer"
             >
               Masuk Kader
             </a>
+
+            <button
+              type="button"
+              onClick={onOpenSimulation}
+              className="letters-pill-btn min-h-[40px] px-5 py-2 text-[14px] inline-flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+            >
+              Mulai Gratis
+            </button>
           </div>
-        </nav>
-      )}
-    </header>
+        </div>
+      </header>
+    </>
   )
 }

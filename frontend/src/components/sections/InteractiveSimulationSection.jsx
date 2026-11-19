@@ -85,7 +85,7 @@ export default function InteractiveSimulationSection({ tts }) {
 
   const handleShareWhatsApp = () => {
     const message = encodeURIComponent(
-      `*Kartu Gizi Digital SigapGizi (Tumbuhin)*\n\n` +
+      `*Kartu Gizi Digital Tumbuhin*\n\n` +
         `Nama Balita: *${activeCase.childName}* (${customAge} Bulan)\n` +
         `BB / TB: ${activeCase.weightKg} kg / ${activeCase.heightCm} cm\n` +
         `Z-Score TB/U: ${activeCase.zScoreHFA}\n` +
@@ -374,7 +374,7 @@ export default function InteractiveSimulationSection({ tts }) {
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f2f9fd]">
                         <AfterEditIcon className="w-3.5 h-3.5" />
                         <span className="font-runde text-[11px] font-semibold text-[#070709]">
-                          After (Evaluasi SigapGizi)
+                          After (Evaluasi Tumbuhin)
                         </span>
                       </div>
                       <span

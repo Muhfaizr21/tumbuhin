@@ -1,18 +1,17 @@
 // Copywriting and clinical data structured around letters.app & DESIGN.md specification
 
 export const BRAND_INFO = {
-  name: 'SigapGizi',
-  parentBrand: 'Tumbuhin',
-  tagline: 'Balita sehat, bukan tumpukan berkas',
+  name: 'Tumbuhin',
+  tagline: 'Balita sehat, bukan beban berkas',
   speechOverview:
-    'Selamat datang di SigapGizi Tumbuhin. Sistem informasi Posyandu pintar dan peringatan dini stunting. Hitung Z-Score antropometri instan yang seratus persen akurat sesuai standar WHO LMS, deteksi risiko growth faltering dengan regresi linier, dan susun resep MPASI pangan lokal sesuai pedoman Kementerian Kesehatan Republik Indonesia.',
+    'Selamat datang di Tumbuhin. Platform pintar Posyandu dan peringatan dini stunting. Hitung Z-Score antropometri instan yang seratus persen akurat sesuai standar WHO LMS, deteksi risiko growth faltering dengan regresi linier, dan susun resep MPASI pangan lokal sesuai pedoman Kementerian Kesehatan Republik Indonesia.',
 }
 
 export const NAV_LINKS = [
-  { label: 'Kasus Penggunaan', href: '#for-practice' },
-  { label: 'Fitur Klinis', href: '#save-hours' },
-  { label: 'Simulasi KMS', href: '#letters' },
-  { label: 'Keamanan Data', href: '#safety' },
+  { label: 'Kasus Penggunaan', href: '#for-practice', hasDropdown: true },
+  { label: 'Fitur Klinis', href: '#save-hours', hasDropdown: true },
+  { label: 'Simulasi KMS', href: '#letters', hasDropdown: false },
+  { label: 'Keamanan Data', href: '#safety', hasDropdown: false },
 ]
 
 export const HERO_CONTENT = {
@@ -24,7 +23,7 @@ export const HERO_CONTENT = {
     body: 'Ananda Bima Saputra usia 14 bulan datang timbang rutin. BB 8.4 kg, TB 74.2 cm. Bulan lalu BB 8.3 kg, kenaikan lambat perlu cek tabel Z-Score manual dan susun saran menu PMT...',
   },
   afterNote: {
-    greeting: 'Evaluasi Klinis SigapGizi (14 Bulan):',
+    greeting: 'Evaluasi Klinis Tumbuhin (14 Bulan):',
     body: 'Z-Score TB/U: -1.92 SD, BB/U: -1.85 SD. Peringatan Regresi: Risiko Growth Faltering Tinggi (78%). Menu RAG Kemenkes: Nasi Tim Lele Sari Kelor (Rp 13.500/hari, 24.6g protein hewani).',
   },
 }

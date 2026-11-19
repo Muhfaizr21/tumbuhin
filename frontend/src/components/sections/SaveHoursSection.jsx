@@ -30,7 +30,7 @@ export default function SaveHoursSection({ tts }) {
       {/* Section Heading Block: Centered 44px Open Runde Semibold with Inline Paper Graphic */}
       <div className="max-w-[680px] mx-auto text-center mb-14 sm:mb-16">
         <h2 className="font-runde font-semibold text-[32px] sm:text-[44px] leading-[1.10] tracking-[-0.04em] text-[#070709]">
-          Hemat <FloatingPaperBadge /> 5+ jam setiap minggu bersama SigapGizi
+          Hemat <FloatingPaperBadge /> 5+ jam setiap minggu bersama Tumbuhin
         </h2>
       </div>
 

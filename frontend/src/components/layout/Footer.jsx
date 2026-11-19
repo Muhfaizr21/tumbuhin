@@ -52,7 +52,7 @@ export default function Footer() {
             <div className="w-1/2 sm:w-5/12">
               <img
                 src="/letters/kZTcFdYZoCpXkqrX7IpAsdVPQ4.webp"
-                alt="Pratinjau antarmuka tablet SigapGizi"
+                alt="Pratinjau antarmuka tablet Tumbuhin"
                 width={1684}
                 height={1337}
                 loading="lazy"
@@ -62,7 +62,7 @@ export default function Footer() {
             <div className="w-1/2 sm:w-6/12">
               <img
                 src="/letters/pBWOqpZ9ZeyR8aI9MXLjgMHDLiY.webp"
-                alt="Pratinjau antarmuka desktop dan seluler SigapGizi"
+                alt="Pratinjau antarmuka desktop dan seluler Tumbuhin"
                 width={2438}
                 height={2308}
                 loading="lazy"
