@@ -143,5 +143,11 @@ func RunMigrationAndSeeder(db *pgxpool.Pool) error {
 	}
 
 	log.Println("[SEEDER] All 4 role accounts successfully seeded to PostgreSQL.")
+
+	// Run extended migrations for posyandus, children, measurements, etc.
+	if err := RunExtendedMigrations(db); err != nil {
+		log.Printf("[SEEDER] Extended migrations encountered issue: %v", err)
+	}
+
 	return nil
 }

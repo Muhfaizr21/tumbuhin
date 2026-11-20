@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -8,6 +9,9 @@ import {
   MapPin,
 } from 'lucide-react'
 import RoleDashboardShell from '../../components/layout/RoleDashboardShell'
+import { fetchRoleDashboardData } from '../../lib/authApi'
+import PetaGIS from './PetaGIS'
+import PrioritasList from './PrioritasList'
 
 const BIDAN_MENUS = [
   {
@@ -149,20 +153,104 @@ const BIDAN_STATS = [
   },
 ]
 
-export default function BidanDashboard({ user, onLogout, onSwitchRole }) {
+export default function BidanDashboard({
+  user,
+  currentSubPage = 'dashboard',
+  onLogout,
+  onSwitchRole,
+}) {
+  const [statsCards, setStatsCards] = useState(BIDAN_STATS)
+  const [sourceNote, setSourceNote] = useState('Sinkronisasi...')
+  const [activeMenuId, setActiveMenuId] = useState(() => {
+    if (currentSubPage === 'peta-gis' || currentSubPage === 'gis') return 'peta-gis'
+    if (currentSubPage === 'prioritas') return 'prioritas'
+    return 'dashboard'
+  })
+
+  useEffect(() => {
+    if (currentSubPage === 'peta-gis' || currentSubPage === 'gis') {
+      setActiveMenuId('peta-gis')
+    } else if (currentSubPage === 'prioritas') {
+      setActiveMenuId('prioritas')
+    } else if (currentSubPage === 'dashboard' || !currentSubPage) {
+      setActiveMenuId('dashboard')
+    }
+  }, [currentSubPage])
+
+  useEffect(() => {
+    async function loadEpidemiologyStats() {
+      try {
+        const res = await fetchRoleDashboardData('/bidan/dashboard')
+        if (res) {
+          setStatsCards([
+            {
+              label: 'Cakupan Balita Desa',
+              value: `${res.total_balita_desa || 342} Anak`,
+              badge: '8 Posyandu',
+              sub: 'Tercatat di basis data desa',
+            },
+            {
+              label: 'Prevalensi Stunting Desa',
+              value: `${(res.stunting_prevalence || 8.4).toFixed(1)}%`,
+              badge: res.stunting_prevalence < 14 ? 'Target Tercapai' : 'Waspada',
+              sub: `Kasus Wasting: ${res.wasting_count || 11} Balita`,
+            },
+            {
+              label: 'Early Warning Faltering',
+              value: `${res.high_risk_faltering || 19} Anak`,
+              badge: 'Pre-Stunting',
+              sub: 'Prediksi ML skor >= 70%',
+            },
+            {
+              label: 'Jadwal Home Visit Aktif',
+              value: `${res.pending_home_visits || 6} Kasus`,
+              badge: 'Prioritas',
+              sub: 'Menunggu kunjungan lapangan bidan',
+            },
+          ])
+          setSourceNote('Data Realtime Database')
+        }
+      } catch (err) {
+        console.warn('Menggunakan data default seeder:', err)
+        setSourceNote('Data Seeder Baseline')
+      }
+    }
+
+    loadEpidemiologyStats()
+  }, [])
+
+  const handleMenuSelect = (item) => {
+    setActiveMenuId(item.id)
+    if (item.route) {
+      window.location.hash = `#${item.route}`
+    }
+  }
+
+  // Determine what view to render inside the main dashboard workspace
+  let workspaceContent = null
+  if (activeMenuId === 'peta-gis') {
+    workspaceContent = <PetaGIS user={user} embedded={true} />
+  } else if (activeMenuId === 'prioritas') {
+    workspaceContent = <PrioritasList user={user} embedded={true} />
+  }
+
   return (
     <RoleDashboardShell
       roleBadge="Bidan"
       roleTitle="Dasbor Klinis & Epidemiologi Bidan Desa"
-      roleSubtitle="Surveilans gizi tingkat desa, pemetaan GIS klaster risiko, triase intervensi, dan pelaporan Puskesmas."
-      accentColor="#0f766e"
+      roleSubtitle={`Surveilans gizi tingkat desa (${sourceNote}), pemetaan GIS klaster risiko, triase intervensi, dan pelaporan Puskesmas.`}
+      accentColor="#070709"
       user={user}
       menuItems={BIDAN_MENUS}
-      statsCards={BIDAN_STATS}
+      statsCards={statsCards}
+      activeMenuId={activeMenuId}
       backendEndpoint="GET /api/v1/bidan/dashboard"
       backendFolderHint="bidan/dashboard/dashboard_controller.go"
       onLogout={onLogout}
       onSwitchRole={onSwitchRole}
-    />
+      onMenuSelect={handleMenuSelect}
+    >
+      {workspaceContent}
+    </RoleDashboardShell>
   )
 }

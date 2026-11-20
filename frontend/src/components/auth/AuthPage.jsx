@@ -309,7 +309,7 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
                 alt="dr. Anindya Putri, Sp.A - Konsultan Nutrisi Pediatrik Tumbuhin"
                 width={896}
                 height={1200}
-                fetchpriority="high"
+                fetchPriority="high"
                 style={{
                   WebkitMaskImage:
                     'linear-gradient(to bottom, black 80%, transparent 99%)',

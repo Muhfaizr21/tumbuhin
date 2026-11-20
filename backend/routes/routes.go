@@ -9,6 +9,8 @@ import (
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
+	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
+	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/middlewares"
@@ -24,9 +26,11 @@ type RouteDependencies struct {
 	UserCtrl         *controllers.UserController
 	AuthLoginCtrl    *authLoginCtrl.Controller
 	AuthRegisterCtrl *authRegisterCtrl.Controller
-	KaderDashCtrl    *kaderDashCtrl.Controller
-	BidanDashCtrl    *bidanDashCtrl.Controller
-	AdminDashCtrl    *adminDashCtrl.Controller
+	KaderDashCtrl      *kaderDashCtrl.Controller
+	BidanDashCtrl      *bidanDashCtrl.Controller
+	BidanGISCtrl       *bidanGISCtrl.Controller
+	BidanPrioritasCtrl *bidanPrioritasCtrl.Controller
+	AdminDashCtrl      *adminDashCtrl.Controller
 	OrtuDashCtrl     *ortuDashCtrl.Controller
 }
 
@@ -80,6 +84,11 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		bidanGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleBidan, models.RoleAdmin))
 		{
 			bidanGroup.GET("/dashboard", deps.BidanDashCtrl.HandleGetOverview)
+			bidanGroup.GET("/gis-clusters", deps.BidanGISCtrl.HandleGetGISClusters)
+			bidanGroup.GET("/priority-list", deps.BidanPrioritasCtrl.HandleGetPriorityList)
+			bidanGroup.POST("/priority-list", deps.BidanPrioritasCtrl.HandleCreatePriorityChild)
+			bidanGroup.PUT("/priority-list/:id", deps.BidanPrioritasCtrl.HandleUpdatePriorityChild)
+			bidanGroup.DELETE("/priority-list/:id", deps.BidanPrioritasCtrl.HandleDeletePriorityChild)
 		}
 
 		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)
@@ -106,6 +115,25 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			users.DELETE("/:id", deps.UserCtrl.Delete)
 		}
 	}
+
+	// Graceful JSON fallback for undefined routes / methods
+	router.NoRoute(func(c *gin.Context) {
+		c.JSON(404, gin.H{
+			"success": false,
+			"message": "Endpoint API tidak ditemukan (404). Silakan pastikan method & path URL sudah sesuai.",
+			"data": gin.H{
+				"method": c.Request.Method,
+				"path":   c.Request.URL.Path,
+			},
+		})
+	})
+
+	router.NoMethod(func(c *gin.Context) {
+		c.JSON(405, gin.H{
+			"success": false,
+			"message": "Metode HTTP tidak diizinkan untuk endpoint ini (405 Method Not Allowed)",
+		})
+	})
 
 	return router
 }

@@ -16,6 +16,8 @@ import {
 } from './lib/authApi'
 import AdminDashboard from './pages/admin/Dashboard'
 import BidanDashboard from './pages/bidan/BidanDashboard'
+import PetaGIS from './pages/bidan/PetaGIS'
+import PrioritasList from './pages/bidan/PrioritasList'
 import KaderDashboard from './pages/kader/KaderDashboard'
 import OrtuDashboard from './pages/ortu/OrtuDashboard'
 
@@ -25,7 +27,11 @@ function parseViewFromHash(hash) {
   if (clean === 'login') return { type: 'auth', mode: 'login' }
   if (clean === 'register') return { type: 'auth', mode: 'register' }
   if (clean.startsWith('kader')) return { type: 'dashboard', role: 'kader' }
-  if (clean.startsWith('bidan')) return { type: 'dashboard', role: 'bidan' }
+  if (clean.startsWith('bidan')) {
+    let sub = clean.replace(/^bidan\/?/, '')
+    if (sub === 'gis') sub = 'peta-gis'
+    return { type: 'dashboard', role: 'bidan', subPage: sub || 'dashboard' }
+  }
   if (clean.startsWith('admin')) return { type: 'dashboard', role: 'admin' }
   if (clean.startsWith('ortu') || clean.startsWith('p/')) {
     return { type: 'dashboard', role: 'ortu' }
@@ -154,6 +160,7 @@ export default function App() {
       return (
         <BidanDashboard
           user={currentUser}
+          currentSubPage={viewState.subPage}
           onLogout={handleLogout}
           onSwitchRole={handleSwitchRole}
         />

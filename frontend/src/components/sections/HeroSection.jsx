@@ -81,7 +81,7 @@ export default function HeroSection({ onOpenSimulation, onOpenAuth }) {
               alt="Dokter dan Bidan Koordinator Gizi Tumbuhin"
               width={687}
               height={1146}
-              fetchpriority="high"
+              fetchPriority="high"
               loading="eager"
               className="w-full h-auto object-contain drop-shadow-[0_16px_32px_rgba(16,55,132,0.18)]"
             />

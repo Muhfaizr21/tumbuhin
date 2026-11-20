@@ -123,6 +123,26 @@ export async function registerWithBackend({
   }
 }
 
+async function safeParseResponse(response, defaultMsg) {
+  const text = await response.text()
+  let payload = null
+  try {
+    payload = JSON.parse(text)
+  } catch {
+    if (response.status === 404) {
+      throw new Error(
+        'Endpoint backend Golang mengembalikan 404 (Not Found). Silakan restart terminal server Golang Anda (Ctrl+C lalu go run cmd/api/main.go) agar penambahan rute baru terbaca.'
+      )
+    }
+    throw new Error(text || defaultMsg)
+  }
+
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || defaultMsg)
+  }
+  return payload.data
+}
+
 export async function fetchRoleDashboardData(rolePath) {
   const token = getStoredToken()
   const headers = { 'Content-Type': 'application/json' }
@@ -134,9 +154,49 @@ export async function fetchRoleDashboardData(rolePath) {
     method: 'GET',
     headers,
   })
-  const payload = await response.json()
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.message || 'Gagal memuat data dasbor')
+  return safeParseResponse(response, 'Gagal memuat data dasbor')
+}
+
+export async function postRoleData(path, data) {
+  const token = getStoredToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
   }
-  return payload.data
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  })
+  return safeParseResponse(response, 'Gagal menyimpan data')
+}
+
+export async function putRoleData(path, data) {
+  const token = getStoredToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+  })
+  return safeParseResponse(response, 'Gagal memperbarui data')
+}
+
+export async function deleteRoleData(path) {
+  const token = getStoredToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'DELETE',
+    headers,
+  })
+  return safeParseResponse(response, 'Gagal menghapus data')
 }
