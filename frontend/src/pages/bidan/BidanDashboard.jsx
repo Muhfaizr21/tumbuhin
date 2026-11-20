@@ -356,12 +356,12 @@ export default function BidanDashboard({
       {/* Mobile Header Bar */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#2597d0] text-white flex items-center justify-center shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-[#1e293b] text-white flex items-center justify-center shadow-xs">
             <Stethoscope className="w-4 h-4" aria-hidden="true" />
           </div>
           <div>
             <span className="font-bold text-[15px] text-slate-800">Tumbuhin</span>
-            <span className="ml-2 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#edf7fe] text-[#2597d0]">
+            <span className="ml-2 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-600">
               Bidan Desa
             </span>
           </div>
@@ -375,7 +375,7 @@ export default function BidanDashboard({
           {mobileMenuOpen ? (
             <X className="w-5 h-5" aria-hidden="true" />
           ) : (
-            <Menu className="w-5 h-5 text-[#2597d0]" aria-hidden="true" />
+            <Menu className="w-5 h-5 text-[#1e293b]" aria-hidden="true" />
           )}
         </button>
       </header>
@@ -497,18 +497,18 @@ export default function BidanDashboard({
         {/* Top 3 Featured Storage-Style Cards with Circular SVG Progress Rings */}
         <section aria-label="Ringkasan Surveilans Utama">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Card 1: Primary Blue Card (Matching Dropbox active blue card in reference) */}
+            {/* Card 1: Primary Navy Card */}
             <button
               type="button"
               onClick={() => handleSelectMenu('dashboard')}
-              className={`p-5 rounded-2xl text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2597d0] ${
+              className={`p-5 rounded-2xl text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e293b] ${
                 activeMenuId === 'dashboard'
-                  ? 'bg-[#2597d0] text-white shadow-md shadow-[#2597d0]/15'
-                  : 'bg-[#2597d0] text-white opacity-95 hover:opacity-100 shadow-sm'
+                  ? 'bg-[#1e293b] text-white shadow-md shadow-[#1e293b]/15'
+                  : 'bg-[#1e293b] text-white opacity-95 hover:opacity-100 shadow-sm'
               }`}
             >
               <div className="space-y-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white text-[#2597d0] flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-white text-[#1e293b] flex items-center justify-center shadow-xs">
                   <Stethoscope className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
@@ -523,16 +523,17 @@ export default function BidanDashboard({
               <CircularProgressRing
                 percentage={dsCoveragePercent}
                 isPrimaryCard={true}
+                accentColor="white"
               />
             </button>
 
-            {/* Card 2: White Card (Matching Google Drive card in reference) */}
+            {/* Card 2: White Card */}
             <button
               type="button"
               onClick={() => handleSelectMenu('peta-gis')}
-              className={`p-5 rounded-2xl bg-white border text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] ${
+              className={`p-5 rounded-2xl bg-white border text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#1e293b] ${
                 activeMenuId === 'peta-gis'
-                  ? 'border-[#2597d0] ring-2 ring-[#2597d0]/15 shadow-sm'
+                  ? 'border-[#1e293b] ring-2 ring-[#1e293b]/15 shadow-sm'
                   : 'border-slate-100 hover:border-slate-200 shadow-2xs'
               }`}
             >
@@ -556,13 +557,13 @@ export default function BidanDashboard({
               />
             </button>
 
-            {/* Card 3: White Card (Matching One Drive card in reference) */}
+            {/* Card 3: White Card */}
             <button
               type="button"
               onClick={() => handleSelectMenu('prioritas')}
-              className={`p-5 rounded-2xl bg-white border text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] ${
+              className={`p-5 rounded-2xl bg-white border text-left flex items-center justify-between gap-4 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#1e293b] ${
                 activeMenuId === 'prioritas'
-                  ? 'border-[#2597d0] ring-2 ring-[#2597d0]/15 shadow-sm'
+                  ? 'border-[#1e293b] ring-2 ring-[#1e293b]/15 shadow-sm'
                   : 'border-slate-100 hover:border-slate-200 shadow-2xs'
               }`}
             >
@@ -582,7 +583,7 @@ export default function BidanDashboard({
               <CircularProgressRing
                 percentage={visitActionPercent}
                 isPrimaryCard={false}
-                accentColor="#2597d0"
+                accentColor="#1e293b"
               />
             </button>
           </div>
@@ -608,18 +609,18 @@ export default function BidanDashboard({
                   key={item.id}
                   type="button"
                   onClick={() => handleSelectMenu(item.id)}
-                  className="group flex flex-col items-center gap-2 text-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] rounded-2xl p-1"
+                  className="group flex flex-col items-center gap-2 text-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[#1e293b] rounded-2xl p-1"
                 >
                   <div
                     className={`w-13 h-13 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all ${
                       isCurrent
-                        ? 'bg-[#2597d0] text-white shadow-sm scale-105'
-                        : 'bg-white border border-slate-100 shadow-2xs group-hover:border-[#2597d0]/40 group-hover:bg-[#f2f9ff]'
+                        ? 'bg-[#1e293b] text-white shadow-sm scale-105'
+                        : 'bg-white border border-slate-100 shadow-2xs group-hover:border-[#1e293b]/40 group-hover:bg-[#f8fafc]'
                     }`}
                   >
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                        isCurrent ? 'bg-white/20 text-white' : item.boxBg
+                        isCurrent ? 'bg-white/20 text-white' : item.boxBg.replace('#2597d0', '#1e293b')
                       }`}
                     >
                       <Icon className="w-4 h-4" aria-hidden="true" />
@@ -627,7 +628,7 @@ export default function BidanDashboard({
                   </div>
                   <span
                     className={`text-[11.5px] font-medium leading-tight ${
-                      isCurrent ? 'text-[#2597d0] font-bold' : 'text-slate-600'
+                      isCurrent ? 'text-[#1e293b] font-bold' : 'text-slate-600'
                     }`}
                   >
                     {item.label}
@@ -640,12 +641,12 @@ export default function BidanDashboard({
             <button
               type="button"
               onClick={handleOpenQuickAdd}
-              className="group flex flex-col items-center gap-2 text-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] rounded-2xl p-1"
+              className="group flex flex-col items-center gap-2 text-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[#1e293b] rounded-2xl p-1"
             >
-              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#2597d0] hover:bg-[#edf7fe] text-slate-400 hover:text-[#2597d0] flex items-center justify-center transition-all">
+              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1e293b] hover:bg-[#f8fafc] text-slate-400 hover:text-[#1e293b] flex items-center justify-center transition-all">
                 <Plus className="w-5 h-5" aria-hidden="true" />
               </div>
-              <span className="text-[11.5px] font-medium text-slate-500 group-hover:text-[#2597d0] leading-tight">
+              <span className="text-[11.5px] font-medium text-slate-500 group-hover:text-[#1e293b] leading-tight">
                 Tambah
               </span>
             </button>
@@ -690,7 +691,7 @@ export default function BidanDashboard({
                     <button
                       type="button"
                       onClick={handleExportCSV}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2597d0] hover:bg-[#1e82b8] text-white text-[12.5px] font-semibold cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white text-[12.5px] font-semibold cursor-pointer"
                     >
                       <Download className="w-4 h-4" aria-hidden="true" />
                       <span>Unduh CSV e-PPGBM</span>
@@ -717,7 +718,7 @@ export default function BidanDashboard({
                       className="p-4 rounded-xl bg-slate-50/70 border border-slate-100 flex items-start gap-3"
                     >
                       <CheckCircle2
-                        className="w-4 h-4 text-[#2597d0] shrink-0 mt-0.5"
+                        className="w-4 h-4 text-[#1e293b] shrink-0 mt-0.5"
                         aria-hidden="true"
                       />
                       <span className="text-[13px] font-medium text-slate-700 leading-snug">

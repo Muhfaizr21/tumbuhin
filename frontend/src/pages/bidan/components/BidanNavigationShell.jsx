@@ -45,10 +45,10 @@ export default function BidanNavigationShell({
 
   return (
     <div className="flex shrink-0">
-      {/* Column 1: Blue Vertical Icon Rail */}
+      {/* Column 1: Navy Vertical Icon Rail */}
       <nav
         aria-label="Navigasi Ikon Utama Bidan"
-        className="w-16 bg-[#2597d0] text-white flex flex-col items-center justify-between py-5 shrink-0 select-none"
+        className="w-16 bg-[#1e293b] text-white flex flex-col items-center justify-between py-5 shrink-0 select-none"
       >
         {/* Top Brand Icon */}
         <div className="flex flex-col items-center gap-6">
@@ -57,7 +57,7 @@ export default function BidanNavigationShell({
             onClick={() => onSelectMenu(menus[0])}
             title="Beranda Surveilans Tumbuhin"
             aria-label="Beranda Surveilans Tumbuhin"
-            className="w-10 h-10 rounded-xl bg-white text-[#2597d0] flex items-center justify-center shadow-sm hover:bg-[#f0f9ff] focus-visible:outline-2 focus-visible:outline-white cursor-pointer transition-colors"
+            className="w-10 h-10 rounded-xl bg-white text-[#1e293b] flex items-center justify-center shadow-sm hover:bg-slate-50 cursor-pointer transition-colors"
           >
             <Stethoscope className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -81,7 +81,7 @@ export default function BidanNavigationShell({
                     title={item.label}
                     aria-label={item.label}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-white ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                       isActive
                         ? 'bg-white/20 text-white shadow-xs'
                         : 'text-white/75 hover:text-white hover:bg-white/10'
@@ -102,7 +102,7 @@ export default function BidanNavigationShell({
             onClick={onLogout}
             title="Keluar Sesi Bidan"
             aria-label="Keluar Sesi Bidan"
-            className="w-10 h-10 rounded-xl text-white/80 hover:text-white hover:bg-white/15 flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-white"
+            className="w-10 h-10 rounded-xl text-white/80 hover:text-white hover:bg-white/15 flex items-center justify-center cursor-pointer"
           >
             <LogOut className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -123,7 +123,7 @@ export default function BidanNavigationShell({
               type="button"
               onClick={onToggleCollapse}
               aria-label="Sembunyikan panel menu samping"
-              className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0]"
+              className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 flex items-center justify-center cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
@@ -156,16 +156,16 @@ export default function BidanNavigationShell({
                     key={item.id}
                     type="button"
                     onClick={() => onSelectMenu(item)}
-                    className={`w-full p-3 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] ${
+                    className={`w-full p-3 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-[#edf7fe] text-[#1a78a8]'
+                        ? 'bg-slate-100 text-[#1e293b]'
                         : 'bg-white hover:bg-slate-50 text-slate-700'
                     }`}
                   >
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
                         isActive
-                          ? 'bg-white text-[#2597d0]'
+                          ? 'bg-[#1e293b] text-white'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -174,7 +174,7 @@ export default function BidanNavigationShell({
                     <div className="min-w-0 flex-1">
                       <p
                         className={`text-[13px] font-semibold truncate ${
-                          isActive ? 'text-[#2597d0]' : 'text-slate-800'
+                          isActive ? 'text-[#1e293b]' : 'text-slate-800'
                         }`}
                       >
                         {item.shortLabel || item.label}
@@ -199,16 +199,16 @@ export default function BidanNavigationShell({
                   key={item.id}
                   type="button"
                   onClick={() => onSelectMenu(item)}
-                  className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between text-[12.5px] font-medium transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] ${
+                  className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between text-[12.5px] font-medium transition-colors cursor-pointer ${
                     isActive
-                      ? 'bg-[#edf7fe] text-[#2597d0] font-semibold'
+                      ? 'bg-slate-100 text-[#1e293b] font-semibold'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                   }`}
                 >
                   <span className="flex items-center gap-2.5 truncate">
                     <Icon
                       className={`w-4 h-4 shrink-0 ${
-                        isActive ? 'text-[#2597d0]' : 'text-slate-400'
+                        isActive ? 'text-[#1e293b]' : 'text-slate-400'
                       }`}
                       aria-hidden="true"
                     />
@@ -227,17 +227,13 @@ export default function BidanNavigationShell({
 
         {/* Bottom Info Box & Primary Action CTA */}
         <div className="p-4 space-y-3 border-t border-slate-100 bg-white">
-          {/* Team Dev Role Switcher Card (Styled like the reference soft blue card) */}
-          <div className="p-3.5 rounded-2xl bg-[#f2f9ff] border border-[#d8eefc]">
-            <div className="flex items-center gap-2 text-[#2597d0] mb-1.5">
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-2 text-slate-700 mb-1.5">
               <Users className="w-4 h-4" aria-hidden="true" />
               <span className="text-[11px] font-bold uppercase tracking-wider">
                 Pindah Role Cepat
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 mb-2.5 leading-snug">
-              Mode kolaborasi tim: uji coba halaman antar-role secara instan.
-            </p>
             <div className="grid grid-cols-2 gap-1.5">
               {ROLE_SWITCH_ITEMS.map((r) => {
                 const isCurrentRole = (user?.role || 'bidan').toLowerCase() === r.key
@@ -246,10 +242,10 @@ export default function BidanNavigationShell({
                     key={r.key}
                     type="button"
                     onClick={() => onSwitchRole && onSwitchRole(r.key)}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2597d0] ${
+                    className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
                       isCurrentRole
-                        ? 'bg-[#2597d0] text-white shadow-2xs'
-                        : 'bg-white text-slate-600 hover:bg-[#e1f2fe] hover:text-[#2597d0]'
+                        ? 'bg-[#1e293b] text-white shadow-2xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     {r.label}
@@ -259,11 +255,10 @@ export default function BidanNavigationShell({
             </div>
           </div>
 
-          {/* Primary Create New Button matching "+ Create New" in reference */}
           <button
             type="button"
             onClick={onOpenQuickAdd}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#2597d0] hover:bg-[#1e82b8] active:bg-[#196f9e] text-white font-semibold text-[12.5px] flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2597d0]"
+            className="w-full py-2.5 px-4 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white font-semibold text-[12.5px] flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
             <span>Tambah Data Triase</span>
