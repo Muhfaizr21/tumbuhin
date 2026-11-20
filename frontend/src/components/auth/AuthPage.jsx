@@ -16,6 +16,7 @@ import { BRAND_INFO } from '../../constants/landingData'
 import { LettersStethoscopeIcon } from '../ui/LettersIcons'
 import { loginWithBackend, registerWithBackend } from '../../lib/authApi'
 import { isMockEnabled, isSupabaseConfigured, supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../context/AuthContext'
 
 export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess }) {
   const [mode, setMode] = useState(initialMode) // 'login' | 'register'
@@ -32,6 +33,8 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
   const [showPassword, setShowPassword] = useState(false)
   const [submittedMessage, setSubmittedMessage] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  const { login } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -50,24 +53,27 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
     try {
       if (mode === 'login') {
         const identifier = loginMethod === 'phone' ? phone.trim() : email.trim()
-        const authData = await loginWithBackend({
+        const result = await login({
           identifier,
           email: email.trim(),
           phone: phone.trim(),
           password,
         })
+        
+        if (!result.success) throw new Error(result.error)
 
         setSubmittedMessage({
           type: 'success',
           title: 'Autentikasi Berhasil',
-          desc: `Mengarahkan ke Dasbor Role (${authData.user.role.toUpperCase()})...`,
+          desc: `Mengarahkan ke Dasbor Role...`,
         })
 
         if (onAuthSuccess) {
-          onAuthSuccess(authData)
+          onAuthSuccess({ user: result.user, redirect_to: result.redirect_to })
         }
         return
       } else {
+        // Registration still uses direct backend call
         const authData = await registerWithBackend({
           fullName: name.trim() || 'Petugas Posyandu',
           email: email.trim(),
@@ -89,35 +95,6 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
         return
       }
     } catch (backendErr) {
-      // Optional secondary fallback to Supabase Auth if backend is offline
-      if (!isMockEnabled && isSupabaseConfigured && supabase) {
-        try {
-          if (mode === 'login') {
-            const res = await supabase.auth.signInWithPassword({
-              email: email.trim(),
-              password,
-            })
-            if (!res.error && res.data?.user) {
-              const userObj = {
-                full_name: res.data.user.user_metadata?.full_name || res.data.user.email,
-                email: res.data.user.email,
-                role: res.data.user.user_metadata?.role || 'kader',
-              }
-              if (onAuthSuccess) {
-                onAuthSuccess({
-                  token: res.data.session?.access_token,
-                  user: userObj,
-                  redirect_to: `/${userObj.role}/dashboard`,
-                })
-              }
-              return
-            }
-          }
-        } catch {
-          // ignore fallback error and report main backend error
-        }
-      }
-
       setSubmittedMessage({
         type: 'error',
         title: mode === 'login' ? 'Autentikasi Gagal' : 'Registrasi Gagal',
@@ -167,14 +144,16 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
 
     setIsLoading(true)
     try {
-      const authData = await loginWithBackend({
+      const result = await login({
         identifier: chosen.method === 'phone' ? chosen.phone : chosen.email,
         email: chosen.email,
         phone: chosen.phone,
         password: chosen.pass,
       })
+      if (!result.success) throw new Error(result.error)
+
       if (onAuthSuccess) {
-        onAuthSuccess(authData)
+        onAuthSuccess({ user: result.user, redirect_to: result.redirect_to })
       }
     } catch (err) {
       setSubmittedMessage({

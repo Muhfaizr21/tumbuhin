@@ -1,28 +1,41 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
+import {
+  getStoredUser,
+  loginWithBackend,
+  saveAuthSession,
+  clearAuthSession,
+  getRoleDashboardPath,
+} from '../lib/authApi';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || null);
+  const [user, setUser] = useState(() => getStoredUser());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const login = (role) => {
-    const mockUsers = {
-      kader: { id: 'k1', name: 'Bu Sari', role: 'kader', posyandu: 'Melati 04' },
-      bidan: { id: 'b1', name: 'Bidan Desa', role: 'bidan', puskesmas: 'Puskesmas Utama' },
-      admin: { id: 'a1', name: 'Admin Desa', role: 'admin' },
-    };
-    const user = mockUsers[role];
-    setUser(user);
-    localStorage.setItem('user', JSON.stringify(user));
-  };
+  const login = useCallback(async ({ identifier, email, phone, password }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const authData = await loginWithBackend({ identifier, email, phone, password });
+      setUser(authData.user);
+      return { success: true, user: authData.user, redirect_to: authData.redirect_to || getRoleDashboardPath(authData.user.role) };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
+    clearAuthSession();
     setUser(null);
-    localStorage.removeItem('user');
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

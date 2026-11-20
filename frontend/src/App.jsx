@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AuthProvider } from './context/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 import Footer from './components/layout/Footer'
 import HeroSection from './components/sections/HeroSection'
@@ -57,6 +58,14 @@ function parseViewFromHash(hash) {
 }
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  )
+}
+
+function AppContent() {
   const tts = useTextToSpeech()
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [viewState, setViewState] = useState(() => {

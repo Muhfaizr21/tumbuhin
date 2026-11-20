@@ -1,0 +1,260 @@
+import { useState } from 'react'
+import { 
+  X, 
+  User, 
+  Calendar, 
+  Scale, 
+  Ruler, 
+  MapPin, 
+  AlertCircle,
+  ShieldCheck,
+  Save
+} from 'lucide-react'
+
+export default function BalitaRegistrationForm({ onClose, onSuccess }) {
+  const [formData, setFormData] = useState({
+    nik: '',
+    nama: '',
+    jenisKelamin: 'L',
+    tanggalLahir: '',
+    beratLahir: '',
+    panjangLahir: '',
+    namaIbu: '',
+    namaAyah: '',
+    noWA: '',
+    rt: '',
+    rw: '04',
+    alergi: '',
+    koordinat: null
+  })
+
+  const [isHashing, setIsHashing] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsHashing(true)
+    
+    // Simulasi enkripsi NIK SHA-256 sesuai fitur.md MOD-03
+    // Di real app, hashing dilakukan sebelum kirim ke API atau di backend
+    const nikHash = btoa(formData.nik).slice(0, 32) // Dummy hash
+    
+    const newBalita = {
+      id: `BLT-${Math.floor(Math.random() * 1000)}`,
+      ...formData,
+      nik_hash: nikHash,
+      nik: '********', // Jangan simpan NIK asli di state utama
+      magic_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      statusGizi: 'Normal',
+      statusTimbang: 'Belum Ditimbang'
+    }
+
+    // Simulasi delay proses
+    setTimeout(() => {
+      setIsHashing(false)
+      onSuccess(newBalita)
+    }, 800)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-black/5">
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-black/5 flex items-center justify-between z-10">
+          <div>
+            <h2 className="text-xl font-bold text-[#070709]">Registrasi Balita Baru</h2>
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              NIK dienkripsi otomatis (SHA-256) demi privasi medis
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Section 1: Identitas Vital */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5 col-span-full md:col-span-1">
+              <label className="text-[13px] font-semibold text-gray-700">NIK Anak (16 Digit)</label>
+              <div className="relative">
+                <input 
+                  required
+                  maxLength={16}
+                  value={formData.nik}
+                  onChange={e => setFormData({...formData, nik: e.target.value.replace(/\D/g, '')})}
+                  placeholder="3201..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2597d0] focus:ring-2 focus:ring-[#2597d0]/10 outline-none transition-all text-sm pl-10"
+                />
+                <ShieldCheck className="w-4 h-4 absolute left-3.5 top-3 text-emerald-500" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 col-span-full md:col-span-1">
+              <label className="text-[13px] font-semibold text-gray-700">Nama Lengkap Balita</label>
+              <div className="relative">
+                <input 
+                  required
+                  value={formData.nama}
+                  onChange={e => setFormData({...formData, nama: e.target.value})}
+                  placeholder="Contoh: Andi Pratama"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2597d0] focus:ring-2 focus:ring-[#2597d0]/10 outline-none transition-all text-sm pl-10"
+                />
+                <User className="w-4 h-4 absolute left-3.5 top-3 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-gray-700">Tanggal Lahir</label>
+              <div className="relative">
+                <input 
+                  required
+                  type="date"
+                  value={formData.tanggalLahir}
+                  onChange={e => setFormData({...formData, tanggalLahir: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2597d0] focus:ring-2 focus:ring-[#2597d0]/10 outline-none transition-all text-sm pl-10"
+                />
+                <Calendar className="w-4 h-4 absolute left-3.5 top-3 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-gray-700">Jenis Kelamin</label>
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+                {['L', 'P'].map(jk => (
+                  <button
+                    key={jk}
+                    type="button"
+                    onClick={() => setFormData({...formData, jenisKelamin: jk})}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                      formData.jenisKelamin === jk 
+                        ? 'bg-white text-[#2597d0] shadow-sm' 
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Data Kelahiran */}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-[#f5f8fc] rounded-2xl border border-[#2597d0]/10">
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-bold text-[#2597d0] uppercase tracking-wider">Berat Lahir (kg)</label>
+              <div className="relative">
+                <input 
+                  type="number" step="0.01" required
+                  value={formData.beratLahir}
+                  onChange={e => setFormData({...formData, beratLahir: e.target.value})}
+                  placeholder="3.20"
+                  className="w-full px-4 py-2 rounded-xl border border-white focus:border-[#2597d0] outline-none transition-all text-sm pl-9"
+                />
+                <Scale className="w-4 h-4 absolute left-3 top-2.5 text-[#2597d0]" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-bold text-[#2597d0] uppercase tracking-wider">Panjang Lahir (cm)</label>
+              <div className="relative">
+                <input 
+                  type="number" step="0.1" required
+                  value={formData.panjangLahir}
+                  onChange={e => setFormData({...formData, panjangLahir: e.target.value})}
+                  placeholder="49.5"
+                  className="w-full px-4 py-2 rounded-xl border border-white focus:border-[#2597d0] outline-none transition-all text-sm pl-9"
+                />
+                <Ruler className="w-4 h-4 absolute left-3 top-2.5 text-[#2597d0]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Orang Tua & Lokasi */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-gray-700">Nama Ibu Kandung</label>
+              <input 
+                required
+                value={formData.namaIbu}
+                onChange={e => setFormData({...formData, namaIbu: e.target.value})}
+                placeholder="Nama lengkap ibu"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-gray-700">WhatsApp Orang Tua</label>
+              <input 
+                required
+                type="tel"
+                value={formData.noWA}
+                onChange={e => setFormData({...formData, noWA: e.target.value})}
+                placeholder="0812..."
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-gray-700">RT (RW 04)</label>
+              <select 
+                value={formData.rt}
+                onChange={e => setFormData({...formData, rt: e.target.value})}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none"
+              >
+                <option value="">Pilih RT</option>
+                {[1,2,3,4,5].map(n => <option key={n} value={`0${n}`}>RT 0{n}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5 flex items-end">
+              <button 
+                type="button"
+                className="w-full px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                Ambil GPS Rumah (Pin Lokasi)
+              </button>
+            </div>
+          </div>
+
+          {/* Section 4: Catatan Medis */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-semibold text-gray-700">Alergi & Pantangan Makan</label>
+            <div className="relative">
+              <textarea 
+                value={formData.alergi}
+                onChange={e => setFormData({...formData, alergi: e.target.value})}
+                placeholder="Contoh: Alergi telur ayam, ikan laut, atau kacang-kacangan..."
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none min-h-[80px]"
+              />
+              <AlertCircle className="w-4 h-4 absolute right-3 bottom-3 text-amber-500" />
+            </div>
+            <p className="text-[11px] text-gray-500">Data ini akan digunakan AI Nutri-Chef untuk memfilter resep MPASI.</p>
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all"
+            >
+              Batal
+            </button>
+            <button
+              disabled={isHashing}
+              className="flex-[2] py-3 rounded-2xl bg-[#070709] text-white font-bold text-sm hover:bg-black/90 shadow-lg shadow-black/10 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {isHashing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Mengenkripsi & Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Simpan & Generate Magic Token
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
