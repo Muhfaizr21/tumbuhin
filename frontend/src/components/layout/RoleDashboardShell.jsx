@@ -23,10 +23,23 @@ export default function RoleDashboardShell({
   backendFolderHint,
   onLogout,
   onSwitchRole,
+  activeMenuId: propActiveMenuId,
+  onMenuChange,
   children,
 }) {
-  const [activeMenuId, setActiveMenuId] = useState(menuItems[0]?.id || 'dashboard')
+  const [internalActiveMenuId, setInternalActiveMenuId] = useState(menuItems[0]?.id || 'dashboard')
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  const activeMenuId = propActiveMenuId !== undefined ? propActiveMenuId : internalActiveMenuId
+
+  const handleMenuClick = (id) => {
+    if (onMenuChange) {
+      onMenuChange(id)
+    } else {
+      setInternalActiveMenuId(id)
+    }
+    setMobileSidebarOpen(false)
+  }
 
   const currentMenu = menuItems.find((item) => item.id === activeMenuId) || menuItems[0]
 
@@ -128,8 +141,7 @@ export default function RoleDashboardShell({
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setActiveMenuId(item.id)
-                    setMobileSidebarOpen(false)
+                    handleMenuClick(item.id)
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-[13.5px] font-medium transition-all cursor-pointer ${
                     isActive
@@ -164,39 +176,8 @@ export default function RoleDashboardShell({
           </nav>
         </div>
 
-        {/* Bottom Actions: Quick Role Switcher (for Team Dev) & Logout */}
-        <div className="p-4 border-t border-black/8 bg-[#fafbfd] space-y-3">
-          <div>
-            <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#8b8b8b] mb-1.5">
-              Pindah Role Cepat (Mode Tim Dev)
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {[
-                { key: 'kader', label: '1. Petugas' },
-                { key: 'bidan', label: '2. Bidan' },
-                { key: 'admin', label: '3. Super Admin' },
-                { key: 'ortu', label: '4. Ortu' },
-              ].map((r) => (
-                <button
-                  key={r.key}
-                  type="button"
-                  onClick={() => {
-                    if (onSwitchRole) {
-                      onSwitchRole(r.key)
-                    }
-                  }}
-                  className={`px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium border transition-colors cursor-pointer ${
-                    (user?.role || '').toLowerCase() === r.key
-                      ? 'bg-[#2597d0] text-white border-[#2597d0]'
-                      : 'bg-white text-[#070709] border-black/10 hover:bg-[#eef5fc]'
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
+        {/* Bottom Actions: Logout */}
+        <div className="p-4 border-t border-black/8 bg-[#fafbfd]">
           <button
             type="button"
             onClick={onLogout}
@@ -272,76 +253,9 @@ export default function RoleDashboardShell({
             </div>
           )}
 
-          {/* Active Menu Workspace / Team Feature Slot */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8 space-y-6">
-              <div className="p-6 rounded-2xl bg-white border border-black/8 shadow-2xs">
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <h2 className="font-bold text-[17px] text-[#070709]">
-                      Workspace Fitur: {currentMenu?.label}
-                    </h2>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#eef5fc] text-[#2597d0]">
-                    Route: {currentMenu?.route}
-                  </span>
-                </div>
-
-                <p className="text-[14px] text-[#4a5568] leading-relaxed">
-                  {currentMenu?.description}
-                </p>
-
-                {currentMenu?.features && (
-                  <div className="mt-5 pt-5 border-t border-black/8">
-                    <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8b8b8b] mb-3">
-                      Spesifikasi Checklist Fitur (Sesuai fitur.md):
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {currentMenu.features.map((feat, i) => (
-                        <li
-                          key={i}
-                          className="p-3 rounded-xl bg-[#f5f8fc] border border-black/6 text-[13px] text-[#070709] flex items-start gap-2"
-                        >
-                          <span className="w-2 h-2 rounded-full bg-[#2597d0] mt-1.5 shrink-0" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {children && <div className="mt-6">{children}</div>}
-              </div>
-            </div>
-
-            {/* Right Column: Clean Code Architecture Hint for Team Collaboration */}
-            <div className="lg:col-span-4 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#070709] text-white shadow-sm">
-                <div className="flex items-center gap-2 text-[#5cc0f0] text-[12px] font-semibold mb-2">
-                  <FolderGit2 className="w-4 h-4" />
-                  <span>Panduan Struktur Tim (SOLID)</span>
-                </div>
-                <p className="text-[13px] text-white/80 leading-snug">
-                  Untuk mengerjakan fitur <strong>{currentMenu?.label}</strong> di backend Golang tanpa konflik git antar anggota tim, gunakan folder modular:
-                </p>
-                <div className="mt-3 p-3 rounded-xl bg-white/8 font-mono text-[11.5px] text-emerald-300 space-y-1.5 overflow-x-auto">
-                  <div>controllers/{currentMenu?.backendPath || backendFolderHint}</div>
-                  <div>services/{currentMenu?.backendPath || backendFolderHint}</div>
-                  <div>repositories/{currentMenu?.backendPath || backendFolderHint}</div>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white border border-black/8 shadow-2xs">
-                <div className="flex items-center gap-2 text-[13px] font-bold text-[#070709] mb-2">
-                  <UserCheck className="w-4 h-4 text-[#2597d0]" />
-                  <span>Status Integrasi Auth & Role</span>
-                </div>
-                <p className="text-[12.5px] text-[#60606c] leading-relaxed">
-                  Halaman ini telah terhubung dengan endpoint <code>{backendEndpoint}</code> dan dilindungi oleh middleware RBAC JWT sesuai role <strong>{roleBadge}</strong>.
-                </p>
-              </div>
-            </div>
+          {/* Main Content Workspace */}
+          <div className="mt-6">
+            {children}
           </div>
         </div>
       </main>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Baby,
   Camera,
@@ -8,6 +9,13 @@ import {
   Send,
 } from 'lucide-react'
 import RoleDashboardShell from '../../components/layout/RoleDashboardShell'
+import KaderBalitaPage from './KaderBalitaPage'
+import KaderTimbangPage from './KaderTimbangPage'
+import KaderOCRPage from './KaderOCRPage'
+import KaderNutriChefPage from './KaderNutriChefPage'
+import KaderSinkronisasiPage from './KaderSinkronisasiPage'
+import KaderDistribusiPage from './KaderDistribusiPage'
+import KaderHomePage from './KaderHomePage'
 
 const KADER_MENUS = [
   {
@@ -15,7 +23,6 @@ const KADER_MENUS = [
     label: 'Beranda Posyandu',
     route: '/kader/dashboard',
     icon: LayoutDashboard,
-    badge: 'Live',
     backendPath: 'kader/dashboard/dashboard_controller.go',
     description:
       'Ringkasan hari buka Posyandu, kehadiran balita, peringatan dini Growth Faltering, serta instruksi tindak lanjut dari Bidan Desa.',
@@ -31,7 +38,6 @@ const KADER_MENUS = [
     label: 'Data & Profil Balita',
     route: '/kader/balita',
     icon: Baby,
-    badge: '48 Anak',
     backendPath: 'kader/balita/balita_controller.go',
     description:
       'Direktori profil balita RW, registrasi anak baru dengan penyamaran NIK SHA-256, koordinat rumah, alergi, dan penerbitan Magic Token.',
@@ -47,7 +53,6 @@ const KADER_MENUS = [
     label: 'Input Timbangan & Z-Score',
     route: '/kader/timbang',
     icon: Scale,
-    badge: 'WHO LMS',
     backendPath: 'kader/timbang/timbang_controller.go',
     description:
       'Kalkulator deterministik Z-Score WHO LMS (BB/U, TB/U, BB/TB) dengan koreksi posisi ukur terlentang/berdiri dan prediksi ML Growth Faltering.',
@@ -151,6 +156,29 @@ const KADER_STATS = [
 ]
 
 export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
+  const [activeMenuId, setActiveMenuId] = useState('dashboard')
+
+  const renderContent = () => {
+    switch (activeMenuId) {
+      case 'dashboard':
+        return <KaderHomePage user={user} onMenuChange={setActiveMenuId} />
+      case 'balita':
+        return <KaderBalitaPage user={user} onLogout={onLogout} onSwitchRole={onSwitchRole} onNavigate={setActiveMenuId} />
+      case 'timbang':
+        return <KaderTimbangPage user={user} />
+      case 'ocr-kms':
+        return <KaderOCRPage />
+      case 'nutri-chef':
+        return <KaderNutriChefPage />
+      case 'sinkronisasi':
+        return <KaderSinkronisasiPage />
+      case 'distribusi':
+        return <KaderDistribusiPage />
+      default:
+        return <KaderHomePage user={user} onMenuChange={setActiveMenuId} />
+    }
+  }
+
   return (
     <RoleDashboardShell
       roleBadge="Petugas"
@@ -162,8 +190,12 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       statsCards={KADER_STATS}
       backendEndpoint="GET /api/v1/kader/dashboard"
       backendFolderHint="kader/dashboard/dashboard_controller.go"
+      activeMenuId={activeMenuId}
+      onMenuChange={setActiveMenuId}
       onLogout={onLogout}
       onSwitchRole={onSwitchRole}
-    />
+    >
+      {renderContent()}
+    </RoleDashboardShell>
   )
 }

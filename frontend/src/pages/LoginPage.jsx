@@ -1,13 +1,46 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login, loading, error } = useAuth();
 
-  const handleLogin = (role) => {
-    login(role);
-    navigate(`/${role}/dashboard`);
+  const handleLogin = async (role) => {
+    // Simpan ke localStorage dulu
+    let identifier = '';
+    let email = '';
+    let phone = '';
+    let password = '';
+    
+    switch (role) {
+      case 'kader':
+        identifier = '081288990011';
+        email = 'kader@tumbuhin.id';
+        phone = '081288990011';
+        password = 'kadersehat2026';
+        break;
+      case 'bidan':
+        identifier = '081288990022';
+        email = 'bidan@tumbuhin.id';
+        phone = '081288990022';
+        password = 'bidansiaga2026';
+        break;
+      case 'admin':
+        identifier = '081288990033';
+        email = 'admin@tumbuhin.id';
+        phone = '081288990033';
+        password = 'adminsehat2026';
+        break;
+      default:
+        return;
+    }
+    
+    const result = await login({ identifier, email, phone, password });
+    
+    if (result.success) {
+      // Navigate ke dashboard sesuai role menggunakan hash routing
+      window.location.hash = `#${result.redirect_to}`;
+    } else {
+      alert('Login gagal: ' + result.error);
+    }
   };
 
   return (
@@ -19,23 +52,32 @@ export default function LoginPage() {
         <div className="space-y-3">
           <button
             onClick={() => handleLogin('kader')}
-            className="w-full py-3 bg-[#0F9D8A] text-white rounded-xl font-medium hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full py-3 bg-[#0F9D8A] text-white rounded-xl font-medium hover:opacity-90 transition disabled:opacity-50"
           >
-            Masuk sebagai Kader
+            {loading ? 'Memproses...' : 'Masuk sebagai Kader'}
           </button>
           <button
             onClick={() => handleLogin('bidan')}
-            className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition disabled:opacity-50"
           >
-            Masuk sebagai Bidan
+            {loading ? 'Memproses...' : 'Masuk sebagai Bidan'}
           </button>
           <button
             onClick={() => handleLogin('admin')}
-            className="w-full py-3 bg-gray-800 text-white rounded-xl font-medium hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full py-3 bg-gray-800 text-white rounded-xl font-medium hover:opacity-90 transition disabled:opacity-50"
           >
-            Masuk sebagai Admin
+            {loading ? 'Memproses...' : 'Masuk sebagai Admin'}
           </button>
         </div>
+        
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
       </div>
     </div>
   );

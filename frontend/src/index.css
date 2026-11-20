@@ -70,6 +70,13 @@
   --shadow-xl: rgba(16, 55, 132, 0.03) 0px 17px 37px 0px,
     rgba(16, 55, 132, 0.03) 0px 67px 67px 0px,
     rgba(16, 55, 132, 0.02) 0px 150px 90px 0px;
+
+  /* ClinicFlow Inspired Design Tokens (Kader Dashboard) */
+  --color-clinicflow-navy-start: #0B1F4B;
+  --color-clinicflow-navy-end: #11306F;
+  --color-clinicflow-primary: #2563EB;
+  --color-clinicflow-surface: #F3F6FB;
+  --color-clinicflow-card: #FFFFFF;
 }
 
 body {
@@ -230,4 +237,20 @@ html.a11y-high-contrast h3,
 html.a11y-high-contrast p,
 html.a11y-high-contrast span {
   color: #ffffff !important;
+}
+
+/* Dashboard High Contrast & ClinicFlow Overrides */
+html.a11y-high-contrast .clinicflow-sidebar {
+  background: #000000 !important;
+  border-right: 2px solid #2563EB !important;
+}
+
+html.a11y-high-contrast .clinicflow-card {
+  background-color: #0b0f19 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #3b82f6 !important;
+}
+
+html.a11y-high-contrast .clinicflow-surface {
+  background-color: #030712 !important;
 }
