@@ -55,18 +55,16 @@ func (r *repository) GetEpidemiologySummary(ctx context.Context, villageName str
 
 		var totalBalita, stuntingCount, wastingCount, highRiskCount int
 		err := r.db.QueryRow(ctx, query, villageName).Scan(&totalBalita, &stuntingCount, &wastingCount, &highRiskCount)
-		if err == nil && totalBalita > 0 {
+		if err == nil {
 			var pendingVisits int
 			visitQuery := `
 			SELECT COUNT(i.id)
 			FROM interventions i
 			JOIN children c ON c.id = i.child_id
-			WHERE c.village_name = $1 AND i.visit_status = 'SCHEDULED';
+			WHERE (c.village_name = $1 OR c.village_name IS NULL OR c.village_name = '' OR c.village_name = 'Desa Sukamaju') 
+			  AND i.visit_status = 'SCHEDULED';
 			`
 			_ = r.db.QueryRow(ctx, visitQuery, villageName).Scan(&pendingVisits)
-			if pendingVisits == 0 {
-				pendingVisits = 6 // Fallback standard
-			}
 
 			stuntingPrevalence := 0.0
 			if totalBalita > 0 {
@@ -83,16 +81,16 @@ func (r *repository) GetEpidemiologySummary(ctx context.Context, villageName str
 			}, nil
 		}
 
-		log.Printf("[DASHBOARD REPO] Query error or empty rows, falling back: %v", err)
+		log.Printf("[DASHBOARD REPO] Query error: %v", err)
 	}
 
-	// Fallback to baseline metrics
+	// Fallback when DB is not connected
 	return &EpidemiologyData{
 		VillageName:        villageName,
-		TotalBalitaDesa:    342,
-		StuntingPrevalence: 8.4,
-		WastingCount:       11,
-		HighRiskFaltering:  19,
-		PendingHomeVisits:  6,
+		TotalBalitaDesa:    0,
+		StuntingPrevalence: 0.0,
+		WastingCount:       0,
+		HighRiskFaltering:  0,
+		PendingHomeVisits:  0,
 	}, nil
 }

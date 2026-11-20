@@ -161,68 +161,16 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Printf("[MIGRATION WARNING] Failed seeding posyandus: %v", err)
 	}
 
-	// Seed Children & Measurements if empty
-	seedClinicalSQL := `
-	DO $$
-	DECLARE
-		pos1_id UUID; pos2_id UUID; pos3_id UUID; pos4_id UUID;
-		pos5_id UUID; pos6_id UUID; pos7_id UUID; pos8_id UUID;
-		ch_id UUID;
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM children LIMIT 1) THEN
-			SELECT id INTO pos1_id FROM posyandus WHERE name = 'Posyandu Melati 01' LIMIT 1;
-			SELECT id INTO pos2_id FROM posyandus WHERE name = 'Posyandu Melati 02' LIMIT 1;
-			SELECT id INTO pos3_id FROM posyandus WHERE name = 'Posyandu Melati 03' LIMIT 1;
-			SELECT id INTO pos4_id FROM posyandus WHERE name = 'Posyandu Melati 04' LIMIT 1;
-			SELECT id INTO pos5_id FROM posyandus WHERE name = 'Posyandu Mawar 05' LIMIT 1;
-			SELECT id INTO pos6_id FROM posyandus WHERE name = 'Posyandu Mawar 06' LIMIT 1;
-			SELECT id INTO pos7_id FROM posyandus WHERE name = 'Posyandu Kenanga 07' LIMIT 1;
-			SELECT id INTO pos8_id FROM posyandus WHERE name = 'Posyandu Kenanga 08' LIMIT 1;
-
-			-- 1. Bayu Aditya (Severely Stunted)
-			INSERT INTO children (nik_hash, full_name, gender, birth_date, posyandu_id, posyandu_name, village_name, rw_code, rt_code, parent_name, parent_phone)
-			VALUES ('nik_hash_001', 'Bayu Aditya', 'L', '2025-09-10', pos3_id, 'Posyandu Melati 03', 'Desa Sukamaju', 'RW 03', 'RT 02', 'Ibu Ratna', '081299112201')
-			RETURNING id INTO ch_id;
-			INSERT INTO measurements (child_id, age_months, weight_kg, height_cm, zscore_wfa, zscore_hfa, zscore_wfh, nutrition_status, faltering_risk_score, faltering_risk_level)
-			VALUES (ch_id, 14, 8.1, 71.0, -2.8, -3.4, -1.9, 'severely_stunted', 94.5, 'HIGH');
-			INSERT INTO interventions (child_id, visit_status, clinical_notes)
-			VALUES (ch_id, 'SCHEDULED', 'Kunjungan evaluasi sanitasi & rujukan Puskesmas');
-
-			-- 2. Kiran Cahyani (Severely Wasted)
-			INSERT INTO children (nik_hash, full_name, gender, birth_date, posyandu_id, posyandu_name, village_name, rw_code, rt_code, parent_name, parent_phone)
-			VALUES ('nik_hash_002', 'Kiran Cahyani', 'P', '2026-02-14', pos5_id, 'Posyandu Mawar 05', 'Desa Sukamaju', 'RW 05', 'RT 01', 'Ibu Siti Maryam', '081299112202')
-			RETURNING id INTO ch_id;
-			INSERT INTO measurements (child_id, age_months, weight_kg, height_cm, zscore_wfa, zscore_hfa, zscore_wfh, nutrition_status, faltering_risk_score, faltering_risk_level)
-			VALUES (ch_id, 9, 6.0, 68.5, -3.1, -2.3, -3.2, 'severely_wasted', 91.2, 'HIGH');
-			INSERT INTO interventions (child_id, visit_status, clinical_notes)
-			VALUES (ch_id, 'SCHEDULED', 'Pemberian F-75 & PMT Pemulihan Darurat');
-
-			-- 3. Rian Ardiansyah (Severely Stunted)
-			INSERT INTO children (nik_hash, full_name, gender, birth_date, posyandu_id, posyandu_name, village_name, rw_code, rt_code, parent_name, parent_phone)
-			VALUES ('nik_hash_003', 'Rian Ardiansyah', 'L', '2025-01-20', pos8_id, 'Posyandu Kenanga 08', 'Desa Sukamaju', 'RW 08', 'RT 03', 'Ibu Fitri', '081299112203')
-			RETURNING id INTO ch_id;
-			INSERT INTO measurements (child_id, age_months, weight_kg, height_cm, zscore_wfa, zscore_hfa, zscore_wfh, nutrition_status, faltering_risk_score, faltering_risk_level)
-			VALUES (ch_id, 22, 9.2, 77.2, -2.9, -3.2, -1.8, 'severely_stunted', 88.7, 'HIGH');
-
-			-- 4. Farhan Ramadhan (Normal tapi Faltering Risk 84%)
-			INSERT INTO children (nik_hash, full_name, gender, birth_date, posyandu_id, posyandu_name, village_name, rw_code, rt_code, parent_name, parent_phone)
-			VALUES ('nik_hash_004', 'Farhan Ramadhan', 'L', '2025-08-15', pos1_id, 'Posyandu Melati 01', 'Desa Sukamaju', 'RW 01', 'RT 02', 'Ibu Wulandari', '081299112211')
-			RETURNING id INTO ch_id;
-			INSERT INTO measurements (child_id, age_months, weight_kg, height_cm, zscore_wfa, zscore_hfa, zscore_wfh, nutrition_status, faltering_risk_score, faltering_risk_level)
-			VALUES (ch_id, 15, 8.9, 73.0, -1.2, -1.7, -0.5, 'normal', 84.3, 'HIGH');
-			INSERT INTO interventions (child_id, visit_status, clinical_notes)
-			VALUES (ch_id, 'SCHEDULED', 'Intervensi pre-stunting deteksi penurunan berat badan');
-		END IF;
-
-		-- Bersihkan data dummy seeder lama jika ada agar tabel bersih & fokus
-		DELETE FROM children WHERE full_name LIKE 'Balita Sehat No. %';
-	END $$;
+	// Pembersihan data dummy/seeder balita agar database murni hanya berisi data riil pengguna
+	cleanupDummySQL := `
+	DELETE FROM children 
+	WHERE nik_hash IN ('nik_hash_001', 'nik_hash_002', 'nik_hash_003', 'nik_hash_004') 
+	   OR full_name LIKE 'Balita Sehat No. %';
 	`
-
-	if _, err := db.Exec(ctx, seedClinicalSQL); err != nil {
-		log.Printf("[MIGRATION WARNING] Failed seeding clinical children data: %v", err)
+	if _, err := db.Exec(ctx, cleanupDummySQL); err != nil {
+		log.Printf("[MIGRATION WARNING] Cleanup dummy children notice: %v", err)
 	} else {
-		log.Println("[MIGRATION] Successfully seeded children, measurements & interventions.")
+		log.Println("[MIGRATION] Dummy seeder children cleaned up successfully. Database is now pure user data.")
 	}
 
 	return nil

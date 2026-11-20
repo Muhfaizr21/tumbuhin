@@ -25,69 +25,8 @@ import {
   deleteRoleData,
 } from '../../lib/authApi'
 
-// Ringkasan 3 Balita representatif untuk seeder & offline preview
-const FALLBACK_PRIORITY_LIST = [
-  {
-    child_id: 'ch-001',
-    child_name: 'Bayu Aditya',
-    age_months: 14,
-    gender: 'L',
-    posyandu_name: 'Posyandu Melati 03',
-    rw_code: 'RW 03',
-    rt_code: 'RT 02',
-    parent_name: 'Ibu Ratna',
-    parent_phone: '081299112201',
-    nutrition_status: 'severely_stunted',
-    faltering_risk_score: 94.5,
-    faltering_risk_level: 'HIGH',
-    triage_category: 'MERAH',
-    last_measured_at: '2026-11-12',
-    zscore_wfa: -2.8,
-    zscore_hfa: -3.4,
-    zscore_wfh: -1.9,
-    pending_intervention: true,
-  },
-  {
-    child_id: 'ch-002',
-    child_name: 'Nadia Salsabila',
-    age_months: 16,
-    gender: 'P',
-    posyandu_name: 'Posyandu Anggrek 02',
-    rw_code: 'RW 02',
-    rt_code: 'RT 04',
-    parent_name: 'Ibu Linda',
-    parent_phone: '081299112205',
-    nutrition_status: 'stunted',
-    faltering_risk_score: 79.5,
-    faltering_risk_level: 'HIGH',
-    triage_category: 'ORANYE',
-    last_measured_at: '2026-11-11',
-    zscore_wfa: -2.1,
-    zscore_hfa: -2.6,
-    zscore_wfh: -1.1,
-    pending_intervention: true,
-  },
-  {
-    child_id: 'ch-003',
-    child_name: 'Farhan Ramadhan',
-    age_months: 15,
-    gender: 'L',
-    posyandu_name: 'Posyandu Anggrek 01',
-    rw_code: 'RW 01',
-    rt_code: 'RT 02',
-    parent_name: 'Ibu Wulandari',
-    parent_phone: '081299112211',
-    nutrition_status: 'normal',
-    faltering_risk_score: 84.3,
-    faltering_risk_level: 'HIGH',
-    triage_category: 'KUNING',
-    last_measured_at: '2026-11-16',
-    zscore_wfa: -1.2,
-    zscore_hfa: -1.7,
-    zscore_wfh: -0.5,
-    pending_intervention: false,
-  },
-]
+// Fallback kosong jika database belum memiliki data
+const FALLBACK_PRIORITY_LIST = []
 
 const INITIAL_FORM_STATE = {
   child_name: '',
@@ -140,7 +79,7 @@ export default function PrioritasList({ user, embedded = false }) {
     setLoading(true)
     try {
       const data = await fetchRoleDashboardData('/bidan/priority-list')
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         const uniqueMap = new Map()
         data.forEach((item) => {
           if (item && item.child_id && !uniqueMap.has(item.child_id)) {
@@ -149,10 +88,10 @@ export default function PrioritasList({ user, embedded = false }) {
         })
         setChildrenList(Array.from(uniqueMap.values()))
       } else {
-        setChildrenList(FALLBACK_PRIORITY_LIST)
+        setChildrenList([])
       }
     } catch {
-      setChildrenList(FALLBACK_PRIORITY_LIST)
+      setChildrenList([])
     } finally {
       setLoading(false)
     }
@@ -625,8 +564,27 @@ export default function PrioritasList({ user, embedded = false }) {
                   </tr>
                 ) : filteredChildren.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-8 text-center text-[#8b8b8b] text-[13px]">
-                      Tidak ada balita yang sesuai dengan filter atau kata kunci pencarian.
+                    <td colSpan={10} className="py-12 text-center text-[#8b8b8b] text-[13px]">
+                      {childrenList.length === 0 ? (
+                        <div className="max-w-md mx-auto py-2">
+                          <p className="font-semibold text-[#070709] text-[14px] mb-1">
+                            Belum ada data balita di database
+                          </p>
+                          <p className="text-[12px] text-[#60606c] mb-3">
+                            Semua data seeder dummy telah dinonaktifkan. Data tabel sekarang 100% murni mengambil dari database PostgreSQL Anda.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleOpenCreateModal}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#070709] text-white text-[12px] font-medium hover:bg-[#202028] transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Tambah Balita Sekarang</span>
+                          </button>
+                        </div>
+                      ) : (
+                        'Tidak ada balita yang sesuai dengan filter atau kata kunci pencarian.'
+                      )}
                     </td>
                   </tr>
                 ) : (

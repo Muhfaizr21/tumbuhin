@@ -168,12 +168,11 @@ func (r *repository) GetPriorityList(ctx context.Context, villageName string) ([
 				}
 			}
 
-			if len(list) > 0 {
-				return list, nil
-			}
-		} else {
-			log.Printf("[PRIORITAS] DB query error, falling back to mock store: %v", err)
+			return list, nil
 		}
+
+		log.Printf("[PRIORITAS] DB query error: %v", err)
+		return []PriorityChild{}, err
 	}
 
 	r.mu.RLock()
@@ -526,66 +525,5 @@ func (r *repository) DeletePriorityChild(ctx context.Context, villageName string
 }
 
 func getInitialMockPriorityList() []PriorityChild {
-	return []PriorityChild{
-		{
-			ChildID:             "ch-001",
-			ChildName:           "Bayu Aditya",
-			AgeMonths:           14,
-			Gender:              "L",
-			PosyanduName:        "Posyandu Melati 03",
-			RWCode:              "RW 03",
-			RTCode:              "RT 02",
-			ParentName:          "Ibu Ratna",
-			ParentPhone:         "081299112201",
-			NutritionStatus:     "severely_stunted",
-			FalteringRiskScore:  94.5,
-			FalteringRiskLevel:  "HIGH",
-			TriageCategory:      "MERAH",
-			LastMeasuredAt:      "2026-11-12",
-			ZscoreWFA:           -2.8,
-			ZscoreHFA:           -3.4,
-			ZscoreWFH:           -1.9,
-			PendingIntervention: true,
-		},
-		{
-			ChildID:             "ch-002",
-			ChildName:           "Nadia Salsabila",
-			AgeMonths:           16,
-			Gender:              "P",
-			PosyanduName:        "Posyandu Anggrek 02",
-			RWCode:              "RW 02",
-			RTCode:              "RT 04",
-			ParentName:          "Ibu Linda",
-			ParentPhone:         "081299112205",
-			NutritionStatus:     "stunted",
-			FalteringRiskScore:  79.5,
-			FalteringRiskLevel:  "HIGH",
-			TriageCategory:      "ORANYE",
-			LastMeasuredAt:      "2026-11-11",
-			ZscoreWFA:           -2.1,
-			ZscoreHFA:           -2.6,
-			ZscoreWFH:           -1.1,
-			PendingIntervention: true,
-		},
-		{
-			ChildID:             "ch-003",
-			ChildName:           "Farhan Ramadhan",
-			AgeMonths:           15,
-			Gender:              "L",
-			PosyanduName:        "Posyandu Anggrek 01",
-			RWCode:              "RW 01",
-			RTCode:              "RT 02",
-			ParentName:          "Ibu Wulandari",
-			ParentPhone:         "081299112211",
-			NutritionStatus:     "normal",
-			FalteringRiskScore:  84.3,
-			FalteringRiskLevel:  "HIGH",
-			TriageCategory:      "KUNING",
-			LastMeasuredAt:      "2026-11-16",
-			ZscoreWFA:           -1.2,
-			ZscoreHFA:           -1.7,
-			ZscoreWFH:           -0.5,
-			PendingIntervention: false,
-		},
-	}
+	return []PriorityChild{}
 }
