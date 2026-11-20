@@ -23,33 +23,14 @@ export default function RoleDashboardShell({
   backendFolderHint,
   onLogout,
   onSwitchRole,
-<<<<<<< HEAD
   onMenuSelect,
   activeMenuId: propActiveMenuId,
-=======
-  activeMenuId: propActiveMenuId,
-  onMenuChange,
->>>>>>> 585fb2db644aa31a59d8af36addccf2f989347af
   children,
 }) {
   const [internalActiveMenuId, setInternalActiveMenuId] = useState(menuItems[0]?.id || 'dashboard')
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
-<<<<<<< HEAD
   const activeMenuId = propActiveMenuId || internalActiveMenuId
-=======
-  const activeMenuId = propActiveMenuId !== undefined ? propActiveMenuId : internalActiveMenuId
-
-  const handleMenuClick = (id) => {
-    if (onMenuChange) {
-      onMenuChange(id)
-    } else {
-      setInternalActiveMenuId(id)
-    }
-    setMobileSidebarOpen(false)
-  }
-
->>>>>>> 585fb2db644aa31a59d8af36addccf2f989347af
   const currentMenu = menuItems.find((item) => item.id === activeMenuId) || menuItems[0]
 
   return (
@@ -149,15 +130,11 @@ export default function RoleDashboardShell({
                   key={item.id}
                   type="button"
                   onClick={() => {
-<<<<<<< HEAD
                     setInternalActiveMenuId(item.id)
                     setMobileSidebarOpen(false)
                     if (onMenuSelect) {
                       onMenuSelect(item)
                     }
-=======
-                    handleMenuClick(item.id)
->>>>>>> 585fb2db644aa31a59d8af36addccf2f989347af
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-full text-left text-[13px] font-medium transition-all cursor-pointer ${
                     isActive
@@ -192,7 +169,6 @@ export default function RoleDashboardShell({
           </nav>
         </div>
 
-<<<<<<< HEAD
         {/* Bottom Actions: Quick Role Switcher (for Team Dev) & Logout */}
         <div className="p-4 border-t border-[#e4e4eb] bg-[#ffffff] space-y-3">
           <div>
@@ -225,11 +201,6 @@ export default function RoleDashboardShell({
               ))}
             </div>
           </div>
-
-=======
-        {/* Bottom Actions: Logout */}
-        <div className="p-4 border-t border-black/8 bg-[#fafbfd]">
->>>>>>> 585fb2db644aa31a59d8af36addccf2f989347af
           <button
             type="button"
             onClick={onLogout}
@@ -305,7 +276,6 @@ export default function RoleDashboardShell({
             </div>
           )}
 
-<<<<<<< HEAD
           {/* Active Menu Workspace / Team Feature Slot / Custom Children Component */}
           {children ? (
             <div className="mt-6 w-full animate-in fade-in duration-200">
@@ -396,12 +366,6 @@ export default function RoleDashboardShell({
               </div>
             </div>
           )}
-=======
-          {/* Main Content Workspace */}
-          <div className="mt-6">
-            {children}
-          </div>
->>>>>>> 585fb2db644aa31a59d8af36addccf2f989347af
         </div>
       </main>
     </div>
