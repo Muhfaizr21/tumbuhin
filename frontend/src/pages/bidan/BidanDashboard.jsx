@@ -22,6 +22,7 @@ import BidanRightPanel from './components/BidanRightPanel'
 import CircularProgressRing from './components/CircularProgressRing'
 import PetaGIS from './PetaGIS'
 import PrioritasList from './PrioritasList'
+import IntervensiList from './IntervensiList'
 
 const BIDAN_MENUS = [
   {
@@ -655,6 +656,8 @@ export default function BidanDashboard({
               externalCreateTrigger={createTriggerCount}
               onDataChange={handlePriorityDataChange}
             />
+          ) : activeMenuId === 'intervensi' ? (
+            <IntervensiList user={user} embedded={true} />
           ) : (
             /* Clean Functional Workspace for Home Visit, Evaluasi PMT, Supervisi, and Laporan e-PPGBM */
             <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-6 space-y-5">

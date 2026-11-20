@@ -9,6 +9,7 @@ import (
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
+	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
@@ -19,6 +20,7 @@ import (
 	authRepo "tumbuhin-backend/repositories/auth"
 	bidanDashRepo "tumbuhin-backend/repositories/bidan/dashboard"
 	bidanGISRepo "tumbuhin-backend/repositories/bidan/petagis"
+	bidanIntervensiRepo "tumbuhin-backend/repositories/bidan/intervensi"
 	bidanPrioritasRepo "tumbuhin-backend/repositories/bidan/prioritas"
 	kaderDashRepo "tumbuhin-backend/repositories/kader/dashboard"
 	ortuDashRepo "tumbuhin-backend/repositories/ortu/dashboard"
@@ -29,6 +31,7 @@ import (
 	authRegisterService "tumbuhin-backend/services/auth/register"
 	bidanDashService "tumbuhin-backend/services/bidan/dashboard"
 	bidanGISService "tumbuhin-backend/services/bidan/petagis"
+	bidanIntervensiService "tumbuhin-backend/services/bidan/intervensi"
 	bidanPrioritasService "tumbuhin-backend/services/bidan/prioritas"
 	kaderDashService "tumbuhin-backend/services/kader/dashboard"
 	ortuDashService "tumbuhin-backend/services/ortu/dashboard"
@@ -50,6 +53,7 @@ func main() {
 	kaderDashRepository := kaderDashRepo.NewRepository()
 	bidanDashRepository := bidanDashRepo.NewRepository(cfg.DBPool)
 	bidanGISRepository := bidanGISRepo.NewRepository(cfg.DBPool)
+	bidanIntervensiRepository := bidanIntervensiRepo.NewRepository(cfg.DBPool)
 	bidanPrioritasRepository := bidanPrioritasRepo.NewRepository(cfg.DBPool)
 	adminDashRepository := adminDashRepo.NewRepository()
 	ortuDashRepository := ortuDashRepo.NewRepository()
@@ -61,22 +65,24 @@ func main() {
 	kaderDashSvc := kaderDashService.NewService(kaderDashRepository)
 	bidanDashSvc := bidanDashService.NewService(bidanDashRepository)
 	bidanGISSvc := bidanGISService.NewService(bidanGISRepository)
+	bidanIntervensiSvc := bidanIntervensiService.NewService(bidanIntervensiRepository)
 	bidanPrioritasSvc := bidanPrioritasService.NewService(bidanPrioritasRepository)
 	adminDashSvc := adminDashService.NewService(adminDashRepository)
 	ortuDashSvc := ortuDashService.NewService(ortuDashRepository)
 
 	// 5. Initialize Controllers (Presentation / Handler Layer)
 	deps := routes.RouteDependencies{
-		HealthCtrl:         controllers.NewHealthController(),
-		UserCtrl:           controllers.NewUserController(userService),
-		AuthLoginCtrl:      authLoginCtrl.NewController(loginSvc),
-		AuthRegisterCtrl:   authRegisterCtrl.NewController(registerSvc),
-		KaderDashCtrl:      kaderDashCtrl.NewController(kaderDashSvc),
-		BidanDashCtrl:      bidanDashCtrl.NewController(bidanDashSvc),
-		BidanGISCtrl:       bidanGISCtrl.NewController(bidanGISSvc),
-		BidanPrioritasCtrl: bidanPrioritasCtrl.NewController(bidanPrioritasSvc),
-		AdminDashCtrl:      adminDashCtrl.NewController(adminDashSvc),
-		OrtuDashCtrl:       ortuDashCtrl.NewController(ortuDashSvc),
+		HealthCtrl:          controllers.NewHealthController(),
+		UserCtrl:            controllers.NewUserController(userService),
+		AuthLoginCtrl:       authLoginCtrl.NewController(loginSvc),
+		AuthRegisterCtrl:    authRegisterCtrl.NewController(registerSvc),
+		KaderDashCtrl:       kaderDashCtrl.NewController(kaderDashSvc),
+		BidanDashCtrl:       bidanDashCtrl.NewController(bidanDashSvc),
+		BidanGISCtrl:        bidanGISCtrl.NewController(bidanGISSvc),
+		BidanPrioritasCtrl:  bidanPrioritasCtrl.NewController(bidanPrioritasSvc),
+		BidanIntervensiCtrl: bidanIntervensiCtrl.NewController(bidanIntervensiSvc),
+		AdminDashCtrl:       adminDashCtrl.NewController(adminDashSvc),
+		OrtuDashCtrl:        ortuDashCtrl.NewController(ortuDashSvc),
 	}
 
 	// 6. Setup Router and Start Server

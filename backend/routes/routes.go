@@ -9,6 +9,7 @@ import (
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
+	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
@@ -30,6 +31,7 @@ type RouteDependencies struct {
 	BidanDashCtrl      *bidanDashCtrl.Controller
 	BidanGISCtrl       *bidanGISCtrl.Controller
 	BidanPrioritasCtrl *bidanPrioritasCtrl.Controller
+	BidanIntervensiCtrl *bidanIntervensiCtrl.Controller
 	AdminDashCtrl      *adminDashCtrl.Controller
 	OrtuDashCtrl     *ortuDashCtrl.Controller
 }
@@ -89,6 +91,10 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			bidanGroup.POST("/priority-list", deps.BidanPrioritasCtrl.HandleCreatePriorityChild)
 			bidanGroup.PUT("/priority-list/:id", deps.BidanPrioritasCtrl.HandleUpdatePriorityChild)
 			bidanGroup.DELETE("/priority-list/:id", deps.BidanPrioritasCtrl.HandleDeletePriorityChild)
+			bidanGroup.GET("/intervensi", deps.BidanIntervensiCtrl.HandleGetInterventionList)
+			bidanGroup.POST("/intervensi", deps.BidanIntervensiCtrl.HandleCreateIntervention)
+			bidanGroup.PUT("/intervensi/:id", deps.BidanIntervensiCtrl.HandleUpdateIntervention)
+			bidanGroup.DELETE("/intervensi/:id", deps.BidanIntervensiCtrl.HandleDeleteIntervention)
 		}
 
 		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)

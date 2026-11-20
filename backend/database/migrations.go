@@ -54,6 +54,8 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		village_name VARCHAR(120) DEFAULT 'Desa Sukamaju',
 		rw_code VARCHAR(10) DEFAULT '001',
 		rt_code VARCHAR(10) DEFAULT '001',
+		latitude DOUBLE PRECISION DEFAULT -6.5950378,
+		longitude DOUBLE PRECISION DEFAULT 106.816635,
 		parent_name VARCHAR(150) DEFAULT '',
 		parent_phone VARCHAR(30) DEFAULT '',
 		magic_token VARCHAR(128) DEFAULT '',
@@ -61,6 +63,9 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		created_at TIMESTAMPTZ DEFAULT NOW(),
 		updated_at TIMESTAMPTZ DEFAULT NOW()
 	);
+
+	ALTER TABLE children ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION DEFAULT -6.5950378;
+	ALTER TABLE children ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION DEFAULT 106.816635;
 
 	-- 4. WHO LMS Reference Standards
 	CREATE TABLE IF NOT EXISTS who_lms_standards (
@@ -132,6 +137,13 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		content TEXT NOT NULL,
 		created_at TIMESTAMPTZ DEFAULT NOW()
 	);
+
+	DO $$
+	BEGIN
+		ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS embedding vector(768);
+	EXCEPTION WHEN OTHERS THEN
+		NULL;
+	END $$;
 	`
 
 	if _, err := db.Exec(ctx, ddlSQL); err != nil {
@@ -159,6 +171,26 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	`
 	if _, err := db.Exec(ctx, seedPosyanduSQL); err != nil {
 		log.Printf("[MIGRATION WARNING] Failed seeding posyandus: %v", err)
+	}
+
+	// Seed WHO LMS reference standards sample (idempotent ON CONFLICT DO NOTHING)
+	seedWhoSQL := `
+	INSERT INTO who_lms_standards (indicator, gender, age_months, l_val, m_val, s_val)
+	VALUES
+		('HFA', 'L', 0, 1.0, 49.88, 0.038),
+		('HFA', 'L', 12, 1.0, 75.75, 0.034),
+		('HFA', 'L', 24, 1.0, 87.12, 0.033),
+		('HFA', 'P', 0, 1.0, 49.14, 0.038),
+		('HFA', 'P', 12, 1.0, 74.02, 0.035),
+		('HFA', 'P', 24, 1.0, 85.70, 0.034),
+		('WFA', 'L', 0, 0.3487, 3.346, 0.146),
+		('WFA', 'L', 12, -0.0611, 9.648, 0.117),
+		('WFA', 'P', 0, 0.3809, 3.232, 0.141),
+		('WFA', 'P', 12, -0.0305, 8.948, 0.118)
+	ON CONFLICT (indicator, gender, age_months) DO NOTHING;
+	`
+	if _, err := db.Exec(ctx, seedWhoSQL); err != nil {
+		log.Printf("[MIGRATION WARNING] Failed seeding WHO standards: %v", err)
 	}
 
 	// Pembersihan data dummy/seeder balita agar database murni hanya berisi data riil pengguna

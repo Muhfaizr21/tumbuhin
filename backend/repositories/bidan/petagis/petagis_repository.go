@@ -69,11 +69,11 @@ func (r *repository) GetGISClusters(ctx context.Context, villageName string) ([]
 			var clusters []GISCluster
 			for rows.Next() {
 				var c GISCluster
-				if err := rows.Scan(
+				if scanErr := rows.Scan(
 					&c.PosyanduID, &c.PosyanduName, &c.VillageName, &c.RWCode, &c.RTCode,
 					&c.Latitude, &c.Longitude, &c.TotalBalita, &c.StuntingCount,
 					&c.WastingCount, &c.HighRiskCount,
-				); err == nil {
+				); scanErr == nil {
 					if c.TotalBalita > 0 {
 						c.StuntingPrevalence = float64(c.StuntingCount) / float64(c.TotalBalita) * 100.0
 					}
@@ -87,13 +87,13 @@ func (r *repository) GetGISClusters(ctx context.Context, villageName string) ([]
 					clusters = append(clusters, c)
 				}
 			}
-
-			if len(clusters) > 0 {
-				return clusters, nil
+			// Return DB result directly — posyandu master data is authoritative even when children table is empty
+			if clusters == nil {
+				clusters = []GISCluster{}
 			}
-		} else {
-			log.Printf("[PETA-GIS] DB query error, falling back to realistic data: %v", err)
+			return clusters, nil
 		}
+		log.Printf("[PETA-GIS] DB query error, falling back to static data: %v", err)
 	}
 
 	// Realistic fallback cluster data for Desa Sukamaju (Bogor area)
@@ -220,3 +220,4 @@ func (r *repository) GetGISClusters(ctx context.Context, villageName string) ([]
 		},
 	}, nil
 }
+
