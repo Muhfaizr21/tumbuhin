@@ -187,6 +187,21 @@ export async function putRoleData(path, data) {
   return safeParseResponse(response, 'Gagal memperbarui data')
 }
 
+export async function patchRoleData(path, data) {
+  const token = getStoredToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(data),
+  })
+  return safeParseResponse(response, 'Gagal memperbarui data')
+}
+
 export async function deleteRoleData(path) {
   const token = getStoredToken()
   const headers = { 'Content-Type': 'application/json' }

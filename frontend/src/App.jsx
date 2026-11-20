@@ -16,10 +16,21 @@ import {
 } from './lib/authApi'
 import AdminDashboard from './pages/admin/Dashboard'
 import BidanDashboard from './pages/bidan/BidanDashboard'
+import HomeVisitPage from './pages/bidan/HomeVisitPage'
+import PMTEvaluationPage from './pages/bidan/PMTEvaluationPage'
 import PetaGIS from './pages/bidan/PetaGIS'
 import PrioritasList from './pages/bidan/PrioritasList'
 import KaderDashboard from './pages/kader/KaderDashboard'
 import OrtuDashboard from './pages/ortu/OrtuDashboard'
+
+function parseQueryString(raw) {
+  const query = {}
+  if (!raw) return query
+  new URLSearchParams(raw).forEach((value, key) => {
+    query[key] = value
+  })
+  return query
+}
 
 function parseViewFromHash(hash) {
   if (!hash) return { type: 'landing' }
@@ -28,9 +39,15 @@ function parseViewFromHash(hash) {
   if (clean === 'register') return { type: 'auth', mode: 'register' }
   if (clean.startsWith('kader')) return { type: 'dashboard', role: 'kader' }
   if (clean.startsWith('bidan')) {
-    let sub = clean.replace(/^bidan\/?/, '')
+    const [pathPart, queryPart] = clean.split('?')
+    let sub = pathPart.replace(/^bidan\/?/, '')
     if (sub === 'gis') sub = 'peta-gis'
-    return { type: 'dashboard', role: 'bidan', subPage: sub || 'dashboard' }
+    return {
+      type: 'dashboard',
+      role: 'bidan',
+      subPage: sub || 'dashboard',
+      query: parseQueryString(queryPart),
+    }
   }
   if (clean.startsWith('admin')) return { type: 'dashboard', role: 'admin' }
   if (clean.startsWith('ortu') || clean.startsWith('p/')) {
@@ -157,6 +174,27 @@ export default function App() {
 
   if (viewState.type === 'dashboard') {
     if (viewState.role === 'bidan') {
+      // Batch 2 pages own their routes so BidanDashboard keeps its mockup intact.
+      if (viewState.subPage === 'intervensi') {
+        return (
+          <HomeVisitPage
+            key={viewState.query.child_id || 'home-visit'}
+            user={currentUser}
+            prefill={viewState.query}
+            onLogout={handleLogout}
+            onSwitchRole={handleSwitchRole}
+          />
+        )
+      }
+      if (viewState.subPage === 'pmt-evaluasi') {
+        return (
+          <PMTEvaluationPage
+            user={currentUser}
+            onLogout={handleLogout}
+            onSwitchRole={handleSwitchRole}
+          />
+        )
+      }
       return (
         <BidanDashboard
           user={currentUser}

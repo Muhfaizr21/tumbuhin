@@ -10,7 +10,9 @@ import (
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
 	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
+	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
+	bidanPMTEvalCtrl "tumbuhin-backend/controllers/bidan/pmt_evaluations"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
@@ -23,17 +25,19 @@ import (
 
 // RouteDependencies bundles all role-based controllers for clean dependency injection
 type RouteDependencies struct {
-	HealthCtrl       *controllers.HealthController
-	UserCtrl         *controllers.UserController
-	AuthLoginCtrl    *authLoginCtrl.Controller
-	AuthRegisterCtrl *authRegisterCtrl.Controller
-	KaderDashCtrl      *kaderDashCtrl.Controller
-	BidanDashCtrl      *bidanDashCtrl.Controller
-	BidanGISCtrl       *bidanGISCtrl.Controller
-	BidanPrioritasCtrl *bidanPrioritasCtrl.Controller
-	BidanIntervensiCtrl *bidanIntervensiCtrl.Controller
-	AdminDashCtrl      *adminDashCtrl.Controller
-	OrtuDashCtrl     *ortuDashCtrl.Controller
+	HealthCtrl             *controllers.HealthController
+	UserCtrl               *controllers.UserController
+	AuthLoginCtrl          *authLoginCtrl.Controller
+	AuthRegisterCtrl       *authRegisterCtrl.Controller
+	KaderDashCtrl          *kaderDashCtrl.Controller
+	BidanDashCtrl          *bidanDashCtrl.Controller
+	BidanGISCtrl           *bidanGISCtrl.Controller
+	BidanPrioritasCtrl     *bidanPrioritasCtrl.Controller
+	BidanIntervensiCtrl    *bidanIntervensiCtrl.Controller
+	BidanInterventionsCtrl *bidanInterventionsCtrl.Controller
+	BidanPMTEvalCtrl       *bidanPMTEvalCtrl.Controller
+	AdminDashCtrl          *adminDashCtrl.Controller
+	OrtuDashCtrl           *ortuDashCtrl.Controller
 }
 
 // SetupRouter initializes and configures the Gin engine with all routes and RBAC middlewares
@@ -95,6 +99,16 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			bidanGroup.POST("/intervensi", deps.BidanIntervensiCtrl.HandleCreateIntervention)
 			bidanGroup.PUT("/intervensi/:id", deps.BidanIntervensiCtrl.HandleUpdateIntervention)
 			bidanGroup.DELETE("/intervensi/:id", deps.BidanIntervensiCtrl.HandleDeleteIntervention)
+
+			// Batch 2: Home Visit (SOAP + PMT), fitur.md 2.4
+			bidanGroup.GET("/interventions", deps.BidanInterventionsCtrl.HandleListHomeVisits)
+			bidanGroup.POST("/interventions", deps.BidanInterventionsCtrl.HandleCreateHomeVisit)
+			bidanGroup.PATCH("/interventions/:id/status", deps.BidanInterventionsCtrl.HandleUpdateHomeVisitStatus)
+
+			// Batch 2: Evaluasi Program PMT 90 hari, fitur.md 2.5
+			bidanGroup.GET("/pmt-evaluations", deps.BidanPMTEvalCtrl.HandleListEvaluations)
+			bidanGroup.GET("/pmt-evaluations/:id", deps.BidanPMTEvalCtrl.HandleGetEvaluationDetail)
+			bidanGroup.PATCH("/pmt-evaluations/:id/compliance", deps.BidanPMTEvalCtrl.HandleUpdateCompliance)
 		}
 
 		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)

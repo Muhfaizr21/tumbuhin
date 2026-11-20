@@ -113,12 +113,12 @@ func (r *repository) GetPriorityList(ctx context.Context, villageName string) ([
 			COALESCE(c.posyandu_name, 'Posyandu Melati 04'), c.rw_code, c.rt_code,
 			c.parent_name, c.parent_phone,
 			COALESCE(m.nutrition_status, 'normal'),
-			COALESCE(m.faltering_risk_score, 0.0),
+			COALESCE(m.faltering_risk_score, 0.0)::float8,
 			COALESCE(m.faltering_risk_level, 'LOW'),
 			COALESCE(to_char(m.measured_at, 'YYYY-MM-DD'), to_char(CURRENT_DATE, 'YYYY-MM-DD')),
-			COALESCE(m.zscore_wfa, 0.0),
-			COALESCE(m.zscore_hfa, 0.0),
-			COALESCE(m.zscore_wfh, 0.0),
+			COALESCE(m.zscore_wfa, 0.0)::float8,
+			COALESCE(m.zscore_hfa, 0.0)::float8,
+			COALESCE(m.zscore_wfh, 0.0)::float8,
 			CASE WHEN EXISTS (
 				SELECT 1 FROM interventions 
 				WHERE child_id = c.id AND visit_status = 'SCHEDULED'
@@ -390,6 +390,49 @@ func (r *repository) UpdatePriorityChild(ctx context.Context, villageName string
 			}
 		}
 
+		// Update or record latest measurement metrics
+		if req.NutritionStatus != "" || req.ZscoreHFA != nil || req.FalteringRiskScore != nil || req.AgeMonths > 0 {
+			zWfa := -1.5
+			if req.ZscoreWFA != nil {
+				zWfa = *req.ZscoreWFA
+			}
+			zHfa := -2.3
+			if req.ZscoreHFA != nil {
+				zHfa = *req.ZscoreHFA
+			}
+			zWfh := -1.0
+			if req.ZscoreWFH != nil {
+				zWfh = *req.ZscoreWFH
+			}
+			fScore := 75.0
+			if req.FalteringRiskScore != nil {
+				fScore = *req.FalteringRiskScore
+			}
+			rLevel := "LOW"
+			if fScore >= 70.0 {
+				rLevel = "HIGH"
+			} else if fScore >= 40.0 {
+				rLevel = "MEDIUM"
+			}
+			nStatus := req.NutritionStatus
+			if nStatus == "" {
+				nStatus = "stunted"
+			}
+			ageM := req.AgeMonths
+			if ageM <= 0 {
+				ageM = 12
+			}
+			_, _ = r.db.Exec(ctx, `
+				INSERT INTO measurements (
+					child_id, age_months, weight_kg, height_cm,
+					zscore_wfa, zscore_hfa, zscore_wfh,
+					nutrition_status, faltering_risk_score, faltering_risk_level,
+					measured_at
+				)
+				VALUES ($1::uuid, $2, 9.5, 75.0, $3, $4, $5, $6, $7, $8, CURRENT_DATE);
+			`, childID, ageM, zWfa, zHfa, zWfh, nStatus, fScore, rLevel)
+		}
+
 		// Check if record exists in PostgreSQL and return it immediately
 		querySingle := `
 		SELECT 
@@ -397,13 +440,16 @@ func (r *repository) UpdatePriorityChild(ctx context.Context, villageName string
 			COALESCE(c.posyandu_name, 'Posyandu Melati 04'), c.rw_code, c.rt_code,
 			c.parent_name, c.parent_phone,
 			COALESCE(m.nutrition_status, 'normal'),
-			COALESCE(m.faltering_risk_score, 0.0),
+			COALESCE(m.faltering_risk_score, 0.0)::float8,
 			COALESCE(m.faltering_risk_level, 'LOW'),
 			COALESCE(to_char(m.measured_at, 'YYYY-MM-DD'), to_char(CURRENT_DATE, 'YYYY-MM-DD')),
-			COALESCE(m.zscore_wfa, 0.0),
-			COALESCE(m.zscore_hfa, 0.0),
-			COALESCE(m.zscore_wfh, 0.0),
-			CASE WHEN i.id IS NULL THEN TRUE ELSE FALSE END as pending_intervention
+			COALESCE(m.zscore_wfa, 0.0)::float8,
+			COALESCE(m.zscore_hfa, 0.0)::float8,
+			COALESCE(m.zscore_wfh, 0.0)::float8,
+			CASE WHEN EXISTS (
+				SELECT 1 FROM interventions 
+				WHERE child_id = c.id AND visit_status = 'SCHEDULED'
+			) THEN TRUE ELSE FALSE END as pending_intervention
 		FROM children c
 		LEFT JOIN (
 			SELECT DISTINCT ON (child_id) child_id, age_months, nutrition_status,
@@ -412,7 +458,6 @@ func (r *repository) UpdatePriorityChild(ctx context.Context, villageName string
 			FROM measurements
 			ORDER BY child_id, measured_at DESC
 		) m ON m.child_id = c.id
-		LEFT JOIN interventions i ON i.child_id = c.id AND i.visit_status = 'SCHEDULED'
 		WHERE c.id::text = $1 LIMIT 1;
 		`
 		var p PriorityChild
@@ -427,6 +472,7 @@ func (r *repository) UpdatePriorityChild(ctx context.Context, villageName string
 			p.TriageCategory = determineTriageCategory(p.NutritionStatus, p.ZscoreHFA, p.FalteringRiskScore)
 			return &p, nil
 		}
+		log.Printf("[PRIORITAS] Single child query after update: %v", err)
 	}
 
 	// 2. Fallback to in-memory store for mock records (e.g. ch-001)
@@ -495,10 +541,25 @@ func (r *repository) UpdatePriorityChild(ctx context.Context, villageName string
 
 func (r *repository) DeletePriorityChild(ctx context.Context, villageName string, childID string) error {
 	if r.db != nil {
+		// Clean up referencing rows first to ensure FK integrity even if ON DELETE CASCADE isn't present
+		_, _ = r.db.Exec(ctx, `DELETE FROM pmt_evaluations WHERE child_id::text = $1;`, childID)
+		_, _ = r.db.Exec(ctx, `DELETE FROM mpasi_plans WHERE child_id::text = $1;`, childID)
+		_, _ = r.db.Exec(ctx, `DELETE FROM interventions WHERE child_id::text = $1;`, childID)
+		_, _ = r.db.Exec(ctx, `DELETE FROM measurements WHERE child_id::text = $1;`, childID)
 		tag, err := r.db.Exec(ctx, `DELETE FROM children WHERE id::text = $1;`, childID)
-		if err == nil && tag.RowsAffected() > 0 {
-			_, _ = r.db.Exec(ctx, `DELETE FROM interventions WHERE child_id::text = $1;`, childID)
-			_, _ = r.db.Exec(ctx, `DELETE FROM measurements WHERE child_id::text = $1;`, childID)
+		if err != nil {
+			log.Printf("[PRIORITAS] Error deleting child from DB %s: %v", childID, err)
+		} else if tag.RowsAffected() > 0 {
+			// Also sync removal from in-memory mock store
+			r.mu.Lock()
+			filtered := make([]PriorityChild, 0, len(r.mockStore))
+			for _, item := range r.mockStore {
+				if item.ChildID != childID {
+					filtered = append(filtered, item)
+				}
+			}
+			r.mockStore = filtered
+			r.mu.Unlock()
 			return nil
 		}
 	}

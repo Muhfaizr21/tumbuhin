@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -46,8 +47,13 @@ func LoadConfig() *Config {
 		log.Fatalf("FATAL: Failed to parse DATABASE_URL: %v", err)
 	}
 
-	// Supabase Transaction Pooler compatibility (PgBouncer port 6543)
-	parsedConfig.ConnConfig.DefaultQueryExecMode = 3 // pgx.QueryExecModeSimpleProtocol
+	// Supabase Transaction Pooler compatibility (PgBouncer port 6543).
+	// Must be QueryExecModeExec (4): a single round trip, so PgBouncer cannot
+	// swap the server connection between describe and execute. The previous
+	// value 3 was QueryExecModeDescribeExec (the enum starts at _ = iota),
+	// which pgx documents as unsafe with transaction pooling and caused
+	// intermittent "unnamed prepared statement does not exist" 500s.
+	parsedConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
 	parsedConfig.MaxConns = 10
 	parsedConfig.MinConns = 1
 	parsedConfig.MaxConnLifetime = 30 * time.Minute

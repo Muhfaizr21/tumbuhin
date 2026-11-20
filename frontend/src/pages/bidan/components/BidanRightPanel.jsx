@@ -252,9 +252,9 @@ export default function BidanRightPanel({
                 </p>
               </div>
             ) : (
-              pendingVisits.slice(0, 5).map((child) => (
+              pendingVisits.slice(0, 5).map((child, idx) => (
                 <div
-                  key={child.child_id}
+                  key={`${child.child_id || 'visit'}-${idx}`}
                   className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">

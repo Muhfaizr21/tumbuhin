@@ -8,7 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// RunExtendedMigrations executes DDL for the clinical and GIS data tables
+// RunExtendedMigrations executes DDL for the clinical, GIS, home visit, and PMT evaluation tables.
+// All migrations (Batch 1 & Batch 2) are unified in this file and are idempotent (safe to run on every boot).
 func RunExtendedMigrations(db *pgxpool.Pool) error {
 	if db == nil {
 		log.Println("[MIGRATION] Skipped: database pool is nil")
@@ -19,7 +20,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	defer cancel()
 
 	ddlSQL := `
-	-- 1. Enable extension if available (optional pgvector)
+	-- 1. Enable extension if available (UUID & optional pgvector)
 	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 	CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 	DO $$
@@ -144,6 +145,26 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	EXCEPTION WHEN OTHERS THEN
 		NULL;
 	END $$;
+
+	-- 9. Evaluation record for 90-day PMT cohort (Batch 2)
+	CREATE TABLE IF NOT EXISTS pmt_evaluations (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		child_id UUID NOT NULL UNIQUE REFERENCES children(id) ON DELETE CASCADE,
+		village_name VARCHAR(120) DEFAULT '',
+		consumption_compliance_percent NUMERIC(5,2) DEFAULT 0 CHECK (consumption_compliance_percent BETWEEN 0 AND 100),
+		distribution_compliance_percent NUMERIC(5,2) DEFAULT NULL CHECK (distribution_compliance_percent IS NULL OR distribution_compliance_percent BETWEEN 0 AND 100),
+		notes TEXT DEFAULT '',
+		updated_by BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL,
+		created_at TIMESTAMPTZ DEFAULT NOW(),
+		updated_at TIMESTAMPTZ DEFAULT NOW()
+	);
+
+	-- 10. Performance indexes for queries (Batch 2)
+	CREATE INDEX IF NOT EXISTS idx_pmt_evaluations_village ON pmt_evaluations (village_name);
+	CREATE INDEX IF NOT EXISTS idx_interventions_visit_date ON interventions (visit_date);
+	CREATE INDEX IF NOT EXISTS idx_interventions_child_id ON interventions (child_id);
+	CREATE INDEX IF NOT EXISTS idx_children_village ON children (village_name);
+	CREATE INDEX IF NOT EXISTS idx_measurements_child_measured_at ON measurements (child_id, measured_at);
 	`
 
 	if _, err := db.Exec(ctx, ddlSQL); err != nil {
@@ -151,7 +172,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		return err
 	}
 
-	log.Println("[MIGRATION] Extended clinical & GIS tables created successfully.")
+	log.Println("[MIGRATION] Extended clinical, GIS & PMT tables created successfully.")
 
 	// Seed Posyandu master data if empty
 	seedPosyanduSQL := `
@@ -205,5 +226,10 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Println("[MIGRATION] Dummy seeder children cleaned up successfully. Database is now pure user data.")
 	}
 
+	return nil
+}
+
+// RunBatch2Migrations is retained for compatibility, delegating to the unified migration runner.
+func RunBatch2Migrations(db *pgxpool.Pool) error {
 	return nil
 }

@@ -46,6 +46,18 @@ const safeParseFloat = (val, defaultVal = 0) => {
   return Number.isNaN(parsed) ? defaultVal : parsed
 }
 
+// Deduplicate children list by child_id, keeping first occurrence
+const dedupeChildren = (list) => {
+  if (!Array.isArray(list)) return []
+  const seen = new Map()
+  list.forEach((item) => {
+    if (item && item.child_id && !seen.has(item.child_id)) {
+      seen.set(item.child_id, item)
+    }
+  })
+  return Array.from(seen.values())
+}
+
 const safeParseInt = (val, defaultVal = 0) => {
   if (val === null || val === undefined || val === '') return defaultVal
   const parsed = parseInt(val, 10)
@@ -82,13 +94,7 @@ export default function PrioritasList({
     try {
       const data = await fetchRoleDashboardData('/bidan/priority-list')
       if (Array.isArray(data)) {
-        const uniqueMap = new Map()
-        data.forEach((item) => {
-          if (item && item.child_id && !uniqueMap.has(item.child_id)) {
-            uniqueMap.set(item.child_id, item)
-          }
-        })
-        const cleanList = Array.from(uniqueMap.values())
+        const cleanList = dedupeChildren(data)
         setChildrenList(cleanList)
         if (onDataChange) onDataChange(cleanList)
       } else {
@@ -228,7 +234,7 @@ export default function PrioritasList({
           }
         }
 
-        const nextList = [saved, ...childrenList]
+        const nextList = dedupeChildren([saved, ...childrenList])
         setChildrenList(nextList)
         if (onDataChange) onDataChange(nextList)
         setActionNotice(`Balita ${saved.child_name} berhasil ditambahkan ke daftar triase prioritas.`)
@@ -581,7 +587,8 @@ export default function PrioritasList({
                   </td>
                 </tr>
               ) : (
-                filteredChildren.map((c, idx) => {
+                filteredChildren.map((child, idx) => {
+                  const c = child
                   const isMerah = c.triage_category === 'MERAH'
                   const isOranye = c.triage_category === 'ORANYE'
 
@@ -703,6 +710,16 @@ export default function PrioritasList({
                             <span>Selesai</span>
                           </button>
                         )}
+                        <a
+                          href={`#/bidan/intervensi?child_id=${encodeURIComponent(c.child_id || '')}&child_name=${encodeURIComponent(
+                            c.child_name || ''
+                          )}`}
+                          title={`Catat kunjungan rumah dan SOAP untuk ${c.child_name}`}
+                          className="mt-1.5 flex items-center justify-center gap-1 px-2.5 py-1 rounded-xl border border-slate-200 bg-white text-slate-600 text-[11px] font-semibold cursor-pointer hover:border-[#2597d0] hover:text-[#2597d0] transition-colors"
+                        >
+                          <Activity className="w-3 h-3" aria-hidden="true" />
+                          <span>Catat SOAP</span>
+                        </a>
                       </td>
 
                       <td className="py-3.5 px-5 text-right whitespace-nowrap">

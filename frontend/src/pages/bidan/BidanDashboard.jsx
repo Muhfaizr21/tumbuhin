@@ -238,7 +238,14 @@ export default function BidanDashboard({
           fetchRoleDashboardData('/bidan/priority-list').catch(() => null),
         ])
 
-        const pList = Array.isArray(priorityRes) ? priorityRes : []
+        const rawList = Array.isArray(priorityRes) ? priorityRes : []
+        const uniqueMap = new Map()
+        rawList.forEach((item) => {
+          if (item && item.child_id && !uniqueMap.has(item.child_id)) {
+            uniqueMap.set(item.child_id, item)
+          }
+        })
+        const pList = Array.from(uniqueMap.values())
         setPriorityChildren(pList)
         const redCases = pList.filter((c) => c.triage_category === 'MERAH').length
 
