@@ -17,6 +17,7 @@ import (
 	bidanSupervisiCtrl "tumbuhin-backend/controllers/bidan/supervisi"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
+	kaderBalitaCtrl "tumbuhin-backend/controllers/kader/balita"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/middlewares"
 	"tumbuhin-backend/models"
@@ -32,6 +33,7 @@ type RouteDependencies struct {
 	AuthLoginCtrl          *authLoginCtrl.Controller
 	AuthRegisterCtrl       *authRegisterCtrl.Controller
 	KaderDashCtrl          *kaderDashCtrl.Controller
+	KaderBalitaCtrl        *kaderBalitaCtrl.Controller
 	BidanDashCtrl          *bidanDashCtrl.Controller
 	BidanGISCtrl           *bidanGISCtrl.Controller
 	BidanPrioritasCtrl     *bidanPrioritasCtrl.Controller
@@ -87,6 +89,7 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		kaderGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleKader, models.RoleBidan, models.RoleAdmin))
 		{
 			kaderGroup.GET("/dashboard", deps.KaderDashCtrl.HandleGetOverview)
+			kaderGroup.GET("/balita", deps.KaderBalitaCtrl.HandleGetChildren)
 		}
 
 		// Role 2: Bidan Desa Routes (/api/v1/bidan/...)
