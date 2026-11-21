@@ -165,6 +165,24 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	CREATE INDEX IF NOT EXISTS idx_interventions_child_id ON interventions (child_id);
 	CREATE INDEX IF NOT EXISTS idx_children_village ON children (village_name);
 	CREATE INDEX IF NOT EXISTS idx_measurements_child_measured_at ON measurements (child_id, measured_at);
+
+	-- 11. Supervision audit locks (Batch 3)
+	CREATE TABLE IF NOT EXISTS supervision_locks (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		village_name VARCHAR(120) NOT NULL DEFAULT 'Desa Sukamaju',
+		posyandu_id UUID REFERENCES posyandus(id) ON DELETE CASCADE,
+		period_month INT NOT NULL CHECK (period_month BETWEEN 1 AND 12),
+		period_year INT NOT NULL CHECK (period_year >= 2020),
+		is_locked BOOLEAN NOT NULL DEFAULT TRUE,
+		locked_at TIMESTAMPTZ DEFAULT NOW(),
+		locked_by BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL,
+		locked_by_name VARCHAR(150) DEFAULT '',
+		audit_notes TEXT DEFAULT '',
+		created_at TIMESTAMPTZ DEFAULT NOW(),
+		updated_at TIMESTAMPTZ DEFAULT NOW(),
+		UNIQUE(village_name, posyandu_id, period_month, period_year)
+	);
+	CREATE INDEX IF NOT EXISTS idx_supervision_locks_village ON supervision_locks(village_name, period_year, period_month);
 	`
 
 	if _, err := db.Exec(ctx, ddlSQL); err != nil {

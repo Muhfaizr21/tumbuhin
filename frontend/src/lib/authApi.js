@@ -215,3 +215,46 @@ export async function deleteRoleData(path) {
   })
   return safeParseResponse(response, 'Gagal menghapus data')
 }
+
+export async function downloadRoleFile(path, fallbackFilename = 'dokumen_unduhan') {
+  const token = getStoredToken()
+  const headers = {}
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    headers,
+  })
+
+  if (!response.ok) {
+    let errMsg = `Gagal mengunduh berkas (HTTP ${response.status})`
+    try {
+      const errJson = await response.json()
+      if (errJson && errJson.message) errMsg = errJson.message
+    } catch {
+      // ignore
+    }
+    throw new Error(errMsg)
+  }
+
+  const disposition = response.headers.get('Content-Disposition') || ''
+  let filename = fallbackFilename
+  const match = disposition.match(/filename=["']?([^"';]+)["']?/)
+  if (match && match[1]) {
+    filename = match[1].trim()
+  }
+
+  const blob = await response.blob()
+  const blobUrl = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(blobUrl)
+
+  return filename
+}

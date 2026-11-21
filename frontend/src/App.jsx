@@ -19,6 +19,8 @@ import AdminDashboard from './pages/admin/Dashboard'
 import BidanDashboard from './pages/bidan/BidanDashboard'
 import HomeVisitPage from './pages/bidan/HomeVisitPage'
 import PMTEvaluationPage from './pages/bidan/PMTEvaluationPage'
+import SupervisiPage from './pages/bidan/SupervisiPage'
+import LaporanExportPage from './pages/bidan/LaporanExportPage'
 import PetaGIS from './pages/bidan/PetaGIS'
 import PrioritasList from './pages/bidan/PrioritasList'
 import KaderDashboard from './pages/kader/KaderDashboard'
@@ -198,6 +200,24 @@ function AppContent() {
       if (viewState.subPage === 'pmt-evaluasi') {
         return (
           <PMTEvaluationPage
+            user={currentUser}
+            onLogout={handleLogout}
+            onSwitchRole={handleSwitchRole}
+          />
+        )
+      }
+      if (viewState.subPage === 'supervisi') {
+        return (
+          <SupervisiPage
+            user={currentUser}
+            onLogout={handleLogout}
+            onSwitchRole={handleSwitchRole}
+          />
+        )
+      }
+      if (viewState.subPage === 'laporan') {
+        return (
+          <LaporanExportPage
             user={currentUser}
             onLogout={handleLogout}
             onSwitchRole={handleSwitchRole}

@@ -14,6 +14,8 @@ import (
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPMTEvalCtrl "tumbuhin-backend/controllers/bidan/pmt_evaluations"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
+	bidanSupervisiCtrl "tumbuhin-backend/controllers/bidan/supervisi"
+	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/middlewares"
@@ -36,6 +38,8 @@ type RouteDependencies struct {
 	BidanIntervensiCtrl    *bidanIntervensiCtrl.Controller
 	BidanInterventionsCtrl *bidanInterventionsCtrl.Controller
 	BidanPMTEvalCtrl       *bidanPMTEvalCtrl.Controller
+	BidanSupervisiCtrl     *bidanSupervisiCtrl.Controller
+	BidanLaporanCtrl       *bidanLaporanCtrl.Controller
 	AdminDashCtrl          *adminDashCtrl.Controller
 	OrtuDashCtrl           *ortuDashCtrl.Controller
 }
@@ -109,6 +113,13 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			bidanGroup.GET("/pmt-evaluations", deps.BidanPMTEvalCtrl.HandleListEvaluations)
 			bidanGroup.GET("/pmt-evaluations/:id", deps.BidanPMTEvalCtrl.HandleGetEvaluationDetail)
 			bidanGroup.PATCH("/pmt-evaluations/:id/compliance", deps.BidanPMTEvalCtrl.HandleUpdateCompliance)
+
+			// Batch 3: Supervisi Posyandu & Audit Data, fitur.md 2.6
+			bidanGroup.GET("/supervision", deps.BidanSupervisiCtrl.HandleGetSupervision)
+			bidanGroup.POST("/supervision/lock", deps.BidanSupervisiCtrl.HandleLockSupervision)
+
+			// Batch 3: Laporan & Ekspor e-PPGBM, fitur.md 2.7
+			bidanGroup.GET("/export", deps.BidanLaporanCtrl.HandleExport)
 		}
 
 		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)
