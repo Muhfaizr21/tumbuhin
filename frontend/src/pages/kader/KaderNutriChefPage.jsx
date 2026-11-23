@@ -293,6 +293,15 @@ export default function KaderNutriChefPage() {
                 <div>
                   <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Sitasi Resmi Kemenkes RI</p>
                   <p className="text-[11px] text-emerald-700 italic">{recipe.citation}</p>
+                  {recipe.ragSources?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {recipe.ragSources.map((src, i) => (
+                        <li key={i} className="text-[10px] text-emerald-700">
+                          [{i + 1}] {src.sourceDoc} · kemiripan {Math.round(src.score * 100)}%
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 

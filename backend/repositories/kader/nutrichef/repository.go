@@ -39,6 +39,7 @@ type RecipeResponse struct {
 	RecipientWa  string       `json:"recipientWa"`
 	PlanId       string       `json:"planId"`
 	Source       string       `json:"source"`
+	RagSources   []RagSource  `json:"ragSources,omitempty"`
 }
 
 type Repository interface {
@@ -134,7 +135,18 @@ func (r *repository) SaveAndGenerateRecipe(ctx context.Context, req GenerateRequ
 	// kosong / panggilan gagal, resep rule-based tetap dipakai agar endpoint
 	// tidak pernah mati karena kuota/API key.
 	if geminiAPIKey() != "" {
-		aiRecipe, aiErr := generateWithGemini(ctx, buildGeminiPrompt(cx, req.Budget, req.Foods, blocked))
+		// RAG: isi korpus bila kosong, lalu ambil pedoman paling relevan.
+		var ragSources []RagSource
+		if serr := r.seedKnowledge(ctx); serr != nil {
+			log.Printf("[NUTRICHEF RAG] seeding dilewati: %v", serr)
+		}
+		if sources, rerr := r.retrieveKnowledge(ctx, buildRagQuery(cx, req.Foods), 3); rerr != nil {
+			log.Printf("[NUTRICHEF RAG] retrieval gagal, lanjut tanpa konteks: %v", rerr)
+		} else if len(sources) > 0 {
+			ragSources = sources
+		}
+
+		aiRecipe, aiErr := generateWithGemini(ctx, buildGeminiPrompt(cx, req.Budget, req.Foods, blocked, ragSources))
 		if aiErr != nil {
 			log.Printf("[NUTRICHEF] Gemini gagal, fallback rule-based: %v", aiErr)
 		} else if sanitized, serr := sanitizeGeminiRecipe(aiRecipe, cx, req.Budget, strings.ToLower(cx.Notes)); serr != nil {
@@ -144,6 +156,7 @@ func (r *repository) SaveAndGenerateRecipe(ctx context.Context, req GenerateRequ
 			sanitized.NutritionTag = cx.NutritionStatus
 			sanitized.RecipientWa = cx.Phone
 			sanitized.Source = "gemini-structured"
+			sanitized.RagSources = ragSources
 			recipe = sanitized
 		}
 	}
@@ -309,7 +322,7 @@ func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked 
 	}
 }
 
-func buildGeminiPrompt(cx *childContext, budget int, foods []string, blocked map[string]bool) string {
+func buildGeminiPrompt(cx *childContext, budget int, foods []string, blocked map[string]bool, rag []RagSource) string {
 	targetAge, texture := targetAgeTexture(cx.AgeMonths)
 
 	catalogLines := make([]string, 0, len(foodCatalog))
@@ -319,6 +332,15 @@ func buildGeminiPrompt(cx *childContext, budget int, foods []string, blocked map
 			status = "DILARANG (alergi)"
 		}
 		catalogLines = append(catalogLines, fmt.Sprintf("- %s: Rp %d (%s, %s)", f.name, f.cost, f.qty, status))
+	}
+
+	ragBlock := "Tidak ada konteks pedoman tambahan."
+	if len(rag) > 0 {
+		lines := make([]string, 0, len(rag))
+		for i, src := range rag {
+			lines = append(lines, fmt.Sprintf("[%d] %s\n%s", i+1, src.SourceDoc, src.Snippet))
+		}
+		ragBlock = strings.Join(lines, "\n\n")
 	}
 
 	return fmt.Sprintf(`Anda ahli gizi anak Indonesia. Susun SATU resep MPASI lokal.
@@ -335,6 +357,9 @@ TARGET
 - Anggaran harian maksimum: Rp %d
 - Bahan yang dipilih kader: %s
 
+KONTEKS PEDOMAN (RAG, hasil retrieval)
+%s
+
 KATALOG BAHAN (pakai hanya bahan ini, harga mengikuti katalog)
 %s
 
@@ -343,14 +368,16 @@ ATURAN
 2. Total biaya semua bahan tidak boleh melebihi anggaran.
 3. Wajib ada minimal satu protein hewani bila balita berisiko stunting/wasting.
 4. Langkah memasak 4-6 langkah, bahasa Indonesia, praktis untuk kader posyandu.
-5. Sitasi harus menyebut pedoman resmi Kemenkes RI.
+5. Sitasi WAJIB mengutip salah satu sumber pada KONTEKS PEDOMAN di atas, tulis judul dokumennya.
 6. Isi energy dan protein sebagai string dengan satuan, contoh "430 kkal" dan "14.0 g".
 7. totalCost = jumlah cost seluruh ingredients.
+8. Ikuti porsi, frekuensi, tekstur, dan batas gula/garam dari konteks pedoman.
 Kembalikan HANYA JSON sesuai schema.`,
 		cx.Name, cx.AgeMonths, cx.NutritionStatus, cx.ZWFA, cx.ZHFA, cx.ZWFH,
 		fallbackText(cx.Notes, "tidak ada"),
 		targetAge, texture, budget,
 		fallbackText(strings.Join(foods, ", "), "belum dipilih"),
+		ragBlock,
 		strings.Join(catalogLines, "\n"),
 	)
 }
