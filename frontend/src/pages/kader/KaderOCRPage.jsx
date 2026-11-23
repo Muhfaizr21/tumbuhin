@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { 
   Camera, 
   Upload, 
@@ -10,15 +10,29 @@ import {
   Save,
   Trash2
 } from 'lucide-react'
-import { postRoleData } from '../../lib/authApi' // Import fungsi API
+import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
 
 export default function KaderOCRPage() {
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [extractedData, setExtractedData] = useState(null)
-  const [isSaving, setIsSaving] = useState(false) // State loading simpan
+  const [isSaving, setIsSaving] = useState(false)
+  const [balitaList, setBalitaList] = useState([])
+  const [selectedBalitaId, setSelectedBalitaId] = useState('')
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    const loadBalita = async () => {
+      try {
+        const data = await fetchRoleDashboardData('/kader/balita')
+        setBalitaList(Array.isArray(data) ? data : [])
+      } catch (err) {
+        console.error('Gagal memuat balita:', err)
+      }
+    }
+    loadBalita()
+  }, [])
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -30,11 +44,18 @@ export default function KaderOCRPage() {
   }
 
   const simulateOCR = () => {
+    if (!selectedBalitaId) {
+      alert('Pilih balita terlebih dahulu di dropdown')
+      return
+    }
     setIsProcessing(true)
     setTimeout(() => {
-      // Data simulasi
+      // Data simulasi — nanti diganti Vision AI sungguhan
+      const mockDate = new Date().toISOString().split('T')[0]
       setExtractedData([
-        { balitaId: '32b48645-783d-493d-986b-4331a12afd0a', bulan: 'Jan 2026', usia: 12, berat: 8.5, tinggi: 74.0 },
+        { balitaId: selectedBalitaId, bulan: 'Jan 2026', tanggal: '2026-01-15', usia: 12, berat: 8.5, tinggi: 74.0 },
+        { balitaId: selectedBalitaId, bulan: 'Feb 2026', tanggal: '2026-02-15', usia: 13, berat: 8.7, tinggi: 75.2 },
+        { balitaId: selectedBalitaId, bulan: 'Mar 2026', tanggal: '2026-03-15', usia: 14, berat: 8.8, tinggi: 76.5 },
       ])
       setIsProcessing(false)
     }, 2500)
@@ -43,22 +64,23 @@ export default function KaderOCRPage() {
   const handleSaveData = async (data) => {
     setIsSaving(true)
     try {
-      // Kirim data per baris ke API timbang
+      // Kirim setiap baris pengukuran ke API timbang
       for (const row of data) {
         await postRoleData('/kader/timbang', {
             balitaId: row.balitaId,
-            tanggal: '2026-11-23', // Tanggal default
-            berat: row.berat,
-            tinggi: row.tinggi,
-            posisi: 'standing',
-            lingkarKepala: 20.0,
-            lila: 5.0
+            tanggal: row.tanggal || new Date().toISOString().split('T')[0],
+            berat: parseFloat(row.berat),
+            tinggi: parseFloat(row.tinggi),
+            posisi: 'berdiri',
+            lingkarKepala: 0,
+            lila: 0
         })
       }
       alert('Data berhasil disimpan ke database!')
       setExtractedData(null)
       setPreview(null)
       setFile(null)
+      setSelectedBalitaId('')
     } catch (err) {
       alert('Gagal menyimpan: ' + err.message)
     } finally {
@@ -72,6 +94,23 @@ export default function KaderOCRPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#070709]">Smart KMS OCR</h1>
           <p className="text-sm text-gray-500">Scan tabel penimbangan Buku KIA fisik menjadi data digital.</p>
+        </div>
+      </div>
+
+      {/* Selector Balita */}
+      <div className="bg-white border border-black/8 rounded-2xl p-4 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <label className="text-[13px] font-semibold text-gray-700 whitespace-nowrap">Pilih Balita:</label>
+          <select 
+            value={selectedBalitaId}
+            onChange={e => setSelectedBalitaId(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#2597d0] outline-none text-sm bg-white"
+          >
+            <option value="">-- Pilih Balita untuk Data KIA --</option>
+            {balitaList.map(b => (
+              <option key={b.id} value={b.id}>{b.nama} ({b.usia})</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -104,7 +143,8 @@ export default function KaderOCRPage() {
           {file && !extractedData && !isProcessing && (
             <button 
               onClick={simulateOCR}
-              className="w-full py-4 rounded-2xl bg-[#2597d0] text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#2597d0]/20"
+              disabled={!selectedBalitaId}
+              className="w-full py-4 rounded-2xl bg-[#2597d0] text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#2597d0]/20 disabled:opacity-50"
             >
               <RefreshCw className="w-5 h-5" />
               Mulai Ekstraksi AI
@@ -129,7 +169,7 @@ export default function KaderOCRPage() {
                 </div>
                 <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase">Vision AI Terverifikasi</span>
               </div>
-              
+               
               <div className="p-6">
                 <table className="w-full text-sm">
                   <thead>
@@ -149,7 +189,10 @@ export default function KaderOCRPage() {
                         <td className="py-4 text-right font-bold text-[#070709]">{row.berat}</td>
                         <td className="py-4 text-right font-bold text-[#070709]">{row.tinggi}</td>
                         <td className="py-4 text-right">
-                          <button className="p-1.5 text-gray-300 hover:text-rose-500 transition-colors">
+                          <button 
+                            onClick={() => setExtractedData(extractedData.filter((_, i) => i !== idx))}
+                            className="p-1.5 text-gray-300 hover:text-rose-500 transition-colors"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
@@ -171,7 +214,7 @@ export default function KaderOCRPage() {
                   </button>
                   <button 
                     onClick={() => handleSaveData(extractedData)}
-                    disabled={isSaving}
+                    disabled={isSaving || !extractedData.length}
                     className="py-3 rounded-2xl bg-[#070709] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-black/90 transition-all"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
