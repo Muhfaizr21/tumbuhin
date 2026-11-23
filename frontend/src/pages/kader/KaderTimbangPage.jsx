@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react'
-import { 
-  Scale, 
-  Ruler, 
-  CircleDot, 
-  Calendar, 
-  CheckCircle2, 
-  AlertTriangle,
-  Info,
-  ChevronRight,
-  Save,
-  Baby
-} from 'lucide-react'
-import { MOCK_BALITA_LIST } from '../../services/mock/kaderMock'
-import { kaderApi } from '../../lib/kaderApi'
+import { Scale, Ruler, CircleDot, Calendar, CheckCircle2, AlertTriangle, Info, ChevronRight, Save, Baby, RefreshCw } from 'lucide-react'
+import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
 
 export default function KaderTimbangPage({ user }) {
+  const [balitaList, setBalitaList] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedBalitaId, setSelectedBalitaId] = useState('')
   const [tanggalTimbang, setTanggalTimbang] = useState(new Date().toISOString().split('T')[0])
   const [berat, setBerat] = useState('')
@@ -23,7 +13,6 @@ export default function KaderTimbangPage({ user }) {
   const [lingkarKepala, setLingkarKepala] = useState('')
   const [lila, setLila] = useState('')
   
-  // Pelayanan Tambahan
   const [layanan, setLayanan] = useState({
     asiEksklusif: false,
     vitA: false,
@@ -33,23 +22,56 @@ export default function KaderTimbangPage({ user }) {
   const [isCalculating, setIsCalculating] = useState(false)
   const [results, setResults] = useState(null)
 
-  const selectedBalita = MOCK_BALITA_LIST.find(b => b.id === selectedBalitaId)
+  const loadBalitaData = async () => {
+    try {
+      setLoading(true)
+      const data = await fetchRoleDashboardData('/kader/balita')
+      setBalitaList(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Gagal memuat balita:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadBalitaData()
+  }, [])
+
+  const selectedBalita = balitaList.find(b => b.id === selectedBalitaId)
+
+  const calculateZScore = () => {
+    // Simulasi kalkulasi Z-Score (Logika backend akan mengembalikan hasil riil)
+    if (berat && tinggi) {
+      setResults({
+        bbu: -0.5,
+        tbu: -1.2,
+        bbtb: -0.8,
+        status: "Gizi Baik",
+        risk: 15,
+        riskLevel: "LOW",
+        adjustedTinggi: parseFloat(tinggi)
+      })
+    }
+  }
 
   const handleSimpanTimbang = async () => {
     try {
       setIsCalculating(true)
-      const result = await kaderApi.postTimbang({
+      const result = await postRoleData('/kader/timbang', {
         balitaId: selectedBalitaId,
         tanggal: tanggalTimbang,
         berat: parseFloat(berat),
         tinggi: parseFloat(tinggi),
         posisi,
-        layanan
+        lingkarKepala: parseFloat(lingkarKepala || 0),
+        lila: parseFloat(lila || 0)
       })
       setResults(result)
+      alert('Data penimbangan berhasil disimpan ke database!')
     } catch (err) {
       console.error('Gagal simpan:', err)
-      alert('Gagal terhubung ke backend')
+      alert('Gagal menyimpan ke database: ' + err.message)
     } finally {
       setIsCalculating(false)
     }
@@ -82,17 +104,21 @@ export default function KaderTimbangPage({ user }) {
             {/* Pilih Balita */}
             <div className="space-y-1.5">
               <label className="text-[13px] font-semibold text-gray-700">Pilih Balita</label>
-              <select 
-                value={selectedBalitaId}
-                onChange={e => setSelectedBalitaId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2597d0] outline-none text-sm appearance-none bg-no-repeat bg-[right_1rem_center]"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundSize: '1em' }}
-              >
-                <option value="">-- Pilih Nama Balita di RW 04 --</option>
-                {MOCK_BALITA_LIST.map(b => (
-                  <option key={b.id} value={b.id}>{b.nama} ({b.usia})</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select 
+                  value={selectedBalitaId}
+                  onChange={e => setSelectedBalitaId(e.target.value)}
+                  disabled={loading}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2597d0] outline-none text-sm appearance-none bg-no-repeat bg-[right_1rem_center] disabled:bg-gray-50"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundSize: '1em' }}
+                >
+                  <option value="">{loading ? 'Memuat data...' : '-- Pilih Nama Balita --'}</option>
+                  {balitaList.map(b => (
+                    <option key={b.id} value={b.id}>{b.nama} ({b.usia})</option>
+                  ))}
+                </select>
+                {loading && <RefreshCw className="w-4 h-4 absolute right-10 top-3.5 text-gray-400 animate-spin" />}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -168,39 +194,13 @@ export default function KaderTimbangPage({ user }) {
               </div>
             </div>
 
-            {/* Checklist Layanan */}
-            <div className="pt-2">
-              <label className="text-[13px] font-semibold text-gray-700 mb-3 block">Pelayanan Tambahan</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: 'asiEksklusif', label: 'ASI Eksklusif' },
-                  { id: 'vitA', label: 'Vitamin A' },
-                  { id: 'obatCacing', label: 'Obat Cacing' }
-                ].map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setLayanan({...layanan, [item.id]: !layanan[item.id]})}
-                    className={`flex items-center gap-2 p-3 rounded-xl border text-[12px] font-medium transition-all ${
-                      layanan[item.id] 
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                        : 'bg-white border-gray-200 text-gray-500'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                      layanan[item.id] ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300'
-                    }`}>
-                      {layanan[item.id] && <CheckCircle2 className="w-3 h-3 text-white" />}
-                    </div>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button className="w-full py-4 rounded-2xl bg-[#070709] text-white font-bold text-sm hover:bg-black/90 shadow-lg shadow-black/10 transition-all flex items-center justify-center gap-2 mt-4">
+            <button 
+              onClick={handleSimpanTimbang}
+              disabled={isCalculating || !selectedBalitaId || !berat || !tinggi}
+              className="w-full py-4 rounded-2xl bg-[#070709] text-white font-bold text-sm hover:bg-black/90 shadow-lg shadow-black/10 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+            >
               <Save className="w-4 h-4" />
-              Simpan Penimbangan & Sinkronkan
+              {isCalculating ? 'Menyimpan ke Database...' : 'Simpan Penimbangan & Sinkronkan'}
             </button>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function KaderTimbangPage({ user }) {
                   <div className="flex items-center justify-between text-xs py-2 border-b border-black/5">
                     <span className="text-gray-500">Koreksi Tinggi WHO</span>
                     <span className="font-semibold text-gray-700">
-                      {results.adjustedTinggi.toFixed(1)} cm
+                      {results.adjustedTinggi?.toFixed(1)} cm
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs py-2 border-b border-black/5">

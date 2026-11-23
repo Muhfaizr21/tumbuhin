@@ -230,6 +230,8 @@ export default function BidanDashboard({
     }
   }, [currentSubPage])
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
   useEffect(() => {
     async function fetchOverview() {
       try {
@@ -266,7 +268,7 @@ export default function BidanDashboard({
     }
 
     fetchOverview()
-  }, [])
+  }, [refreshTrigger])
 
   const handleSelectMenu = (itemOrId) => {
     const targetMenu =
@@ -289,6 +291,7 @@ export default function BidanDashboard({
 
   const handlePriorityDataChange = (updatedList) => {
     setPriorityChildren(updatedList)
+    setRefreshTrigger(prev => prev + 1)
     const redCases = updatedList.filter((c) => c.triage_category === 'MERAH').length
     const pendingCount = updatedList.filter((c) => c.pending_intervention).length
     setStatsSummary((prev) => ({

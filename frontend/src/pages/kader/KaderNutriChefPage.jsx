@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   ChefHat, 
   Utensils, 
@@ -11,7 +11,7 @@ import {
   BookOpen,
   Info
 } from 'lucide-react'
-import { MOCK_BALITA_LIST } from '../../services/mock/kaderMock'
+import { fetchRoleDashboardData } from '../../lib/authApi'
 
 const LOCAL_FOODS = [
   { id: 'telur', name: 'Telur Ayam', price: 2000, unit: 'butir', cat: 'Protein Hewani' },
@@ -25,13 +25,32 @@ const LOCAL_FOODS = [
 ]
 
 export default function KaderNutriChefPage() {
+  const [balitaList, setBalitaList] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedBalitaId, setSelectedBalitaId] = useState('')
   const [budget, setBudget] = useState(15000)
   const [selectedFoods, setSelectedFoods] = useState(['telur', 'bayam', 'minyak'])
   const [isGenerating, setIsGenerating] = useState(false)
   const [recipe, setRecipe] = useState(null)
 
-  const selectedBalita = MOCK_BALITA_LIST.find(b => b.id === selectedBalitaId)
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const data = await fetchRoleDashboardData('/kader/balita')
+        if (Array.isArray(data)) {
+          setBalitaList(data)
+        }
+      } catch (err) {
+        console.error('Failed to load balita:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const selectedBalita = balitaList.find(b => b.id === selectedBalitaId)
 
   const toggleFood = (id) => {
     setSelectedFoods(prev => 
@@ -102,17 +121,18 @@ export default function KaderNutriChefPage() {
               <select 
                 value={selectedBalitaId}
                 onChange={e => setSelectedBalitaId(e.target.value)}
+                disabled={loading}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none"
               >
-                <option value="">-- Pilih Balita --</option>
-                {MOCK_BALITA_LIST.map(b => (
+                <option value="">{loading ? 'Memuat data...' : '-- Pilih Balita --'}</option>
+                {balitaList.map(b => (
                   <option key={b.id} value={b.id}>{b.nama} ({b.usia})</option>
                 ))}
               </select>
               {selectedBalita && (
                 <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 mt-2">
                   <p className="text-[11px] text-blue-700 leading-tight">
-                    <strong>Status:</strong> {selectedBalita.statusGizi} • 
+                    <strong>Status:</strong> {selectedBalita.status_gizi || selectedBalita.statusGizi || '-'} • 
                     <strong> Alergi:</strong> {selectedBalita.alergi || 'Tidak Ada'}
                   </p>
                 </div>

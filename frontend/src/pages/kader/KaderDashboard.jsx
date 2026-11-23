@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
+import { 
   Baby, Camera, ChefHat, LayoutDashboard, RefreshCw, Scale, Send, 
   Search, Bell, Menu, X, Plus, CheckCircle2, Stethoscope, AlertTriangle, Activity, MapPin
 } from 'lucide-react'
@@ -13,6 +13,7 @@ import KaderNutriChefPage from './KaderNutriChefPage'
 import KaderSinkronisasiPage from './KaderSinkronisasiPage'
 import KaderDistribusiPage from './KaderDistribusiPage'
 import KaderHomePage from './KaderHomePage'
+import { fetchRoleDashboardData } from '../../lib/authApi'
 
 const KADER_MENUS = [
   { 
@@ -83,9 +84,10 @@ const KADER_MENUS = [
 ]
 
 const QUICK_ACCESS_ITEMS = [
+  { id: 'dashboard', label: 'Beranda', icon: LayoutDashboard, boxBg: 'bg-indigo-50 text-indigo-600' },
   { id: 'timbang', label: 'Timbang', icon: Scale, boxBg: 'bg-blue-50 text-blue-600' },
   { id: 'ocr-kms', label: 'Scan KIA', icon: Camera, boxBg: 'bg-rose-50 text-rose-600' },
-  { id: 'balita', label: 'Tambah Anak', icon: Plus, boxBg: 'bg-emerald-50 text-emerald-600' },
+  { id: 'balita', label: 'Data Balita', icon: Baby, boxBg: 'bg-emerald-50 text-emerald-600' },
   { id: 'nutri-chef', label: 'MPASI', icon: ChefHat, boxBg: 'bg-amber-50 text-amber-600' },
   { id: 'sinkronisasi', label: 'Sinkronisasi', icon: RefreshCw, boxBg: 'bg-slate-50 text-slate-600' },
   { id: 'distribusi', label: 'Kirim WA', icon: Send, boxBg: 'bg-sky-50 text-sky-600' },
@@ -96,15 +98,41 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [globalSearch, setGlobalSearch] = useState('')
+  const [stats, setStats] = useState({
+    kehadiran: 0,
+    growthFaltering: 0,
+    totalBalita: 0,
+    pendingSync: 0,
+    sudahDitimbang: 0,
+    persentaseDitimbang: 0,
+    deltaDitimbang: 0,
+    trendPartisipasi: []
+  })
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const data = await fetchRoleDashboardData('/kader/dashboard')
+        if (data) {
+          setStats({
+            kehadiran: Math.round((data.sudah_ditimbang_bulan_ini / data.total_balita) * 100) || 0,
+            growthFaltering: data.risiko_faltering_count || 0,
+            totalBalita: data.total_balita || 0,
+            pendingSync: data.offline_queue_pending || 0,
+            sudahDitimbang: data.sudah_ditimbang_bulan_ini || 0,
+            persentaseDitimbang: Math.round((data.sudah_ditimbang_bulan_ini / data.total_balita) * 100) || 0,
+            deltaDitimbang: 0,
+            trendPartisipasi: data.trend_partisipasi || []
+          })
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats:', err)
+      }
+    }
+    fetchStats()
+  }, [])
 
   const currentMenu = KADER_MENUS.find((m) => m.id === activeMenuId) || KADER_MENUS[0]
-
-  const stats = {
-    kehadiran: 85,
-    growthFaltering: 4,
-    totalBalita: 48,
-    pendingSync: 0
-  }
 
   const renderContent = () => {
     if (activeMenuId === 'dashboard') {
@@ -112,43 +140,52 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
         <div className="space-y-6">
           {/* Top 3 Featured Cards with Progress Rings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-5 rounded-2xl bg-[#1e293b] text-white flex items-center justify-between gap-4 shadow-sm text-left">
+            <button 
+              onClick={() => setActiveMenuId('balita')}
+              className="p-5 rounded-2xl bg-[#1e293b] text-white flex items-center justify-between gap-4 shadow-sm text-left group"
+            >
               <div className="space-y-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white text-[#1e293b] flex items-center justify-center shadow-xs">
                   <Baby className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold truncate">Kehadiran Balita</h3>
-                  <p className="text-[12px] text-white/80 truncate">41 / 48 Anak (RW 04)</p>
+                  <p className="text-[12px] text-white/80 truncate">{stats.sudahDitimbang} / {stats.totalBalita} Anak (RW 04)</p>
                 </div>
               </div>
-              <CircularProgressRing percentage={stats.kehadiran} isPrimaryCard={true} />
+              <CircularProgressRing percentage={stats.kehadiran} isPrimaryCard={true} accentColor="white" />
             </button>
 
-            <button className="p-5 rounded-2xl bg-white border flex items-center justify-between gap-4 shadow-2xs text-left">
+            <button 
+              onClick={() => setActiveMenuId('balita')}
+              className="p-5 rounded-2xl bg-white border border-slate-100 flex items-center justify-between gap-4 shadow-2xs text-left group hover:border-[#1e293b] transition-all"
+            >
               <div className="space-y-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-slate-800">Growth Faltering</h3>
-                  <p className="text-[12px] text-slate-400">4 Anak Perlu Atensi</p>
+                  <p className="text-[12px] text-slate-400">{stats.growthFaltering} Anak Perlu Atensi</p>
                 </div>
               </div>
-              <CircularProgressRing percentage={12} isPrimaryCard={false} accentColor="#e11d48" />
+              <CircularProgressRing percentage={Math.round((stats.growthFaltering / stats.totalBalita) * 100) || 0} isPrimaryCard={false} accentColor="#e11d48" />
             </button>
 
-            <button className="p-5 rounded-2xl bg-white border flex items-center justify-between gap-4 shadow-2xs text-left">
+            <button 
+              onClick={() => setActiveMenuId('sinkronisasi')}
+              className="p-5 rounded-2xl bg-white border border-slate-100 flex items-center justify-between gap-4 shadow-2xs text-left group hover:border-[#1e293b] transition-all"
+            >
               <div className="space-y-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                   <RefreshCw className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-slate-800">Sinkronisasi</h3>
-                  <p className="text-[12px] text-slate-400">Data Tersinkron (Online)</p>
+                  <p className="text-[12px] text-slate-400">{stats.pendingSync === 0 ? 'Data Tersinkron' : `${stats.pendingSync} Data Tertunda`}</p>
                 </div>
               </div>
-              <CircularProgressRing percentage={100} isPrimaryCard={false} accentColor="#2563eb" />
+              <CircularProgressRing percentage={stats.pendingSync === 0 ? 100 : 70} isPrimaryCard={false} accentColor="#2563eb" />
             </button>
           </div>
 
@@ -156,33 +193,40 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
           <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">Akses Cepat Modul Meja Layanan</h2>
+              <span className="text-[11px] text-slate-400">{currentMenu.label}</span>
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
-              {QUICK_ACCESS_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveMenuId(item.id)}
-                  className="flex flex-col items-center gap-2 text-center group"
-                >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border border-slate-100 bg-white shadow-2xs transition-all group-hover:border-[#2597d0]/40 group-hover:bg-[#f2f9ff]`}>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${item.boxBg}`}>
-                      <item.icon className="w-4 h-4" />
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+              {QUICK_ACCESS_ITEMS.map((item) => {
+                const isCurrent = activeMenuId === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveMenuId(item.id)}
+                    className="flex flex-col items-center gap-2 text-center group"
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${isCurrent ? 'bg-[#1e293b] border-[#1e293b] shadow-sm' : 'border-slate-100 bg-white shadow-2xs group-hover:border-[#1e293b]/40 group-hover:bg-slate-50'}`}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-white/20 text-white' : item.boxBg}`}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[11px] font-medium text-slate-600 truncate w-full">{item.label}</span>
-                </button>
-              ))}
-              <button className="flex flex-col items-center gap-2 text-center group">
-                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 group-hover:border-[#2597d0] group-hover:text-[#2597d0] group-hover:bg-[#f2f9ff] transition-all">
+                    <span className={`text-[11px] font-medium truncate w-full ${isCurrent ? 'text-[#1e293b] font-bold' : 'text-slate-600'}`}>{item.label}</span>
+                  </button>
+                )
+              })}
+              <button 
+                onClick={() => setActiveMenuId('balita')}
+                className="flex flex-col items-center gap-2 text-center group"
+              >
+                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 group-hover:border-[#1e293b] group-hover:text-[#1e293b] group-hover:bg-slate-50 transition-all">
                   <Plus className="w-5 h-5" />
                 </div>
-                <span className="text-[11px] font-medium text-slate-500">Lainnya</span>
+                <span className="text-[11px] font-medium text-slate-500 group-hover:text-[#1e293b]">Tambah</span>
               </button>
             </div>
           </section>
 
-          {/* Detailed View for Active Module (Mocking Workspace) */}
-          <KaderHomePage user={user} onMenuChange={setActiveMenuId} />
+          {/* Detailed View for Active Module */}
+          <KaderHomePage user={user} onMenuChange={setActiveMenuId} stats={stats} />
         </div>
       )
     }
@@ -194,7 +238,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       case 'nutri-chef': return <KaderNutriChefPage />
       case 'sinkronisasi': return <KaderSinkronisasiPage />
       case 'distribusi': return <KaderDistribusiPage />
-      default: return <KaderHomePage user={user} onMenuChange={setActiveMenuId} />
+      default: return <KaderHomePage user={user} onMenuChange={setActiveMenuId} stats={stats} />
     }
   }
 
@@ -203,7 +247,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       {/* Mobile Header */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b sticky top-0 z-40">
         <div className="flex items-center gap-2">
-           <div className="w-8 h-8 rounded-lg bg-[#1e293b] text-white flex items-center justify-center"><Stethoscope className="w-4 h-4"/></div>
+           <div className="w-8 h-8 rounded-lg bg-[#1e293b] text-white flex items-center justify-center shadow-xs"><Stethoscope className="w-4 h-4"/></div>
            <span className="font-bold text-slate-800">Tumbuhin</span>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2"><Menu className="w-6 h-6 text-[#1e293b]"/></button>
@@ -234,7 +278,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
               placeholder="Cari balita, NIK, atau jadwal..."
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-white border border-slate-100 text-[13px] shadow-2xs focus:outline-none focus:border-[#2597d0]"
+              className="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-white border border-slate-100 text-[13px] shadow-2xs focus:outline-none focus:border-[#1e293b]"
             />
           </div>
 
@@ -258,7 +302,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       </main>
 
       {/* Right Panel */}
-      <KaderRightPanel user={user} activeMenu={currentMenu} />
+      <KaderRightPanel user={user} activeMenu={currentMenu} stats={stats} />
     </div>
   )
 }

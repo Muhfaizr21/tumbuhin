@@ -8,8 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// RunExtendedMigrations executes DDL for the clinical, GIS, home visit, and PMT evaluation tables.
-// All migrations (Batch 1 & Batch 2) are unified in this file and are idempotent (safe to run on every boot).
+
 func RunExtendedMigrations(db *pgxpool.Pool) error {
 	if db == nil {
 		log.Println("[MIGRATION] Skipped: database pool is nil")
@@ -58,7 +57,11 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		latitude DOUBLE PRECISION DEFAULT -6.5950378,
 		longitude DOUBLE PRECISION DEFAULT 106.816635,
 		parent_name VARCHAR(150) DEFAULT '',
+		parent_father_name VARCHAR(150) DEFAULT '',
 		parent_phone VARCHAR(30) DEFAULT '',
+		birth_weight DOUBLE PRECISION DEFAULT 0.0,
+		birth_height DOUBLE PRECISION DEFAULT 0.0,
+		notes TEXT DEFAULT '',
 		magic_token VARCHAR(128) DEFAULT '',
 		is_active BOOLEAN DEFAULT TRUE,
 		created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -85,9 +88,12 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		child_id UUID NOT NULL REFERENCES children(id) ON DELETE CASCADE,
 		measured_at DATE NOT NULL DEFAULT CURRENT_DATE,
-		age_months INT NOT NULL,
+		age_months INT DEFAULT 12,
 		weight_kg DOUBLE PRECISION NOT NULL,
 		height_cm DOUBLE PRECISION NOT NULL,
+		head_circumference DOUBLE PRECISION DEFAULT 0.0,
+		arm_circumference DOUBLE PRECISION DEFAULT 0.0,
+		measurement_pos VARCHAR(10) DEFAULT 'berdiri',
 		zscore_wfa DOUBLE PRECISION DEFAULT 0.0,
 		zscore_hfa DOUBLE PRECISION DEFAULT 0.0,
 		zscore_wfh DOUBLE PRECISION DEFAULT 0.0,
@@ -192,7 +198,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 
 	log.Println("[MIGRATION] Extended clinical, GIS & PMT tables created successfully.")
 
-	// Seed Posyandu master data if empty
+	
 	seedPosyanduSQL := `
 	INSERT INTO posyandus (name, village_name, rw_code, rt_code, latitude, longitude)
 	SELECT name, village_name, rw_code, rt_code, latitude, longitude
@@ -212,7 +218,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Printf("[MIGRATION WARNING] Failed seeding posyandus: %v", err)
 	}
 
-	// Seed WHO LMS reference standards sample (idempotent ON CONFLICT DO NOTHING)
+	
 	seedWhoSQL := `
 	INSERT INTO who_lms_standards (indicator, gender, age_months, l_val, m_val, s_val)
 	VALUES
@@ -232,7 +238,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Printf("[MIGRATION WARNING] Failed seeding WHO standards: %v", err)
 	}
 
-	// Pembersihan data dummy/seeder balita agar database murni hanya berisi data riil pengguna
+	
 	cleanupDummySQL := `
 	DELETE FROM children 
 	WHERE nik_hash IN ('nik_hash_001', 'nik_hash_002', 'nik_hash_003', 'nik_hash_004') 
@@ -247,7 +253,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	return nil
 }
 
-// RunBatch2Migrations is retained for compatibility, delegating to the unified migration runner.
+
 func RunBatch2Migrations(db *pgxpool.Pool) error {
 	return nil
 }

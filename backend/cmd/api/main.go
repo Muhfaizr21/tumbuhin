@@ -17,6 +17,7 @@ import (
 	bidanSupervisiCtrl "tumbuhin-backend/controllers/bidan/supervisi"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	kaderBalitaCtrl "tumbuhin-backend/controllers/kader/balita"
+	kaderTimbangCtrl "tumbuhin-backend/controllers/kader/timbang"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/database"
@@ -32,6 +33,7 @@ import (
 	bidanSupervisiRepo "tumbuhin-backend/repositories/bidan/supervisi"
 	bidanLaporanRepo "tumbuhin-backend/repositories/bidan/laporan"
 	kaderBalitaRepo "tumbuhin-backend/repositories/kader/balita"
+	kaderTimbangRepo "tumbuhin-backend/repositories/kader/timbang"
 	kaderDashRepo "tumbuhin-backend/repositories/kader/dashboard"
 	ortuDashRepo "tumbuhin-backend/repositories/ortu/dashboard"
 	"tumbuhin-backend/routes"
@@ -48,6 +50,7 @@ import (
 	bidanSupervisiService "tumbuhin-backend/services/bidan/supervisi"
 	bidanLaporanService "tumbuhin-backend/services/bidan/laporan"
 	kaderBalitaService "tumbuhin-backend/services/kader/balita"
+	kaderTimbangService "tumbuhin-backend/services/kader/timbang"
 	kaderDashService "tumbuhin-backend/services/kader/dashboard"
 	ortuDashService "tumbuhin-backend/services/ortu/dashboard"
 )
@@ -66,7 +69,8 @@ func main() {
 	userRepository := repositories.NewInMemoryUserRepository()
 	authRepository := authRepo.NewPostgresAuthRepository(cfg.DBPool)
 	kaderBalitaRepository := kaderBalitaRepo.NewRepository(cfg.DBPool)
-	kaderDashRepository := kaderDashRepo.NewRepository()
+	kaderTimbangRepository := kaderTimbangRepo.NewRepository(cfg.DBPool)
+	kaderDashRepository := kaderDashRepo.NewRepository(cfg.DBPool)
 	bidanDashRepository := bidanDashRepo.NewRepository(cfg.DBPool)
 	bidanGISRepository := bidanGISRepo.NewRepository(cfg.DBPool)
 	bidanIntervensiRepository := bidanIntervensiRepo.NewRepository(cfg.DBPool)
@@ -83,6 +87,7 @@ func main() {
 	loginSvc := authLoginService.NewService(authRepository, cfg.JWTSecret)
 	registerSvc := authRegisterService.NewService(authRepository, cfg.JWTSecret)
 	kaderBalitaSvc := kaderBalitaService.NewService(kaderBalitaRepository)
+	kaderTimbangSvc := kaderTimbangService.NewService(kaderTimbangRepository)
 	kaderDashSvc := kaderDashService.NewService(kaderDashRepository)
 	bidanDashSvc := bidanDashService.NewService(bidanDashRepository)
 	bidanGISSvc := bidanGISService.NewService(bidanGISRepository)
@@ -103,6 +108,7 @@ func main() {
 		AuthRegisterCtrl:       authRegisterCtrl.NewController(registerSvc),
 		KaderDashCtrl:          kaderDashCtrl.NewController(kaderDashSvc),
 		KaderBalitaCtrl:        kaderBalitaCtrl.NewController(kaderBalitaSvc),
+		KaderTimbangCtrl:       kaderTimbangCtrl.NewController(kaderTimbangSvc),
 		BidanDashCtrl:          bidanDashCtrl.NewController(bidanDashSvc),
 		BidanGISCtrl:           bidanGISCtrl.NewController(bidanGISSvc),
 		BidanPrioritasCtrl:     bidanPrioritasCtrl.NewController(bidanPrioritasSvc),

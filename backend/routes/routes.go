@@ -16,6 +16,7 @@ import (
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	bidanSupervisiCtrl "tumbuhin-backend/controllers/bidan/supervisi"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
+	kaderTimbangCtrl "tumbuhin-backend/controllers/kader/timbang"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	kaderBalitaCtrl "tumbuhin-backend/controllers/kader/balita"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
@@ -34,6 +35,7 @@ type RouteDependencies struct {
 	AuthRegisterCtrl       *authRegisterCtrl.Controller
 	KaderDashCtrl          *kaderDashCtrl.Controller
 	KaderBalitaCtrl        *kaderBalitaCtrl.Controller
+	KaderTimbangCtrl       *kaderTimbangCtrl.Controller
 	BidanDashCtrl          *bidanDashCtrl.Controller
 	BidanGISCtrl           *bidanGISCtrl.Controller
 	BidanPrioritasCtrl     *bidanPrioritasCtrl.Controller
@@ -90,6 +92,10 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		{
 			kaderGroup.GET("/dashboard", deps.KaderDashCtrl.HandleGetOverview)
 			kaderGroup.GET("/balita", deps.KaderBalitaCtrl.HandleGetChildren)
+			kaderGroup.POST("/balita", deps.KaderBalitaCtrl.HandleCreateChild)
+			kaderGroup.PUT("/balita/:id", deps.KaderBalitaCtrl.HandleUpdateChild)
+			kaderGroup.DELETE("/balita/:id", deps.KaderBalitaCtrl.HandleDeleteChild)
+			kaderGroup.POST("/timbang", deps.KaderTimbangCtrl.HandleSaveMeasurement)
 		}
 
 		// Role 2: Bidan Desa Routes (/api/v1/bidan/...)

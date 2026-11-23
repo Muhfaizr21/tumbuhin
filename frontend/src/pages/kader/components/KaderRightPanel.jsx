@@ -1,6 +1,6 @@
 import { Stethoscope, User, Calendar, ClipboardCheck } from 'lucide-react'
 
-export default function KaderRightPanel({ user, activeMenu, onNavigateToMenu }) {
+export default function KaderRightPanel({ user, activeMenu, onNavigateToMenu, stats }) {
   return (
     <aside className="w-80 bg-white border-l border-slate-100 p-6 hidden xl:flex flex-col gap-6">
       <div className="flex items-center gap-3">
@@ -16,8 +16,8 @@ export default function KaderRightPanel({ user, activeMenu, onNavigateToMenu }) 
       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
         <h4 className="text-[12px] font-bold uppercase text-slate-400 mb-3">Aktivitas Terkini</h4>
         <div className="space-y-3 text-[13px] text-slate-600">
-          <p>• Selesai timbang 41 balita.</p>
-          <p>• 0 antrean sinkronisasi.</p>
+          <p>• Selesai timbang {stats?.sudahDitimbang || 0} balita.</p>
+          <p>• {stats?.pendingSync || 0} antrean sinkronisasi.</p>
         </div>
       </div>
     </aside>

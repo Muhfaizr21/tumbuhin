@@ -10,12 +10,14 @@ import {
   Save,
   Trash2
 } from 'lucide-react'
+import { postRoleData } from '../../lib/authApi' // Import fungsi API
 
 export default function KaderOCRPage() {
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [extractedData, setExtractedData] = useState(null)
+  const [isSaving, setIsSaving] = useState(false) // State loading simpan
   const fileInputRef = useRef(null)
 
   const handleFileChange = (e) => {
@@ -30,13 +32,38 @@ export default function KaderOCRPage() {
   const simulateOCR = () => {
     setIsProcessing(true)
     setTimeout(() => {
+      // Data simulasi
       setExtractedData([
-        { bulan: 'Jan 2026', usia: 12, berat: 8.5, tinggi: 74.0 },
-        { bulan: 'Feb 2026', usia: 13, berat: 8.7, tinggi: 75.2 },
-        { bulan: 'Mar 2026', usia: 14, berat: 8.8, tinggi: 76.5 },
+        { balitaId: '32b48645-783d-493d-986b-4331a12afd0a', bulan: 'Jan 2026', usia: 12, berat: 8.5, tinggi: 74.0 },
       ])
       setIsProcessing(false)
     }, 2500)
+  }
+
+  const handleSaveData = async (data) => {
+    setIsSaving(true)
+    try {
+      // Kirim data per baris ke API timbang
+      for (const row of data) {
+        await postRoleData('/kader/timbang', {
+            balitaId: row.balitaId,
+            tanggal: '2026-11-23', // Tanggal default
+            berat: row.berat,
+            tinggi: row.tinggi,
+            posisi: 'standing',
+            lingkarKepala: 20.0,
+            lila: 5.0
+        })
+      }
+      alert('Data berhasil disimpan ke database!')
+      setExtractedData(null)
+      setPreview(null)
+      setFile(null)
+    } catch (err) {
+      alert('Gagal menyimpan: ' + err.message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -142,9 +169,13 @@ export default function KaderOCRPage() {
                   >
                     Ulangi Scan
                   </button>
-                  <button className="py-3 rounded-2xl bg-[#070709] text-white font-bold text-sm flex items-center justify-center gap-2">
-                    <Save className="w-4 h-4" />
-                    Simpan Riwayat
+                  <button 
+                    onClick={() => handleSaveData(extractedData)}
+                    disabled={isSaving}
+                    className="py-3 rounded-2xl bg-[#070709] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-black/90 transition-all"
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {isSaving ? 'Menyimpan...' : 'Simpan Riwayat'}
                   </button>
                 </div>
               </div>
