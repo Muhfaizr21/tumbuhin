@@ -11,6 +11,7 @@ import {
   Trash2
 } from 'lucide-react'
 import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+import { recognizeKmsImage } from '../../lib/kmsOcr'
 
 export default function KaderOCRPage() {
   const [file, setFile] = useState(null)
@@ -43,22 +44,33 @@ export default function KaderOCRPage() {
     }
   }
 
-  const simulateOCR = () => {
+  const [ocrProgress, setOcrProgress] = useState(0)
+
+  const simulateOCR = async () => {
     if (!selectedBalitaId) {
       alert('Pilih balita terlebih dahulu di dropdown')
       return
     }
+    if (!preview) return
+
     setIsProcessing(true)
-    setTimeout(() => {
-      // Data simulasi — nanti diganti Vision AI sungguhan
-      const mockDate = new Date().toISOString().split('T')[0]
-      setExtractedData([
-        { balitaId: selectedBalitaId, bulan: 'Jan 2026', tanggal: '2026-01-15', usia: 12, berat: 8.5, tinggi: 74.0 },
-        { balitaId: selectedBalitaId, bulan: 'Feb 2026', tanggal: '2026-02-15', usia: 13, berat: 8.7, tinggi: 75.2 },
-        { balitaId: selectedBalitaId, bulan: 'Mar 2026', tanggal: '2026-03-15', usia: 14, berat: 8.8, tinggi: 76.5 },
-      ])
+    setOcrProgress(0)
+    try {
+      const { text, rows } = await recognizeKmsImage(preview, (p) => setOcrProgress(p))
+      console.log('OCR text:', text)
+      if (!rows.length) {
+        alert('Tidak berhasil membaca tabel KMS. Pastikan foto jelas dan tabel terlihat penuh. Coba foto ulang.')
+        setIsProcessing(false)
+        return
+      }
+      const withBalita = rows.map((r) => ({ ...r, balitaId: selectedBalitaId }))
+      setExtractedData(withBalita)
+    } catch (err) {
+      console.error('OCR error:', err)
+      alert('Gagal memproses gambar: ' + err.message)
+    } finally {
       setIsProcessing(false)
-    }, 2500)
+    }
   }
 
   const handleSaveData = async (data) => {
@@ -154,7 +166,7 @@ export default function KaderOCRPage() {
           {isProcessing && (
             <div className="w-full py-4 rounded-2xl bg-gray-100 text-gray-500 font-bold flex items-center justify-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin" />
-              Menganalisis Tabel...
+              Membaca Tabel... {ocrProgress}%
             </div>
           )}
         </div>
@@ -167,7 +179,7 @@ export default function KaderOCRPage() {
                   <FileText className="w-5 h-5 text-[#2597d0]" />
                   <h3 className="font-bold text-[#070709]">Hasil Ekstraksi AI</h3>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase">Vision AI Terverifikasi</span>
+                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase">OCR Terbaca</span>
               </div>
                
               <div className="p-6">
