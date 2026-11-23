@@ -11,7 +11,38 @@ import {
   BookOpen,
   Info
 } from 'lucide-react'
-import { fetchRoleDashboardData } from '../../lib/authApi'
+import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+
+// Helper kirim WA
+const sendWhatsApp = (balita, recipe) => {
+  if (!balita || !recipe) return
+  let phone = String(recipe.recipientWa || balita.no_wa || balita.noWA || '').replace(/[^0-9]/g, '')
+  if (!phone || phone === '-') {
+    alert('Nomor WhatsApp Ibu belum terisi. Lengkapi data balita dulu.')
+    return
+  }
+  if (phone.startsWith('0')) phone = '62' + phone.slice(1)
+  if (!phone.startsWith('62')) phone = '62' + phone
+
+  const message = `*Rekomendasi Resep MPASI Lokal (AI Nutri-Chef)*
+Untuk: ${recipe.balitaNama || balita.nama}
+
+Menu: ${recipe.title}
+Target Usia: ${recipe.targetAge}
+Tekstur: ${recipe.texture}
+Energi: ${recipe.energy} | Protein: ${recipe.protein}
+Estimasi Biaya: Rp ${recipe.totalCost}
+
+*Bahan:*
+${recipe.ingredients.map((i) => `- ${i.name} (${i.qty})`).join('\n')}
+
+*Langkah Memasak:*
+${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+*Sumber:* ${recipe.citation}`
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+}
 
 const LOCAL_FOODS = [
   { id: 'telur', name: 'Telur Ayam', price: 2000, unit: 'butir', cat: 'Protein Hewani' },
@@ -58,36 +89,22 @@ export default function KaderNutriChefPage() {
     )
   }
 
-  const generateRecipe = () => {
+  const generateRecipe = async () => {
     if (!selectedBalitaId) return
     setIsGenerating(true)
     
-    // Simulasi RAG AI + Gemini Structured Output
-    setTimeout(() => {
-      setRecipe({
-        title: 'Bubur Lumat Telur Bayam Gurih',
-        targetAge: '6-8 Bulan',
-        texture: 'Lumat / Saring',
-        energy: '145 kkal',
-        protein: '8.2 g',
-        ingredients: [
-          { name: 'Telur Ayam', qty: '1 butir', cost: 2000 },
-          { name: 'Bayam', qty: '1/2 ikat', cost: 1000 },
-          { name: 'Nasi Tim', qty: '3 sdm', cost: 500 },
-          { name: 'Minyak Kelapa', qty: '1 sdt', cost: 200 },
-        ],
-        steps: [
-          'Cuci bersih bayam dan ambil daunnya saja.',
-          'Rebus telur hingga matang, lalu ambil kuningnya.',
-          'Masak nasi tim bersama bayam hingga lunak.',
-          'Saring bubur menggunakan saringan kawat hingga lumat.',
-          'Campurkan kuning telur dan minyak kelapa, aduk rata.'
-        ],
-        citation: 'Buku KIA Kemenkes RI 2024, Hal 42: PMBA Usia 6-8 Bulan.',
-        totalCost: 3700
-      })
-      setIsGenerating(false)
-    }, 2000)
+    try {
+        const result = await postRoleData('/kader/nutrichef/generate', {
+            balitaId: selectedBalitaId,
+            budget: budget,
+            foods: selectedFoods
+        })
+        setRecipe(result)
+    } catch (err) {
+        alert('Gagal generate resep: ' + err.message)
+    } finally {
+        setIsGenerating(false)
+    }
   }
 
   const handleSpeak = () => {
@@ -285,7 +302,10 @@ export default function KaderNutriChefPage() {
                   <Volume2 className="w-4 h-4" />
                   Dengar Suara
                 </button>
-                <button className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                <button
+                  onClick={() => sendWhatsApp(selectedBalita, recipe)}
+                  className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                >
                   <Send className="w-4 h-4" />
                   Kirim WA Ibu
                 </button>
