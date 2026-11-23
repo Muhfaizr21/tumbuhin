@@ -157,6 +157,14 @@ export async function fetchRoleDashboardData(rolePath) {
   return safeParseResponse(response, 'Gagal memuat data dasbor')
 }
 
+export async function fetchPublicChildCard(magicToken) {
+  const response = await fetch(
+    `${API_BASE_URL}/public/child/${encodeURIComponent(magicToken)}`,
+    { method: 'GET', headers: { 'Content-Type': 'application/json' } },
+  )
+  return safeParseResponse(response, 'Gagal memuat Kartu Gizi Digital')
+}
+
 export async function postRoleData(path, data) {
   const token = getStoredToken()
   const headers = { 'Content-Type': 'application/json' }

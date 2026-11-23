@@ -68,11 +68,15 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
   })
 
   const handleRegSuccess = (result) => {
-    loadBalitaData() // Refresh from database
     setShowRegForm(false)
     setSelectedBalita(null)
-    const msg = selectedBalita?.id ? 'diperbarui' : 'didaftarkan'
     const name = result?.nama || selectedBalita?.nama || 'Balita'
+    if (result?.offline) {
+      alert(`Data ${name} masuk antrean offline. Buka menu Sinkronisasi setelah sinyal tersedia.`)
+      return
+    }
+    loadBalitaData() // Refresh from database
+    const msg = selectedBalita?.id ? 'diperbarui' : 'didaftarkan'
     alert(`Berhasil ${msg} data ${name}.`)
   }
 
@@ -92,22 +96,38 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     }
   }
 
+  // Keep raw API fields (magic_token, berat_terakhir, ...) while exposing camelCase aliases.
+  const toSelected = (balita) => ({
+    ...balita,
+    jenisKelamin: balita.jenis_kelamin,
+    namaOrtu: balita.nama_ibu,
+    rtRw: balita.rt_rw,
+    statusGizi: balita.status_gizi,
+    statusTimbang: balita.status_timbang,
+    magicToken: balita.magic_token,
+  })
+
   const handleEditBalita = (balita) => {
     // Map list data to form data format
+    const rtRw = balita.rt_rw || balita.rtRw || ''
+    const hasCoord = Number(balita.latitude) !== 0 && Number(balita.longitude) !== 0
     const editData = {
       id: balita.id,
       nik: '', // NIK usually not returned or hidden
       nama: balita.nama,
-      jenisKelamin: balita.jenisKelamin,
-      tanggalLahir: balita.tanggalLahir || '', 
-      beratLahir: balita.beratLahir || '',
-      panjangLahir: balita.panjangLahir || '',
-      namaIbu: balita.namaOrtu,
-      namaAyah: balita.namaAyah || '',
-      noWA: balita.noWA || '',
-      rt: balita.rtRw ? balita.rtRw.split('/')[0].replace('RT ', '').trim() : '',
-      rw: '04',
-      alergi: balita.alergi || ''
+      jenisKelamin: balita.jenis_kelamin || balita.jenisKelamin || 'L',
+      tanggalLahir: balita.tanggal_lahir || balita.tanggalLahir || '',
+      beratLahir: balita.berat_lahir || balita.beratLahir || '',
+      panjangLahir: balita.panjang_lahir || balita.panjangLahir || '',
+      namaIbu: balita.nama_ibu || balita.namaOrtu || '',
+      namaAyah: balita.nama_ayah || balita.namaAyah || '',
+      noWA: balita.no_wa || balita.noWA || '',
+      rt: rtRw ? rtRw.split('/')[0].replace('RT ', '').trim() : '',
+      rw: rtRw ? rtRw.split('/')[1]?.replace('RW ', '').trim() : '04',
+      alergi: balita.alergi || '',
+      koordinat: hasCoord
+        ? { lat: Number(balita.latitude), lng: Number(balita.longitude), accuracy: 0 }
+        : null
     }
     setSelectedBalita(editData)
     setShowRegForm(true)
@@ -121,14 +141,12 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
           <div className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#2597d0] mb-1">
             <ShieldCheck className="w-4 h-4" />
             <span>Manajemen Data Balita RW 04</span>
-            <span>•</span>
-            <span className="text-emerald-600">Database PostgreSQL Aktif</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#070709]">
             Direktori Profil Balita
           </h1>
           <p className="text-sm text-[#60606c] mt-1">
-            {balitaList.length} Anak Terdaftar • Enkripsi SHA-256 Aktif • Terhubung ke Server Backend
+            {balitaList.length} Anak Terdaftar • Enkripsi SHA-256 Aktif
           </p>
         </div>
 
@@ -204,16 +222,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
                 <tr 
                   key={balita.id}
                   onClick={() => {
-                    setSelectedBalita({
-                      id: balita.id,
-                      nama: balita.nama,
-                      usia: balita.usia,
-                      jenisKelamin: balita.jenis_kelamin,
-                      namaOrtu: balita.nama_ibu,
-                      rtRw: balita.rt_rw,
-                      statusGizi: balita.status_gizi,
-                      statusTimbang: balita.status_timbang
-                    })
+                    setSelectedBalita(toSelected(balita))
                     setShowDetail(true)
                   }}
                   className="hover:bg-slate-50 cursor-pointer transition-colors"
@@ -234,17 +243,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          const bData = {
-                            id: balita.id,
-                            nama: balita.nama,
-                            usia: balita.usia,
-                            jenisKelamin: balita.jenis_kelamin,
-                            namaOrtu: balita.nama_ibu,
-                            rtRw: balita.rt_rw,
-                            statusGizi: balita.status_gizi,
-                            statusTimbang: balita.status_timbang
-                          }
-                          setSelectedBalita(bData)
+                          setSelectedBalita(toSelected(balita))
                           setShowDetail(true)
                         }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-[#2597d0] hover:bg-slate-100 transition-colors"
@@ -255,24 +254,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          const bData = {
-                            id: balita.id,
-                            nama: balita.nama,
-                            usia: balita.usia,
-                            jenisKelamin: balita.jenis_kelamin,
-                            namaOrtu: balita.nama_ibu,
-                            rtRw: balita.rt_rw,
-                            statusGizi: balita.status_gizi,
-                            statusTimbang: balita.status_timbang,
-                            // Pass additional fields if available in balita object
-                            tanggalLahir: balita.tanggal_lahir,
-                            beratLahir: balita.berat_lahir,
-                            panjangLahir: balita.panjang_lahir,
-                            namaAyah: balita.nama_ayah,
-                            noWA: balita.no_wa,
-                            alergi: balita.alergi
-                          }
-                          handleEditBalita(bData)
+                          handleEditBalita(toSelected(balita))
                         }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 transition-colors"
                         title="Edit Data"
@@ -282,16 +264,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          setSelectedBalita({
-                            id: balita.id,
-                            nama: balita.nama,
-                            usia: balita.usia,
-                            jenisKelamin: balita.jenis_kelamin,
-                            namaOrtu: balita.nama_ibu,
-                            rtRw: balita.rt_rw,
-                            statusGizi: balita.status_gizi,
-                            statusTimbang: balita.status_timbang
-                          })
+                          setSelectedBalita(toSelected(balita))
                           setShowQR(true)
                         }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-[#2597d0] hover:bg-slate-100 transition-colors"

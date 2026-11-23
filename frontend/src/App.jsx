@@ -54,7 +54,10 @@ function parseViewFromHash(hash) {
   }
   if (clean.startsWith('admin')) return { type: 'dashboard', role: 'admin' }
   if (clean.startsWith('ortu') || clean.startsWith('p/')) {
-    return { type: 'dashboard', role: 'ortu' }
+    const magicToken = clean.startsWith('p/')
+      ? decodeURIComponent(clean.slice(2).split('?')[0])
+      : ''
+    return { type: 'dashboard', role: 'ortu', magicToken }
   }
   return { type: 'landing' }
 }
@@ -246,6 +249,7 @@ function AppContent() {
       return (
         <OrtuDashboard
           user={currentUser}
+          magicToken={viewState.magicToken}
           onLogout={handleLogout}
           onSwitchRole={handleSwitchRole}
           tts={tts}

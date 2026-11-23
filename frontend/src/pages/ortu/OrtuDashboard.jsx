@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Baby, CalendarCheck, ChefHat, LineChart, Volume2, Search, Bell, Menu, X, CheckCircle2, Stethoscope, Sparkles, ArrowRight
 } from 'lucide-react'
 import KaderNavigationShell from '../kader/components/KaderNavigationShell'
 import CircularProgressRing from '../bidan/components/CircularProgressRing'
+import { fetchPublicChildCard } from '../../lib/authApi'
 
 const ORTU_MENUS = [
   { 
@@ -49,15 +50,37 @@ const ORTU_MENUS = [
   },
 ]
 
-export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
+export default function OrtuDashboard({ user, magicToken, onLogout, onSwitchRole, tts }) {
   const [activeMenuId, setActiveMenuId] = useState('ringkasan')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [globalSearch, setGlobalSearch] = useState('')
+  const [card, setCard] = useState(null)
+  const [cardError, setCardError] = useState('')
+
+  useEffect(() => {
+    if (!magicToken) return
+    let active = true
+    fetchPublicChildCard(magicToken)
+      .then((data) => {
+        if (active) setCard(data)
+      })
+      .catch((err) => {
+        if (active) setCardError(err.message || 'Kartu Gizi Digital tidak ditemukan.')
+      })
+    return () => { active = false }
+  }, [magicToken])
 
   const currentMenu = ORTU_MENUS.find((m) => m.id === activeMenuId) || ORTU_MENUS[0]
+  const childName = card?.child_name || 'Andi Pratama'
+  const ageMonths = card?.age_months ?? 14
+  const weight = Number(card?.last_weight_kg || 9.8)
+  const height = Number(card?.last_height_cm || 76.5)
+  const statusLabel = card?.friendly_status || 'Status Gizi Baik (Pita Hijau KMS)'
+  const menuName = card?.recommended_menu || 'Nasi Tim Ikan Lele & Sari Daun Kelor'
+  const nextVisit = card?.next_posyandu_date || 'Tanggal 12 bulan depan • Pukul 08.00 WIB'
 
   const handleReadAloud = (text) => {
-    const sampleText = text || 'Kartu Gizi Digital Ananda Andi Pratama, usia 14 bulan. Berat badan terakhir 9 koma 8 kilogram, tinggi badan 76 koma 5 sentimeter. Status gizi baik di pita hijau KMS.'
+    const sampleText = text || `Kartu Gizi Digital Ananda ${childName}, usia ${ageMonths} bulan. Berat badan terakhir ${weight} kilogram, tinggi badan ${height} sentimeter. ${statusLabel}.`
     if (tts?.speak) tts.speak(sampleText)
     else if (window.speechSynthesis) {
         window.speechSynthesis.cancel()
@@ -75,18 +98,18 @@ export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-6 rounded-2xl bg-[#1e293b] text-white flex items-center justify-between shadow-sm">
                 <div>
-                  <span className="px-2.5 py-1 rounded-lg bg-white/20 text-[11px] font-bold">Ananda Andi Pratama (14 Bln)</span>
-                  <h3 className="text-2xl font-bold mt-2">9.8 kg / 76.5 cm</h3>
-                  <p className="text-xs text-white/80 mt-1">Selisih kenaikan: +450 gram (Target KBM Tercapai)</p>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/20 text-[11px] font-bold">Ananda {childName} ({ageMonths} Bln)</span>
+                  <h3 className="text-2xl font-bold mt-2">{weight} kg / {height} cm</h3>
+                  <p className="text-xs text-white/80 mt-1">{card?.posyandu_name || 'Posyandu Melati 04'}</p>
                 </div>
                 <CircularProgressRing percentage={88} isPrimaryCard={true} accentColor="white" />
               </div>
 
               <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between">
                 <div>
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[11px] font-bold">Status Gizi Baik</span>
-                  <h3 className="text-lg font-bold text-slate-800 mt-2">Pita Hijau KMS</h3>
-                  <p className="text-xs text-slate-500 mt-1">Z-Score TB/U: -0.85 SD (Normal)</p>
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[11px] font-bold">Status Gizi</span>
+                  <h3 className="text-lg font-bold text-slate-800 mt-2">{statusLabel}</h3>
+                  <p className="text-xs text-slate-500 mt-1">Z-Score TB/U: {Number(card?.zscore_hfa || -0.85).toFixed(2)} SD</p>
                 </div>
                 <CircularProgressRing percentage={95} isPrimaryCard={false} accentColor="#10b981" />
               </div>
@@ -95,12 +118,12 @@ export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b pb-3">
                 <h3 className="font-bold text-slate-800">Catatan & Pesan Khusus Bidan Desa</h3>
-                <button onClick={() => handleReadAloud("Catatan Bidan Desa: Pertumbuhan Ananda Andi sangat baik. Pertahankan pemberian ASI dan protein hewani.")} className="text-xs font-semibold text-[#1e293b] flex items-center gap-1.5 hover:underline">
+                <button onClick={() => handleReadAloud(`Catatan Bidan Desa: ${statusLabel}. Pertahankan pemberian ASI dan protein hewani.`)} className="text-xs font-semibold text-[#1e293b] flex items-center gap-1.5 hover:underline">
                   <Volume2 className="w-4 h-4"/> Bacakan Pesan
                 </button>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
-                "Pertumbuhan tinggi dan berat badan Ananda Andi sangat baik bulan ini. Lanjutkan pemberian menu MPASI kaya protein hewani seperti ikan lele dan telur." — Bidan Rina Kartika, A.Md.Keb.
+                "{statusLabel}. Lanjutkan pemberian menu MPASI kaya protein hewani seperti ikan lele dan telur." — Bidan Rina Kartika, A.Md.Keb.
               </p>
             </div>
           </div>
@@ -125,7 +148,7 @@ export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
             <div className="flex items-center justify-between">
               <div>
                 <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-[11px] font-bold">Rekomendasi AI Nutri-Chef</span>
-                <h3 className="text-lg font-bold text-slate-800 mt-1">Nasi Tim Ikan Lele & Sari Daun Kelor</h3>
+                <h3 className="text-lg font-bold text-slate-800 mt-1">{menuName}</h3>
               </div>
               <button onClick={() => handleReadAloud("Menu MPASI hari ini: Nasi Tim Ikan Lele dan Sari Daun Kelor. Estimasi biaya 13 ribu 500 rupiah.")} className="px-3 py-1.5 rounded-xl bg-[#1e293b] text-white text-xs font-semibold flex items-center gap-1.5">
                 <Volume2 className="w-3.5 h-3.5"/> Dengar Resep
@@ -145,8 +168,8 @@ export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
             <h3 className="font-bold text-slate-800">Pengingat Jadwal Posyandu Bulan Depan</h3>
             <div className="p-4 rounded-xl bg-slate-50 border flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-slate-800">Posyandu Melati 04 (RW 04)</p>
-                <p className="text-xs text-slate-500 mt-0.5">Senin, 12 Desember 2026 • Pukul 08.00 WIB</p>
+                <p className="text-sm font-bold text-slate-800">{card?.posyandu_name || 'Posyandu Melati 04'}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{nextVisit}</p>
               </div>
               <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">Akan Datang</span>
             </div>
@@ -214,6 +237,12 @@ export default function OrtuDashboard({ user, onLogout, onSwitchRole, tts }) {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{currentMenu.label}</h1>
           <p className="text-slate-500 text-sm mt-1">{currentMenu.description}</p>
         </div>
+
+        {cardError && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {cardError}
+          </div>
+        )}
 
         {renderTabContent()}
       </main>

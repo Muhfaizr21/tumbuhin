@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Scale, Ruler, CircleDot, Calendar, CheckCircle2, AlertTriangle, Info, ChevronRight, Save, Baby, RefreshCw } from 'lucide-react'
 import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+import { enqueueItem, isBrowserOffline, isOfflineError } from '../../lib/offlineQueue'
 
 export default function KaderTimbangPage({ user }) {
   const [balitaList, setBalitaList] = useState([])
@@ -56,21 +57,48 @@ export default function KaderTimbangPage({ user }) {
   }
 
   const handleSimpanTimbang = async () => {
+    const payload = {
+      balitaId: selectedBalitaId,
+      tanggal: tanggalTimbang,
+      berat: parseFloat(berat),
+      tinggi: parseFloat(tinggi),
+      posisi,
+      lingkarKepala: parseFloat(lingkarKepala || 0),
+      lila: parseFloat(lila || 0)
+    }
+
+    const queueForSync = async () => {
+      await enqueueItem({
+        type: 'timbang',
+        payload: { ...payload, balitaName: selectedBalita?.nama || '' },
+        label: selectedBalita?.nama || 'Balita',
+        subtitle: `${payload.berat} kg / ${payload.tinggi} cm`
+      })
+      alert('Tidak ada koneksi ke server. Data penimbangan tersimpan di antrean IndexedDB dan akan dikirim dari halaman Sinkronisasi.')
+    }
+
     try {
       setIsCalculating(true)
-      const result = await postRoleData('/kader/timbang', {
-        balitaId: selectedBalitaId,
-        tanggal: tanggalTimbang,
-        berat: parseFloat(berat),
-        tinggi: parseFloat(tinggi),
-        posisi,
-        lingkarKepala: parseFloat(lingkarKepala || 0),
-        lila: parseFloat(lila || 0)
-      })
+
+      if (isBrowserOffline()) {
+        await queueForSync()
+        return
+      }
+
+      const result = await postRoleData('/kader/timbang', payload)
       setResults(result)
       alert('Data penimbangan berhasil disimpan ke database!')
     } catch (err) {
       console.error('Gagal simpan:', err)
+      if (isOfflineError(err)) {
+        try {
+          await queueForSync()
+          return
+        } catch (queueErr) {
+          alert('Gagal menyimpan ke antrean offline: ' + queueErr.message)
+          return
+        }
+      }
       alert('Gagal menyimpan ke database: ' + err.message)
     } finally {
       setIsCalculating(false)

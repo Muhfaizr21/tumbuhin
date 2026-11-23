@@ -1,9 +1,23 @@
+import { useEffect, useState } from 'react'
 import StatusTile from '../../components/ui/StatusTile'
 import TrenPartisipasiCard from '../../components/ui/TrenPartisipasiCard'
 import BalitaListCard from '../../components/ui/BalitaListCard'
-import { Wifi, Database } from 'lucide-react'
+import { Wifi, WifiOff, Database } from 'lucide-react'
 
 export default function KaderHomePage({ onMenuChange, stats }) {
+  const [isOnline, setIsOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
   if (!stats) {
     return (
       <div className="space-y-6">
@@ -26,9 +40,13 @@ export default function KaderHomePage({ onMenuChange, stats }) {
       {/* 1. Network & Sync Status Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold uppercase">
-            <Wifi className="w-3.5 h-3.5" />
-            <span>Online: Tersinkron ke Cloud</span>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase ${
+            isOnline
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200'
+          }`}>
+            {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+            <span>{isOnline ? 'Online: Tersinkron ke Cloud' : 'Offline: Data Lokal'}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[11px] font-bold uppercase">
             <Database className="w-3.5 h-3.5" />
@@ -36,7 +54,7 @@ export default function KaderHomePage({ onMenuChange, stats }) {
           </div>
         </div>
         <p className="text-[11px] text-slate-400 font-medium italic">
-          Update otomatis setiap 30 detik via PWA Service Worker
+          Antrean tersimpan di IndexedDB browser sampai dikirim ke backend.
         </p>
       </div>
 
@@ -85,7 +103,9 @@ export default function KaderHomePage({ onMenuChange, stats }) {
       <div className="w-full">
         <TrenPartisipasiCard 
           persentase={persentaseDitimbang} 
-          delta={`+${deltaDitimbang}%`}
+          delta={deltaDitimbang}
+          sudahDitimbang={sudahDitimbang}
+          totalBalita={totalBalita}
           trendData={trendPartisipasi}
         />
       </div>

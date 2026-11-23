@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Baby, Camera, ChefHat, LayoutDashboard, RefreshCw, Scale, Send, 
-  Search, Bell, Menu, X, Plus, CheckCircle2, Stethoscope, AlertTriangle, Activity, MapPin
+  Search, Bell, Menu, X, Plus, CheckCircle2, Stethoscope, AlertTriangle, Activity, MapPin, Clock3
 } from 'lucide-react'
 import KaderNavigationShell from './components/KaderNavigationShell'
 import KaderRightPanel from './components/KaderRightPanel'
@@ -14,6 +14,7 @@ import KaderSinkronisasiPage from './KaderSinkronisasiPage'
 import KaderDistribusiPage from './KaderDistribusiPage'
 import KaderHomePage from './KaderHomePage'
 import { fetchRoleDashboardData } from '../../lib/authApi'
+import { countQueue, subscribeQueue } from '../../lib/offlineQueue'
 
 const KADER_MENUS = [
   { 
@@ -106,8 +107,108 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
     sudahDitimbang: 0,
     persentaseDitimbang: 0,
     deltaDitimbang: 0,
-    trendPartisipasi: []
+    trendPartisipasi: [],
+    recentActivity: []
   })
+
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [readNotifications, setReadNotifications] = useState({})
+  const notificationRef = useRef(null)
+
+  const notifications = useMemo(() => {
+    const belumHadir = Math.max((stats.totalBalita || 0) - (stats.sudahDitimbang || 0), 0)
+    const list = []
+
+    if ((stats.growthFaltering || 0) > 0) {
+      list.push({
+        id: 'faltering',
+        type: 'danger',
+        title: `${stats.growthFaltering} balita perlu atensi gizi`,
+        desc: 'Terdeteksi risiko stunting/wasting pada penimbangan terakhir.',
+        menu: 'balita',
+      })
+    }
+
+    if (belumHadir > 0) {
+      list.push({
+        id: 'belum-hadir',
+        type: 'warning',
+        title: `${belumHadir} balita belum ditimbang`,
+        desc: 'Belum ada catatan timbang pada bulan berjalan.',
+        menu: 'timbang',
+      })
+    }
+
+    if ((stats.pendingSync || 0) > 0) {
+      list.push({
+        id: 'pending-sync',
+        type: 'info',
+        title: `${stats.pendingSync} data menunggu sinkronisasi`,
+        desc: 'Antrean offline tersimpan di IndexedDB browser.',
+        menu: 'sinkronisasi',
+      })
+    }
+
+    const riskItems = (stats.recentActivity || [])
+      .filter((item) => /stunted|wasted|severely/i.test(item.status || ''))
+      .slice(0, 3)
+    riskItems.forEach((item, idx) => {
+      list.push({
+        id: `risk-${item.child_id}-${idx}`,
+        type: 'danger',
+        title: `${item.child_name} berisiko`,
+        desc: `Status gizi: ${String(item.status).replace(/_/g, ' ')}.`,
+        menu: 'balita',
+      })
+    })
+
+    if (list.length === 0) {
+      list.push({
+        id: 'all-good',
+        type: 'success',
+        title: 'Semua data terpantau',
+        desc: 'Tidak ada peringatan gizi maupun antrean tertunda.',
+        menu: 'dashboard',
+      })
+    }
+
+    return list
+  }, [stats])
+
+  const unreadCount = notifications.filter((n) => !readNotifications[n.id]).length
+
+  useEffect(() => {
+    if (!showNotifications) return
+    const handleClickOutside = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotifications(false)
+      }
+    }
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setShowNotifications(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEsc)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEsc)
+    }
+  }, [showNotifications])
+
+  const markAllRead = () => {
+    setReadNotifications(
+      notifications.reduce((acc, n) => {
+        acc[n.id] = true
+        return acc
+      }, {}),
+    )
+  }
+
+  const handleNotificationClick = (notif) => {
+    setReadNotifications((prev) => ({ ...prev, [notif.id]: true }))
+    setShowNotifications(false)
+    if (notif.menu) setActiveMenuId(notif.menu)
+  }
 
   useEffect(() => {
     async function fetchStats() {
@@ -121,8 +222,9 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
             pendingSync: data.offline_queue_pending || 0,
             sudahDitimbang: data.sudah_ditimbang_bulan_ini || 0,
             persentaseDitimbang: Math.round((data.sudah_ditimbang_bulan_ini / data.total_balita) * 100) || 0,
-            deltaDitimbang: 0,
-            trendPartisipasi: data.trend_partisipasi || []
+            deltaDitimbang: data.delta_partisipasi || 0,
+            trendPartisipasi: data.trend_partisipasi || [],
+            recentActivity: data.recent_activity || []
           })
         }
       } catch (err) {
@@ -130,6 +232,31 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       }
     }
     fetchStats()
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    const refreshPendingSync = async () => {
+      try {
+        const pending = await countQueue()
+        if (active) {
+          setStats((prev) => ({ ...prev, pendingSync: pending }))
+        }
+      } catch {
+        // IndexedDB unavailable; keep backend value.
+      }
+    }
+
+    refreshPendingSync()
+    const unsubscribe = subscribeQueue(refreshPendingSync)
+    const timer = window.setInterval(refreshPendingSync, 10000)
+
+    return () => {
+      active = false
+      unsubscribe()
+      window.clearInterval(timer)
+    }
   }, [])
 
   const currentMenu = KADER_MENUS.find((m) => m.id === activeMenuId) || KADER_MENUS[0]
@@ -283,10 +410,82 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-4">
-            <button className="relative w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-2xs hover:bg-slate-50">
-              <Bell className="w-4 h-4 text-slate-600" />
-              <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-rose-500" />
-            </button>
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setShowNotifications((v) => !v)}
+                aria-label={`Notifikasi${unreadCount > 0 ? `, ${unreadCount} belum dibaca` : ''}`}
+                aria-expanded={showNotifications}
+                className="relative w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-2xs hover:bg-slate-50"
+              >
+                <Bell className="w-4 h-4 text-slate-600" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-100 shadow-xl z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-[13px] font-bold text-slate-800">Notifikasi</h3>
+                      <p className="text-[10.5px] text-slate-400">
+                        {unreadCount > 0 ? `${unreadCount} belum dibaca` : 'Semua sudah dibaca'}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-[10.5px] font-semibold text-[#2597d0] hover:underline"
+                      >
+                        Tandai dibaca
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                    {notifications.map((notif) => {
+                      const Icon =
+                        notif.type === 'danger'
+                          ? AlertTriangle
+                          : notif.type === 'warning'
+                            ? Clock3
+                            : notif.type === 'success'
+                              ? CheckCircle2
+                              : RefreshCw
+                      const tone =
+                        notif.type === 'danger'
+                          ? 'bg-rose-50 text-rose-600 border-rose-200'
+                          : notif.type === 'warning'
+                            ? 'bg-amber-50 text-amber-600 border-amber-200'
+                            : notif.type === 'success'
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                              : 'bg-blue-50 text-blue-600 border-blue-200'
+                      const isUnread = !readNotifications[notif.id]
+                      return (
+                        <button
+                          key={notif.id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`w-full text-left px-4 py-3 flex gap-3 items-start transition-colors hover:bg-slate-50 ${
+                            isUnread ? 'bg-slate-50/60' : ''
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${tone}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[12px] font-semibold text-slate-800 leading-snug">{notif.title}</p>
+                            <p className="text-[11px] text-slate-500 leading-snug mt-0.5">{notif.desc}</p>
+                          </div>
+                          {isUnread && <span className="w-1.5 h-1.5 rounded-full bg-[#2597d0] mt-1.5 shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-3 bg-white px-3.5 py-1.5 rounded-2xl border border-slate-100 shadow-2xs">
               <span className="text-[13.5px] font-bold text-slate-800">Halo, {user?.full_name?.split(' ')[0] || 'Kader'}</span>
@@ -302,7 +501,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       </main>
 
       {/* Right Panel */}
-      <KaderRightPanel user={user} activeMenu={currentMenu} stats={stats} />
+      <KaderRightPanel user={user} activeMenu={currentMenu} onNavigateToMenu={setActiveMenuId} stats={stats} />
     </div>
   )
 }

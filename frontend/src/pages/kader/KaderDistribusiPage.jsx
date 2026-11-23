@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react'
 import { 
-  Send, 
   QrCode, 
   Copy, 
   CheckCircle2, 
   Share2, 
   MessageSquare,
-  Smartphone,
   RefreshCw
 } from 'lucide-react'
 import { fetchRoleDashboardData } from '../../lib/authApi'
+import {
+  buildMagicLink,
+  buildWhatsAppMessage,
+  normalizeWhatsAppNumber,
+} from '../../lib/magicLink'
+import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
 
 export default function KaderDistribusiPage() {
   const [balitaList, setBalitaList] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedBalita, setSelectedBalita] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -35,13 +40,44 @@ export default function KaderDistribusiPage() {
     loadData()
   }, [])
 
-  const magicLink = selectedBalita ? `https://tumbuhin.id/p/token_${selectedBalita.id}_998877` : ''
+  const magicLink = selectedBalita ? buildMagicLink(selectedBalita.magic_token) : ''
+  const waMessage = selectedBalita ? buildWhatsAppMessage(selectedBalita, magicLink) : ''
 
-  const handleCopy = () => {
-    if (!magicLink) return
-    navigator.clipboard.writeText(magicLink)
+  const handleCopy = async () => {
+    if (!magicLink) {
+      alert('Magic token belum tersedia. Muat ulang data balita terlebih dahulu.')
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(magicLink)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = magicLink
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSendWhatsApp = () => {
+    if (!selectedBalita) return
+    if (!magicLink) {
+      alert('Magic token belum tersedia. Muat ulang data balita terlebih dahulu.')
+      return
+    }
+    const phone = normalizeWhatsAppNumber(selectedBalita.no_wa || selectedBalita.noWA)
+    if (!phone) {
+      alert('Nomor WhatsApp orang tua belum terisi. Lengkapi data balita dulu.')
+      return
+    }
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(waMessage)}`,
+      '_blank',
+      'noopener,noreferrer',
+    )
   }
 
   return (
@@ -113,11 +149,8 @@ export default function KaderDistribusiPage() {
               {/* Preview Pesan WA */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Pratinjau Pesan WhatsApp</label>
-                <div className="p-4 rounded-2xl bg-[#f5f8fc] border border-black/5 font-mono text-xs text-gray-700 space-y-2 leading-relaxed">
-                  <p>Halo Ibu {selectedBalita.nama_ibu || selectedBalita.namaOrtu || 'Orang Tua'}, berikut ringkasan hasil posyandu <strong>{selectedBalita.nama}</strong> bulan ini:</p>
-                  <p>• Status Gizi: *{selectedBalita.status_gizi || selectedBalita.statusGizi || 'Normal'}*<br />• Berat Badan: *Sesuai Kurva KMS*<br />• Catatan: *{selectedBalita.catatanBidan || 'Pertumbuhan terpantau baik.'}*</p>
-                  <p>Buka Kartu Gizi Digital & Resep MPASI pribadi tanpa login melalui tautan berikut:<br />
-                  <span className="text-[#2597d0] underline">{magicLink}</span></p>
+                <div className="p-4 rounded-2xl bg-[#f5f8fc] border border-black/5 font-mono text-xs text-gray-700 leading-relaxed whitespace-pre-line">
+                  {waMessage || 'Magic token belum tersedia untuk balita ini. Muat ulang data balita.'}
                 </div>
               </div>
 
@@ -143,17 +176,18 @@ export default function KaderDistribusiPage() {
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <button 
-                  onClick={() => {
-                    const phone = (selectedBalita.no_wa || selectedBalita.noWA || '').replace(/\D/g, '')
-                    const text = `Halo Ibu ${selectedBalita.nama_ibu || selectedBalita.namaOrtu || 'Orang Tua'}, berikut ringkasan hasil posyandu ${selectedBalita.nama} bulan ini: Status Gizi: ${selectedBalita.status_gizi || selectedBalita.statusGizi || 'Normal'}. Buka link: ${magicLink}`
-                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank')
-                  }}
-                  className="py-3.5 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20"
+                  onClick={handleSendWhatsApp}
+                  disabled={!magicLink}
+                  className="py-3.5 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MessageSquare className="w-4 h-4" />
                   Kirim ke WhatsApp Ibu
                 </button>
-                <button className="py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-200">
+                <button
+                  onClick={() => setShowQR(true)}
+                  disabled={!magicLink}
+                  className="py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <QrCode className="w-4 h-4" />
                   Cetak QR Code Buku KIA
                 </button>
@@ -166,6 +200,14 @@ export default function KaderDistribusiPage() {
           )}
         </div>
       </div>
+
+      {showQR && selectedBalita && (
+        <BalitaQRCodeModal
+          balita={selectedBalita}
+          magicLink={magicLink}
+          onClose={() => setShowQR(false)}
+        />
+      )}
     </div>
   )
 }

@@ -1,8 +1,10 @@
 package dashboard
 
 import (
+	"errors"
 	"net/http"
 
+	ortuDashRepo "tumbuhin-backend/repositories/ortu/dashboard"
 	ortuDashService "tumbuhin-backend/services/ortu/dashboard"
 	"tumbuhin-backend/views"
 
@@ -24,6 +26,10 @@ func (ctrl *Controller) HandleGetPortal(c *gin.Context) {
 	magicToken := c.Param("magicToken")
 	data, err := ctrl.service.GetChildCard(c.Request.Context(), magicToken)
 	if err != nil {
+		if errors.Is(err, ortuDashRepo.ErrChildNotFound) {
+			views.NotFound(c, "Kartu Gizi Digital tidak ditemukan atau tautan sudah tidak berlaku")
+			return
+		}
 		views.InternalServerError(c, "Gagal memuat Kartu Gizi Digital balita")
 		return
 	}

@@ -8,27 +8,32 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { ArrowUpRight, TrendingUp } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Minus, TrendingUp } from 'lucide-react'
+
+const RANGE_LEN = { '6bulan': 6, '8bulan': 8, tahun: 12 }
 
 export default function TrenPartisipasiCard({
-  persentase = 85.4,
-  delta = '+5.2%',
+  persentase = 0,
+  delta = 0,
+  sudahDitimbang = 0,
+  totalBalita = 0,
   trendData = [],
 }) {
   const [range, setRange] = useState('8bulan')
 
-  const defaultData = [
-    { bulan: 'Apr', persen: 78.5 },
-    { bulan: 'Mei', persen: 81.2 },
-    { bulan: 'Jun', persen: 79.0 },
-    { bulan: 'Jul', persen: 83.4 },
-    { bulan: 'Agu', persen: 82.0 },
-    { bulan: 'Sep', persen: 84.8 },
-    { bulan: 'Okt', persen: 80.2 },
-    { bulan: 'Nov', persen: 85.4 },
-  ]
+  const series = Array.isArray(trendData) ? trendData : []
+  const chartData = series.slice(-RANGE_LEN[range])
 
-  const chartData = trendData && trendData.length > 0 ? trendData : defaultData
+  const deltaNum = Number(delta) || 0
+  const isUp = deltaNum > 0
+  const isFlat = deltaNum === 0
+  const DeltaIcon = isUp ? ArrowUpRight : isFlat ? Minus : ArrowDownRight
+  const deltaClass = isUp
+    ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+    : isFlat
+      ? 'text-slate-600 bg-slate-50 border-slate-200'
+      : 'text-rose-600 bg-rose-50 border-rose-200'
+  const deltaText = `${deltaNum > 0 ? '+' : ''}${deltaNum}%`
 
   return (
     <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/6 shadow-2xs clinicflow-card flex flex-col justify-between">
@@ -56,7 +61,7 @@ export default function TrenPartisipasiCard({
           >
             <option value="6bulan">6 Bulan Terakhir</option>
             <option value="8bulan">8 Bulan Terakhir</option>
-            <option value="tahun">Tahun 2026</option>
+            <option value="tahun">12 Bulan Terakhir</option>
           </select>
         </div>
 
@@ -65,17 +70,22 @@ export default function TrenPartisipasiCard({
           <span className="text-[32px] font-bold tracking-tight text-gray-900 leading-none">
             {persentase}%
           </span>
-          <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>{delta} vs bulan lalu</span>
+          <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${deltaClass}`}>
+            <DeltaIcon className="w-3.5 h-3.5" />
+            <span>{deltaText} vs bulan lalu</span>
           </span>
         </div>
         <p className="text-[11.5px] text-gray-400 mt-1">
-          41 dari 48 balita tercatat aktif dalam pemantauan KMS bulan berjalan
+          {sudahDitimbang} dari {totalBalita} balita tercatat aktif dalam pemantauan KMS bulan berjalan
         </p>
 
         {/* Recharts Area Chart */}
         <div className="mt-4 h-44 w-full">
+          {chartData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-[12px] text-gray-400">
+              Belum ada data penimbangan
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -99,7 +109,7 @@ export default function TrenPartisipasiCard({
                 tick={{ fontSize: 11, fill: '#8b8b8b' }}
               />
               <YAxis
-                domain={[70, 100]}
+                domain={[0, 100]}
                 tickLine={false}
                 axisLine={false}
                 tick={{ fontSize: 11, fill: '#8b8b8b' }}
@@ -110,7 +120,7 @@ export default function TrenPartisipasiCard({
                   if (active && payload && payload.length) {
                     return (
                       <div className="p-2.5 rounded-xl bg-gray-900 text-white text-xs shadow-lg">
-                        <p className="font-semibold">{payload[0].payload.bulan} 2026</p>
+                        <p className="font-semibold">{payload[0].payload.bulan}</p>
                         <p className="text-blue-300 mt-0.5">
                           Kehadiran: {payload[0].value}%
                         </p>
@@ -130,6 +140,7 @@ export default function TrenPartisipasiCard({
               />
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
