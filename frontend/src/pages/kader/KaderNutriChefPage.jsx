@@ -229,6 +229,9 @@ export default function KaderNutriChefPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">Target: {recipe.targetAge}</span>
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">
+                    {recipe.source === 'gemini-structured' ? 'Gemini Structured' : 'Rule-based'}
+                  </span>
                   <h3 className="text-xl font-black mt-1">{recipe.title}</h3>
                 </div>
                 <div className="text-right">
