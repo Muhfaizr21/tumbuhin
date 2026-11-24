@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
   CheckCircle2,
+  Compass,
   Edit3,
+  Eye,
+  EyeOff,
   MapPin,
   Plus,
   Power,
@@ -10,6 +13,10 @@ import {
 } from 'lucide-react'
 import PaginationBar from '../../components/ui/PaginationBar'
 import { adminApi } from '../../lib/adminApi'
+import {
+  AdminWilayahClusterMap,
+  AdminWilayahPickerMap,
+} from './components/AdminWilayahMap'
 
 const EMPTY_FORM = {
   name: '',
@@ -35,6 +42,8 @@ export default function AdminWilayahPage({ searchQuery = '', onDataChanged }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [showGisMap, setShowGisMap] = useState(true)
+  const [selectedMapUnitId, setSelectedMapUnitId] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(4)
 
@@ -162,14 +171,24 @@ export default function AdminWilayahPage({ searchQuery = '', onDataChanged }) {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white text-[12.5px] font-semibold shadow-xs cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Unit Posyandu</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowGisMap((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-semibold cursor-pointer"
+          >
+            {showGisMap ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <span>{showGisMap ? 'Sembunyikan Peta GIS' : 'Tampilkan Peta GIS'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e293b] hover:bg-[#0f172a] text-white text-[12.5px] font-semibold shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Unit Posyandu</span>
+          </button>
+        </div>
       </div>
 
       {notice && (
@@ -191,6 +210,58 @@ export default function AdminWilayahPage({ searchQuery = '', onDataChanged }) {
           >
             Tutup
           </button>
+        </div>
+      )}
+
+      {/* Interactive Leaflet GIS Map Panel */}
+      {showGisMap && (
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-2xs space-y-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-sky-50 text-[#2597d0] flex items-center justify-center">
+                <Compass className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-[14.5px] font-bold text-slate-800">
+                  Peta Sebaran Spasial Unit Posyandu Desa (OpenStreetMap Leaflet GIS)
+                </h3>
+                <p className="text-[11.5px] text-slate-400">
+                  Klik titik klaster pada peta atau tekan koordinat pada kartu Posyandu di bawah untuk memfokuskan lokasi.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1.5 text-slate-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                Unit Aktif ({filtered.filter((u) => u.is_active).length})
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-slate-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2597d0] inline-block" />
+                Unit Terpilih
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-slate-500">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" />
+                Nonaktif ({filtered.filter((u) => !u.is_active).length})
+              </span>
+              {selectedMapUnitId && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedMapUnitId(null)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                >
+                  Reset Zoom Desa
+                </button>
+              )}
+            </div>
+          </div>
+
+          <AdminWilayahClusterMap
+            units={filtered}
+            selectedUnitId={selectedMapUnitId}
+            onSelectUnit={(unit) => setSelectedMapUnitId(unit.id)}
+            onEditUnit={(unit) => openEditModal(unit)}
+          />
         </div>
       )}
 
@@ -250,14 +321,22 @@ export default function AdminWilayahPage({ searchQuery = '', onDataChanged }) {
                       {unit.kader_count} Akun
                     </span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowGisMap(true)
+                      setSelectedMapUnitId(unit.id)
+                    }}
+                    title="Klik untuk memfokuskan titik di Peta Leaflet GIS"
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-sky-50/70 border border-slate-100 hover:border-sky-200 text-left transition-colors cursor-pointer"
+                  >
                     <span className="block text-[10px] text-slate-400 font-semibold uppercase">
-                      Koordinat GIS
+                      Koordinat GIS (Klik)
                     </span>
                     <span className="text-[11px] font-mono font-semibold text-[#2597d0]">
                       {Number(unit.latitude).toFixed(4)}, {Number(unit.longitude).toFixed(4)}
                     </span>
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -478,6 +557,18 @@ export default function AdminWilayahPage({ searchQuery = '', onDataChanged }) {
                     </button>
                   ))}
                 </div>
+
+                <AdminWilayahPickerMap
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onChangeCoordinates={(lat, lng) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      latitude: lat,
+                      longitude: lng,
+                    }))
+                  }
+                />
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
