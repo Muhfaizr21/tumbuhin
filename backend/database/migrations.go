@@ -215,6 +215,46 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_offline_sync_items_kader_status ON offline_sync_items(kader_id, status);
 	CREATE INDEX IF NOT EXISTS idx_offline_sync_items_updated_at ON offline_sync_items(updated_at DESC);
+
+	-- 13. Super Admin extensions for posyandus & knowledge_chunks
+	ALTER TABLE posyandus ADD COLUMN IF NOT EXISTS address VARCHAR(220) DEFAULT 'Balai Warga RW, Desa Sukamaju';
+	ALTER TABLE posyandus ADD COLUMN IF NOT EXISTS schedule_day VARCHAR(100) DEFAULT 'Sabtu Minggu Ke-2 (08.30 - 11.30 WIB)';
+	ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS category VARCHAR(80) DEFAULT 'Pedoman PMBA';
+	ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS target_age VARCHAR(40) DEFAULT '6-24 Bulan';
+
+	-- 14. Local Food Commodities Catalog (Managed by Super Admin & Consumed by AI Nutri-Chef)
+	CREATE TABLE IF NOT EXISTS local_foods (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		food_key VARCHAR(40) NOT NULL UNIQUE,
+		name VARCHAR(150) NOT NULL,
+		category VARCHAR(60) NOT NULL DEFAULT 'Protein Hewani',
+		unit_label VARCHAR(60) NOT NULL DEFAULT '1 porsi',
+		estimated_price_idr INT NOT NULL DEFAULT 2000,
+		calories_kcal INT NOT NULL DEFAULT 80,
+		protein_grams DOUBLE PRECISION NOT NULL DEFAULT 6.0,
+		is_animal_protein BOOLEAN NOT NULL DEFAULT FALSE,
+		allergen_tag VARCHAR(60) DEFAULT '',
+		is_available BOOLEAN NOT NULL DEFAULT TRUE,
+		village_name VARCHAR(120) DEFAULT 'Desa Sukamaju',
+		updated_at TIMESTAMPTZ DEFAULT NOW(),
+		created_at TIMESTAMPTZ DEFAULT NOW()
+	);
+
+	-- 15. Village Governance & System Settings (Super Admin Module 3.7)
+	CREATE TABLE IF NOT EXISTS village_settings (
+		village_name VARCHAR(120) PRIMARY KEY,
+		district_name VARCHAR(120) NOT NULL DEFAULT 'Kecamatan Cibinong',
+		regency_name VARCHAR(120) NOT NULL DEFAULT 'Kabupaten Bogor',
+		province_name VARCHAR(120) NOT NULL DEFAULT 'Jawa Barat',
+		village_head_name VARCHAR(150) NOT NULL DEFAULT 'H. Suryadi Pratama, S.AP',
+		puskesmas_name VARCHAR(150) NOT NULL DEFAULT 'UPTD Puskesmas Sukamaju',
+		default_posyandu_schedule VARCHAR(120) NOT NULL DEFAULT 'Sabtu Minggu Ke-2 Setiap Bulan (08.30 - 11.30 WIB)',
+		wa_template TEXT NOT NULL DEFAULT 'Halo Ibu/Bapak {parent_name}, berikut ringkasan tumbuh kembang Ananda {child_name} bulan ini: BB {weight_kg} kg, TB {height_cm} cm ({nutrition_status}). Pantau kurva KMS & resep MPASI harian di Kartu Gizi Digital: {magic_link}',
+		stunting_target_percent DOUBLE PRECISION NOT NULL DEFAULT 14.0,
+		auto_sync_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+		sha256_enforced BOOLEAN NOT NULL DEFAULT TRUE,
+		updated_at TIMESTAMPTZ DEFAULT NOW()
+	);
 	`
 
 	if _, err := db.Exec(ctx, ddlSQL); err != nil {
@@ -247,19 +287,109 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	INSERT INTO who_lms_standards (indicator, gender, age_months, l_val, m_val, s_val)
 	VALUES
 		('HFA', 'L', 0, 1.0, 49.88, 0.038),
+		('HFA', 'L', 3, 1.0, 61.43, 0.034),
+		('HFA', 'L', 6, 1.0, 67.62, 0.033),
+		('HFA', 'L', 9, 1.0, 71.97, 0.033),
 		('HFA', 'L', 12, 1.0, 75.75, 0.034),
+		('HFA', 'L', 18, 1.0, 82.26, 0.034),
 		('HFA', 'L', 24, 1.0, 87.12, 0.033),
+		('HFA', 'L', 36, 1.0, 96.08, 0.038),
+		('HFA', 'L', 48, 1.0, 103.32, 0.039),
+		('HFA', 'L', 60, 1.0, 109.96, 0.041),
 		('HFA', 'P', 0, 1.0, 49.14, 0.038),
+		('HFA', 'P', 3, 1.0, 59.80, 0.035),
+		('HFA', 'P', 6, 1.0, 65.73, 0.034),
+		('HFA', 'P', 9, 1.0, 70.14, 0.035),
 		('HFA', 'P', 12, 1.0, 74.02, 0.035),
+		('HFA', 'P', 18, 1.0, 80.71, 0.036),
 		('HFA', 'P', 24, 1.0, 85.70, 0.034),
+		('HFA', 'P', 36, 1.0, 95.05, 0.039),
+		('HFA', 'P', 48, 1.0, 102.73, 0.041),
+		('HFA', 'P', 60, 1.0, 109.42, 0.042),
 		('WFA', 'L', 0, 0.3487, 3.346, 0.146),
+		('WFA', 'L', 3, 0.1738, 6.376, 0.120),
+		('WFA', 'L', 6, 0.0756, 7.934, 0.115),
+		('WFA', 'L', 9, 0.0050, 8.901, 0.114),
 		('WFA', 'L', 12, -0.0611, 9.648, 0.117),
+		('WFA', 'L', 18, -0.1570, 10.938, 0.119),
+		('WFA', 'L', 24, -0.2203, 12.152, 0.121),
+		('WFA', 'L', 36, -0.3125, 14.342, 0.125),
+		('WFA', 'L', 48, -0.3712, 16.336, 0.130),
+		('WFA', 'L', 60, -0.4150, 18.337, 0.135),
 		('WFA', 'P', 0, 0.3809, 3.232, 0.141),
-		('WFA', 'P', 12, -0.0305, 8.948, 0.118)
+		('WFA', 'P', 3, 0.1970, 5.845, 0.126),
+		('WFA', 'P', 6, 0.0813, 7.297, 0.122),
+		('WFA', 'P', 9, 0.0136, 8.225, 0.121),
+		('WFA', 'P', 12, -0.0305, 8.948, 0.118),
+		('WFA', 'P', 18, -0.1180, 10.231, 0.122),
+		('WFA', 'P', 24, -0.1912, 11.477, 0.126),
+		('WFA', 'P', 36, -0.2980, 13.850, 0.132),
+		('WFA', 'P', 48, -0.3690, 16.070, 0.138),
+		('WFA', 'P', 60, -0.4220, 18.219, 0.144)
 	ON CONFLICT (indicator, gender, age_months) DO NOTHING;
 	`
 	if _, err := db.Exec(ctx, seedWhoSQL); err != nil {
 		log.Printf("[MIGRATION WARNING] Failed seeding WHO standards: %v", err)
+	}
+
+	seedLocalFoodsSQL := `
+	INSERT INTO local_foods (
+		food_key, name, category, unit_label, estimated_price_idr,
+		calories_kcal, protein_grams, is_animal_protein, allergen_tag, is_available, village_name
+	) VALUES
+		('telur', 'Telur Ayam Kampung / Negeri', 'Protein Hewani', '1 butir (55 g)', 2000, 78, 6.3, TRUE, 'telur', TRUE, 'Desa Sukamaju'),
+		('lele', 'Ikan Lele Segar Desa', 'Protein Hewani', '1 ekor kecil (75 g)', 5000, 95, 15.0, TRUE, 'ikan', TRUE, 'Desa Sukamaju'),
+		('hati', 'Hati Ayam Segar', 'Protein Hewani', '1 potong (45 g)', 3000, 90, 12.0, TRUE, '', TRUE, 'Desa Sukamaju'),
+		('kembung', 'Ikan Kembung Segar', 'Protein Hewani', '1 potong fillet (60 g)', 5500, 102, 16.2, TRUE, 'ikan', TRUE, 'Desa Sukamaju'),
+		('puyuh', 'Telur Puyuh Rebus', 'Protein Hewani', '3 butir (35 g)', 3000, 54, 4.5, TRUE, 'telur', TRUE, 'Desa Sukamaju'),
+		('tempe', 'Tempe Kedelai Lokal', 'Protein Nabati', '1 potong sedang (50 g)', 1000, 80, 7.5, FALSE, 'kedelai', TRUE, 'Desa Sukamaju'),
+		('tahu', 'Tahu Putih Padat', 'Protein Nabati', '1 potong (50 g)', 1000, 42, 4.2, FALSE, 'kedelai', TRUE, 'Desa Sukamaju'),
+		('bayam', 'Bayam Hijau Segar', 'Sayur & Buah', '1/2 ikat (50 g)', 2000, 20, 1.5, FALSE, '', TRUE, 'Desa Sukamaju'),
+		('kelor', 'Pucuk Daun Kelor', 'Sayur & Buah', '1 genggam (30 g)', 500, 25, 2.5, FALSE, '', TRUE, 'Desa Sukamaju'),
+		('labu', 'Labu Kuning Manis', 'Karbohidrat', '1 potong (70 g)', 2000, 45, 1.0, FALSE, '', TRUE, 'Desa Sukamaju'),
+		('minyak', 'Minyak Kelapa / Santan', 'Sumber Lemak', '1 sdt (5 ml)', 500, 45, 0.0, FALSE, '', TRUE, 'Desa Sukamaju')
+	ON CONFLICT (food_key) DO NOTHING;
+	`
+	if _, err := db.Exec(ctx, seedLocalFoodsSQL); err != nil {
+		log.Printf("[MIGRATION WARNING] Failed seeding local foods: %v", err)
+	}
+
+	seedKnowledgeChunksSQL := `
+	INSERT INTO knowledge_chunks (source_doc, chunk_index, category, target_age, content)
+	SELECT source_doc, chunk_index, category, target_age, content
+	FROM (VALUES
+		('Buku KIA Kemenkes RI 2024 - PMBA 6-8 Bulan', 0, 'Standar Tekstur & Porsi', '6-8 Bulan', 'Usia 6-8 bulan: beri MPASI 2-3 kali makan utama dan 1-2 kali makanan selingan per hari. Porsi awal 2-3 sendok makan, tingkatkan bertahap. Tekstur lumat atau disaring. ASI tetap diberikan sampai 2 tahun.'),
+		('Buku KIA Kemenkes RI 2024 - PMBA 9-11 Bulan', 0, 'Standar Tekstur & Porsi', '9-11 Bulan', 'Usia 9-11 bulan: beri 3-4 kali makan utama dan 1-2 kali selingan. Porsi sekitar setengah mangkuk ukuran 250 ml. Tekstur cincang halus atau makanan yang dapat dipegang bayi. Variasi bahan pangan lokal dianjurkan.'),
+		('Buku KIA Kemenkes RI 2024 - PMBA 12-24 Bulan', 0, 'Standar Tekstur & Porsi', '12-24 Bulan', 'Usia 12-24 bulan: beri 3-4 kali makan utama dan 1-2 kali selingan, porsi sekitar tiga perempat mangkuk 250 ml. Tekstur makanan keluarga yang dicincang. ASI dapat diteruskan hingga usia 2 tahun.'),
+		('Pedoman Pemenuhan Gizi Seimbang Kemenkes RI - Protein Hewani', 0, 'Protein Hewani & Mikronutrien', '6-24 Bulan', 'Setiap kali makan sebaiknya mengandung sumber protein hewani seperti telur, ikan, ayam, hati, atau daging. Protein hewani mendukung pertumbuhan linear dan pencegahan stunting. Telur dapat diberikan satu butir per hari bila tidak ada alergi.'),
+		('Pedoman Pemenuhan Gizi Seimbang Kemenkes RI - Lemak Tambahan', 0, 'Kepadatan Energi & Lemak', '6-24 Bulan', 'Tambahkan sumber lemak pada setiap porsi MPASI, misalnya satu sendok teh minyak kelapa, santan, atau alpukat. Lemak meningkatkan kepadatan energi dan membantu penyerapan vitamin larut lemak A, D, E, dan K.'),
+		('Buku Resep Makanan Lokal Balita dan Ibu Hamil Kemenkes RI 2024 - Gula dan Garam', 0, 'Batas Gula & Garam', '6-24 Bulan', 'Hindari penambahan gula dan garam pada makanan bayi di bawah 12 bulan. Untuk usia 12-24 bulan, batasi gula maksimal satu sendok teh per hari dan garam maksimal seperlima sendok teh per hari. Gunakan bumbu alami seperti bawang dan daun aromatik.'),
+		('Buku KIA Kemenkes RI 2024 - Pemberian Makan Responsif', 0, 'Pola Asuh & Responsif', '6-24 Bulan', 'Terapkan pemberian makan responsif: beri makan perlahan, kenali tanda lapar dan kenyang, jangan memaksa. Naikkan tekstur sesuai usia; setelah 9 bulan makanan tidak perlu disaring lagi. Sajikan variasi pangan lokal bergizi agar anak terbiasa.'),
+		('Petunjuk Teknis Pencegahan dan Penanganan Stunting Kemenkes RI', 0, 'Intervensi Stunting & PMT', '0-60 Bulan', 'Balita dengan panjang atau tinggi badan menurut umur di bawah minus dua standar deviasi dikategorikan stunting. Intervensi mencakup pemberian MPASI padat gizi kaya protein hewani, pemantauan pertumbuhan bulanan, dan rujukan ke fasilitas kesehatan bila tidak membaik.'),
+		('Buku KIA Kemenkes RI 2024 - Pencegahan Alergi Makanan', 0, 'Keamanan & Alergi', '6-24 Bulan', 'Kenalkan satu bahan makanan baru setiap kali, beri selama tiga sampai lima hari sebelum menambah bahan lain. Hentikan bahan dan konsultasikan bila muncul ruam, muntah, diare, atau sesak setelah makan.'),
+		('Pedoman Pemenuhan Gizi Seimbang Kemenkes RI - Keamanan Pangan', 0, 'Sanitasi & Higienitas', '6-24 Bulan', 'Cuci tangan sebelum menyiapkan makanan, gunakan alat masak dan wadah bersih. Masak bahan hingga matang, sajikan segera, dan simpan sisa makanan paling lama dua jam pada suhu ruang. Hindari makanan mentah untuk balita.')
+	) AS vals(source_doc, chunk_index, category, target_age, content)
+	WHERE NOT EXISTS (
+		SELECT 1 FROM knowledge_chunks kc
+		WHERE kc.source_doc = vals.source_doc AND kc.chunk_index = vals.chunk_index
+	);
+	`
+	if _, err := db.Exec(ctx, seedKnowledgeChunksSQL); err != nil {
+		log.Printf("[MIGRATION WARNING] Failed seeding knowledge chunks: %v", err)
+	}
+
+	seedVillageSettingsSQL := `
+	INSERT INTO village_settings (
+		village_name, district_name, regency_name, province_name,
+		village_head_name, puskesmas_name, default_posyandu_schedule
+	) VALUES (
+		'Desa Sukamaju', 'Kecamatan Cibinong', 'Kabupaten Bogor', 'Jawa Barat',
+		'H. Suryadi Pratama, S.AP', 'UPTD Puskesmas Sukamaju',
+		'Sabtu Minggu Ke-2 Setiap Bulan (08.30 - 11.30 WIB)'
+	) ON CONFLICT (village_name) DO NOTHING;
+	`
+	if _, err := db.Exec(ctx, seedVillageSettingsSQL); err != nil {
+		log.Printf("[MIGRATION WARNING] Failed seeding village settings: %v", err)
 	}
 
 	cleanupDummySQL := `

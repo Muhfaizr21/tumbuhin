@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Controller handles HTTP endpoints for Super Admin dashboard
+// Controller handles HTTP endpoints for Super Admin dashboard overview (Module 3.1)
 type Controller struct {
 	service adminDashService.Service
 }
@@ -23,9 +23,8 @@ func NewController(service adminDashService.Service) *Controller {
 func (ctrl *Controller) HandleGetOverview(c *gin.Context) {
 	data, err := ctrl.service.GetOverview(c.Request.Context())
 	if err != nil {
-		views.InternalServerError(c, "Gagal memuat ringkasan sistem admin")
+		views.InternalServerError(c, "Gagal memuat ringkasan sistem admin: "+err.Error())
 		return
 	}
-
 	views.Success(c, http.StatusOK, "Ringkasan sistem Super Admin berhasil dimuat", data)
 }

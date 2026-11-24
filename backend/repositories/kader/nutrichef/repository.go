@@ -77,13 +77,44 @@ var foodCatalog = []foodSpec{
 	{key: "minyak", name: "Minyak Kelapa", qty: "1 sdt", cost: 500, energy: 45, protein: 0, allergen: ""},
 }
 
-func lookupFood(key string) (foodSpec, bool) {
-	for _, f := range foodCatalog {
+func lookupFoodFromCatalog(catalog []foodSpec, key string) (foodSpec, bool) {
+	for _, f := range catalog {
 		if f.key == key {
 			return f, true
 		}
 	}
 	return foodSpec{}, false
+}
+
+// loadActiveFoodCatalog fetches available local food items managed by Super Admin
+// from local_foods, falling back to the built-in foodCatalog if empty/error.
+func (r *repository) loadActiveFoodCatalog(ctx context.Context) []foodSpec {
+	if r.db == nil {
+		return foodCatalog
+	}
+	rows, err := r.db.Query(ctx, `
+		SELECT food_key, name, unit_label, estimated_price_idr,
+		       is_animal_protein, calories_kcal, protein_grams, COALESCE(allergen_tag, '')
+		FROM local_foods
+		WHERE is_available = TRUE
+		ORDER BY is_animal_protein DESC, estimated_price_idr ASC
+	`)
+	if err != nil {
+		return foodCatalog
+	}
+	defer rows.Close()
+
+	var list []foodSpec
+	for rows.Next() {
+		var f foodSpec
+		if err := rows.Scan(&f.key, &f.name, &f.qty, &f.cost, &f.animal, &f.energy, &f.protein, &f.allergen); err == nil {
+			list = append(list, f)
+		}
+	}
+	if len(list) == 0 {
+		return foodCatalog
+	}
+	return list
 }
 
 type childContext struct {
@@ -116,16 +147,18 @@ func (r *repository) SaveAndGenerateRecipe(ctx context.Context, req GenerateRequ
 		cx.NutritionStatus == "wasted" || cx.NutritionStatus == "severely_wasted" ||
 		cx.NutritionStatus == "underweight"
 
+	activeCatalog := r.loadActiveFoodCatalog(ctx)
+
 	// Filter alergi dari catatan balita.
 	allergyText := strings.ToLower(cx.Notes)
 	blocked := map[string]bool{}
-	for _, f := range foodCatalog {
+	for _, f := range activeCatalog {
 		if f.allergen != "" && strings.Contains(allergyText, f.allergen) {
 			blocked[f.key] = true
 		}
 	}
 
-	recipe := buildRuleBasedRecipe(cx, req.Budget, req.Foods, blocked, needProteinBoost)
+	recipe := buildRuleBasedRecipe(cx, req.Budget, req.Foods, blocked, needProteinBoost, activeCatalog)
 	recipe.BalitaNama = cx.Name
 	recipe.NutritionTag = cx.NutritionStatus
 	recipe.RecipientWa = cx.Phone
@@ -146,7 +179,7 @@ func (r *repository) SaveAndGenerateRecipe(ctx context.Context, req GenerateRequ
 			ragSources = sources
 		}
 
-		aiRecipe, aiErr := generateWithGemini(ctx, buildGeminiPrompt(cx, req.Budget, req.Foods, blocked, ragSources))
+		aiRecipe, aiErr := generateWithGemini(ctx, buildGeminiPrompt(cx, req.Budget, req.Foods, blocked, ragSources, activeCatalog))
 		if aiErr != nil {
 			log.Printf("[NUTRICHEF] Gemini gagal, fallback rule-based: %v", aiErr)
 		} else if sanitized, serr := sanitizeGeminiRecipe(aiRecipe, cx, req.Budget, strings.ToLower(cx.Notes)); serr != nil {
@@ -236,7 +269,7 @@ func targetAgeTexture(ageMonths int) (string, string) {
 	}
 }
 
-func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked map[string]bool, needProteinBoost bool) *RecipeResponse {
+func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked map[string]bool, needProteinBoost bool, catalog []foodSpec) *RecipeResponse {
 	targetAge, texture := targetAgeTexture(cx.AgeMonths)
 
 	ingredients := []Ingredient{}
@@ -265,7 +298,7 @@ func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked 
 
 	selectedAnimal := false
 	for _, key := range foods {
-		spec, ok := lookupFood(key)
+		spec, ok := lookupFoodFromCatalog(catalog, key)
 		if !ok || blocked[key] {
 			continue
 		}
@@ -275,9 +308,9 @@ func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked 
 	}
 
 	if needProteinBoost && !selectedAnimal {
-		for _, key := range []string{"telur", "hati", "lele"} {
-			spec, _ := lookupFood(key)
-			if blocked[key] {
+		for _, key := range []string{"telur", "hati", "lele", "kembung", "puyuh"} {
+			spec, ok := lookupFoodFromCatalog(catalog, key)
+			if !ok || blocked[key] {
 				continue
 			}
 			if addFood(spec) {
@@ -287,7 +320,7 @@ func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked 
 		}
 	}
 
-	if spec, ok := lookupFood("minyak"); ok && !blocked["minyak"] {
+	if spec, ok := lookupFoodFromCatalog(catalog, "minyak"); ok && !blocked["minyak"] {
 		addFood(spec)
 	}
 
@@ -322,11 +355,11 @@ func buildRuleBasedRecipe(cx *childContext, budget int, foods []string, blocked 
 	}
 }
 
-func buildGeminiPrompt(cx *childContext, budget int, foods []string, blocked map[string]bool, rag []RagSource) string {
+func buildGeminiPrompt(cx *childContext, budget int, foods []string, blocked map[string]bool, rag []RagSource, catalog []foodSpec) string {
 	targetAge, texture := targetAgeTexture(cx.AgeMonths)
 
-	catalogLines := make([]string, 0, len(foodCatalog))
-	for _, f := range foodCatalog {
+	catalogLines := make([]string, 0, len(catalog))
+	for _, f := range catalog {
 		status := "tersedia"
 		if blocked[f.key] {
 			status = "DILARANG (alergi)"

@@ -6,6 +6,12 @@ import (
 	"tumbuhin-backend/config"
 	"tumbuhin-backend/controllers"
 	adminDashCtrl "tumbuhin-backend/controllers/admin/dashboard"
+	adminKnowledgeCtrl "tumbuhin-backend/controllers/admin/knowledge"
+	adminPanganCtrl "tumbuhin-backend/controllers/admin/pangan"
+	adminPengaturanCtrl "tumbuhin-backend/controllers/admin/pengaturan"
+	adminPenggunaCtrl "tumbuhin-backend/controllers/admin/pengguna"
+	adminStandarWhoCtrl "tumbuhin-backend/controllers/admin/standarwho"
+	adminWilayahCtrl "tumbuhin-backend/controllers/admin/wilayah"
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
@@ -25,6 +31,12 @@ import (
 	"tumbuhin-backend/database"
 	"tumbuhin-backend/repositories"
 	adminDashRepo "tumbuhin-backend/repositories/admin/dashboard"
+	adminKnowledgeRepo "tumbuhin-backend/repositories/admin/knowledge"
+	adminPanganRepo "tumbuhin-backend/repositories/admin/pangan"
+	adminPengaturanRepo "tumbuhin-backend/repositories/admin/pengaturan"
+	adminPenggunaRepo "tumbuhin-backend/repositories/admin/pengguna"
+	adminStandarWhoRepo "tumbuhin-backend/repositories/admin/standarwho"
+	adminWilayahRepo "tumbuhin-backend/repositories/admin/wilayah"
 	authRepo "tumbuhin-backend/repositories/auth"
 	bidanDashRepo "tumbuhin-backend/repositories/bidan/dashboard"
 	bidanIntervensiRepo "tumbuhin-backend/repositories/bidan/intervensi"
@@ -43,6 +55,12 @@ import (
 	"tumbuhin-backend/routes"
 	"tumbuhin-backend/services"
 	adminDashService "tumbuhin-backend/services/admin/dashboard"
+	adminKnowledgeService "tumbuhin-backend/services/admin/knowledge"
+	adminPanganService "tumbuhin-backend/services/admin/pangan"
+	adminPengaturanService "tumbuhin-backend/services/admin/pengaturan"
+	adminPenggunaService "tumbuhin-backend/services/admin/pengguna"
+	adminStandarWhoService "tumbuhin-backend/services/admin/standarwho"
+	adminWilayahService "tumbuhin-backend/services/admin/wilayah"
 	authLoginService "tumbuhin-backend/services/auth/login"
 	authRegisterService "tumbuhin-backend/services/auth/register"
 	bidanDashService "tumbuhin-backend/services/bidan/dashboard"
@@ -87,7 +105,13 @@ func main() {
 	bidanPrioritasRepository := bidanPrioritasRepo.NewRepository(cfg.DBPool)
 	bidanSupervisiRepository := bidanSupervisiRepo.NewRepository(cfg.DBPool)
 	bidanLaporanRepository := bidanLaporanRepo.NewRepository(cfg.DBPool)
-	adminDashRepository := adminDashRepo.NewRepository()
+	adminDashRepository := adminDashRepo.NewRepository(cfg.DBPool)
+	adminWilayahRepository := adminWilayahRepo.NewRepository(cfg.DBPool)
+	adminPenggunaRepository := adminPenggunaRepo.NewRepository(cfg.DBPool)
+	adminPanganRepository := adminPanganRepo.NewRepository(cfg.DBPool)
+	adminKnowledgeRepository := adminKnowledgeRepo.NewRepository(cfg.DBPool)
+	adminStandarWhoRepository := adminStandarWhoRepo.NewRepository(cfg.DBPool)
+	adminPengaturanRepository := adminPengaturanRepo.NewRepository(cfg.DBPool)
 	ortuDashRepository := ortuDashRepo.NewRepository(cfg.DBPool)
 
 	// 4. Initialize Services (Business Logic Layer)
@@ -108,6 +132,12 @@ func main() {
 	bidanSupervisiSvc := bidanSupervisiService.NewService(bidanSupervisiRepository)
 	bidanLaporanSvc := bidanLaporanService.NewService(bidanLaporanRepository)
 	adminDashSvc := adminDashService.NewService(adminDashRepository)
+	adminWilayahSvc := adminWilayahService.NewService(adminWilayahRepository)
+	adminPenggunaSvc := adminPenggunaService.NewService(adminPenggunaRepository)
+	adminPanganSvc := adminPanganService.NewService(adminPanganRepository)
+	adminKnowledgeSvc := adminKnowledgeService.NewService(adminKnowledgeRepository)
+	adminStandarWhoSvc := adminStandarWhoService.NewService(adminStandarWhoRepository)
+	adminPengaturanSvc := adminPengaturanService.NewService(adminPengaturanRepository)
 	ortuDashSvc := ortuDashService.NewService(ortuDashRepository)
 
 	// 5. Initialize Controllers (Presentation / Handler Layer)
@@ -130,6 +160,12 @@ func main() {
 		BidanSupervisiCtrl:     bidanSupervisiCtrl.NewController(bidanSupervisiSvc),
 		BidanLaporanCtrl:       bidanLaporanCtrl.NewController(bidanLaporanSvc),
 		AdminDashCtrl:          adminDashCtrl.NewController(adminDashSvc),
+		AdminWilayahCtrl:       adminWilayahCtrl.NewController(adminWilayahSvc),
+		AdminPenggunaCtrl:      adminPenggunaCtrl.NewController(adminPenggunaSvc),
+		AdminPanganCtrl:        adminPanganCtrl.NewController(adminPanganSvc),
+		AdminKnowledgeCtrl:     adminKnowledgeCtrl.NewController(adminKnowledgeSvc),
+		AdminStandarWhoCtrl:    adminStandarWhoCtrl.NewController(adminStandarWhoSvc),
+		AdminPengaturanCtrl:    adminPengaturanCtrl.NewController(adminPengaturanSvc),
 		OrtuDashCtrl:           ortuDashCtrl.NewController(ortuDashSvc),
 	}
 

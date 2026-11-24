@@ -6,6 +6,12 @@ import (
 	"tumbuhin-backend/config"
 	"tumbuhin-backend/controllers"
 	adminDashCtrl "tumbuhin-backend/controllers/admin/dashboard"
+	adminKnowledgeCtrl "tumbuhin-backend/controllers/admin/knowledge"
+	adminPanganCtrl "tumbuhin-backend/controllers/admin/pangan"
+	adminPengaturanCtrl "tumbuhin-backend/controllers/admin/pengaturan"
+	adminPenggunaCtrl "tumbuhin-backend/controllers/admin/pengguna"
+	adminStandarWhoCtrl "tumbuhin-backend/controllers/admin/standarwho"
+	adminWilayahCtrl "tumbuhin-backend/controllers/admin/wilayah"
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
@@ -49,6 +55,12 @@ type RouteDependencies struct {
 	BidanSupervisiCtrl     *bidanSupervisiCtrl.Controller
 	BidanLaporanCtrl       *bidanLaporanCtrl.Controller
 	AdminDashCtrl          *adminDashCtrl.Controller
+	AdminWilayahCtrl       *adminWilayahCtrl.Controller
+	AdminPenggunaCtrl      *adminPenggunaCtrl.Controller
+	AdminPanganCtrl        *adminPanganCtrl.Controller
+	AdminKnowledgeCtrl     *adminKnowledgeCtrl.Controller
+	AdminStandarWhoCtrl    *adminStandarWhoCtrl.Controller
+	AdminPengaturanCtrl    *adminPengaturanCtrl.Controller
 	OrtuDashCtrl           *ortuDashCtrl.Controller
 }
 
@@ -103,6 +115,9 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			kaderGroup.POST("/sinkronisasi/batch", deps.KaderSyncCtrl.HandleBatchSync)
 			kaderGroup.GET("/sinkronisasi/status", deps.KaderSyncCtrl.HandleSyncStatus)
 			kaderGroup.POST("/nutrichef/generate", deps.KaderNutriChefCtrl.HandleGenerateRecipe)
+			kaderGroup.GET("/local-foods", deps.AdminPanganCtrl.HandleListLocalFoods)
+			kaderGroup.GET("/posyandus", deps.AdminWilayahCtrl.HandleListPosyandus)
+			kaderGroup.GET("/settings", deps.AdminPengaturanCtrl.HandleGetSettingsAndAudit)
 		}
 
 		// Role 2: Bidan Desa Routes (/api/v1/bidan/...)
@@ -142,7 +157,49 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		adminGroup := v1.Group("/admin")
 		adminGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleAdmin))
 		{
+			// 3.1. Dashboard Ikhtisar Sistem
 			adminGroup.GET("/dashboard", deps.AdminDashCtrl.HandleGetOverview)
+
+			// 3.2. Master Wilayah & Posyandu
+			adminGroup.GET("/posyandus", deps.AdminWilayahCtrl.HandleListPosyandus)
+			adminGroup.POST("/posyandus", deps.AdminWilayahCtrl.HandleCreatePosyandu)
+			adminGroup.PUT("/posyandus/:id", deps.AdminWilayahCtrl.HandleUpdatePosyandu)
+			adminGroup.PATCH("/posyandus/:id/toggle", deps.AdminWilayahCtrl.HandleTogglePosyandu)
+			adminGroup.DELETE("/posyandus/:id", deps.AdminWilayahCtrl.HandleDeletePosyandu)
+
+			// 3.3. Manajemen Akun, RBAC & Magic Token
+			adminGroup.GET("/users", deps.AdminPenggunaCtrl.HandleListUsersAndTokens)
+			adminGroup.POST("/users", deps.AdminPenggunaCtrl.HandleCreateUser)
+			adminGroup.PUT("/users/:id", deps.AdminPenggunaCtrl.HandleUpdateUser)
+			adminGroup.PATCH("/users/:id/toggle", deps.AdminPenggunaCtrl.HandleToggleUserActive)
+			adminGroup.DELETE("/users/:id", deps.AdminPenggunaCtrl.HandleDeleteUser)
+			adminGroup.POST("/children/:id/regenerate-token", deps.AdminPenggunaCtrl.HandleRegenerateChildToken)
+
+			// 3.4. Harga Pangan Lokal Desa
+			adminGroup.GET("/local-foods", deps.AdminPanganCtrl.HandleListLocalFoods)
+			adminGroup.POST("/local-foods", deps.AdminPanganCtrl.HandleCreateLocalFood)
+			adminGroup.PUT("/local-foods/:id", deps.AdminPanganCtrl.HandleUpdateLocalFood)
+			adminGroup.PATCH("/local-foods/:id/toggle", deps.AdminPanganCtrl.HandleToggleLocalFood)
+			adminGroup.DELETE("/local-foods/:id", deps.AdminPanganCtrl.HandleDeleteLocalFood)
+
+			// 3.5. Knowledge Base AI (RAG) & Sandbox Playground
+			adminGroup.GET("/knowledge-chunks", deps.AdminKnowledgeCtrl.HandleListKnowledgeChunks)
+			adminGroup.POST("/knowledge-chunks", deps.AdminKnowledgeCtrl.HandleCreateKnowledgeChunk)
+			adminGroup.PUT("/knowledge-chunks/:id", deps.AdminKnowledgeCtrl.HandleUpdateKnowledgeChunk)
+			adminGroup.DELETE("/knowledge-chunks/:id", deps.AdminKnowledgeCtrl.HandleDeleteKnowledgeChunk)
+			adminGroup.POST("/knowledge-chunks/upload", deps.AdminKnowledgeCtrl.HandleUploadDocument)
+			adminGroup.POST("/knowledge-chunks/reindex", deps.AdminKnowledgeCtrl.HandleReindexVectors)
+			adminGroup.POST("/knowledge-chunks/playground", deps.AdminKnowledgeCtrl.HandleTestRAGPlayground)
+
+			// 3.6. Standar Antropometri WHO & Simulator Kalibrasi
+			adminGroup.GET("/who-standards", deps.AdminStandarWhoCtrl.HandleListWhoStandards)
+			adminGroup.POST("/who-standards", deps.AdminStandarWhoCtrl.HandleUpsertWhoStandard)
+			adminGroup.POST("/who-standards/simulate", deps.AdminStandarWhoCtrl.HandleSimulateWhoZScore)
+
+			// 3.7. Log Sinkronisasi & Pengaturan Desa
+			adminGroup.GET("/settings", deps.AdminPengaturanCtrl.HandleGetSettingsAndAudit)
+			adminGroup.PUT("/settings", deps.AdminPengaturanCtrl.HandleUpdateVillageSettings)
+			adminGroup.POST("/settings/sync-logs/:id/resolve", deps.AdminPengaturanCtrl.HandleResolveSyncLog)
 		}
 
 		// Role 4: Orang Tua Balita Routes (/api/v1/ortu/...)

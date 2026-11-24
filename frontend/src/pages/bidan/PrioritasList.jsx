@@ -22,6 +22,7 @@ import {
   postRoleData,
   putRoleData,
 } from '../../lib/authApi'
+import PaginationBar from '../../components/ui/PaginationBar'
 
 const INITIAL_FORM_STATE = {
   child_name: '',
@@ -76,6 +77,8 @@ export default function PrioritasList({
   const [filterCategory, setFilterCategory] = useState('ALL')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [actionNotice, setActionNotice] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(6)
 
   // CRUD Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -143,6 +146,10 @@ export default function PrioritasList({
       (c.rw_code || '').toLowerCase().includes(searchKeyword.toLowerCase())
     return matchCategory && matchSearch
   })
+
+  const totalPages = Math.max(1, Math.ceil(filteredChildren.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedChildren = filteredChildren.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   const handleOpenCreateModal = () => {
     setModalMode('create')
@@ -587,7 +594,7 @@ export default function PrioritasList({
                   </td>
                 </tr>
               ) : (
-                filteredChildren.map((child, idx) => {
+                paginatedChildren.map((child, idx) => {
                   const c = child
                   const isMerah = c.triage_category === 'MERAH'
                   const isOranye = c.triage_category === 'ORANYE'
@@ -751,6 +758,20 @@ export default function PrioritasList({
             </tbody>
           </table>
         </div>
+        {filteredChildren.length > 0 && (
+          <div className="px-5 pb-4">
+            <PaginationBar
+              totalItems={filteredChildren.length}
+              currentPage={safePage}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 10, 20]}
+              itemLabel="balita prioritas"
+              compact={true}
+            />
+          </div>
+        )}
       </div>
 
       {/* CRUD Modal */}

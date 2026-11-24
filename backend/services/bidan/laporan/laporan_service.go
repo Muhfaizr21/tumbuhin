@@ -348,16 +348,16 @@ func generateXLSX(rows []laporanRepo.EPPGBMRow, summary *laporanRepo.ReportSumma
 func generatePDF(rows []laporanRepo.EPPGBMRow, summary *laporanRepo.ReportSummary) ([]byte, error) {
 	var body bytes.Buffer
 
-	// Title block and metadata
+	// Title block and metadata (Synced with Super Admin village_settings)
 	body.WriteString("BT\n")
 	body.WriteString("/F1 16 Tf\n")
 	body.WriteString("40 800 Td\n")
 	body.WriteString("(REKAPITULASI SURVEILANS GIZI BALITA DESA) Tj\n")
 	body.WriteString("0 -20 Td\n")
 	body.WriteString("/F1 11 Tf\n")
-	body.WriteString(fmt.Sprintf("(Standar e-PPGBM Kemenkes RI | Wilayah: %s) Tj\n", summary.VillageName))
+	body.WriteString(fmt.Sprintf("(Standar e-PPGBM Kemenkes RI | Wilayah: %s, %s, %s) Tj\n", summary.VillageName, summary.DistrictName, summary.RegencyName))
 	body.WriteString("0 -16 Td\n")
-	body.WriteString(fmt.Sprintf("(Periode: Bulan %d Tahun %d | Dicetak pada: %s) Tj\n", summary.PeriodMonth, summary.PeriodYear, summary.GeneratedAt))
+	body.WriteString(fmt.Sprintf("(Puskesmas Pembina: %s | Periode: %d/%d | Dicetak: %s) Tj\n", summary.PuskesmasName, summary.PeriodMonth, summary.PeriodYear, summary.GeneratedAt))
 	body.WriteString("0 -24 Td\n")
 
 	// Summary KPI Box
@@ -411,14 +411,18 @@ func generatePDF(rows []laporanRepo.EPPGBMRow, summary *laporanRepo.ReportSummar
 		body.WriteString("0 -16 Td\n")
 	}
 
-	// Signature block
+	// Signature block (Synced with Super Admin village_settings)
+	headName := summary.VillageHeadName
+	if strings.TrimSpace(headName) == "" {
+		headName = "H. Suryadi Pratama, S.AP"
+	}
 	body.WriteString("0 -24 Td\n")
 	body.WriteString("/F2 9.5 Tf\n")
 	body.WriteString(fmt.Sprintf("(Mengetahui & Menyetujui,                                                   %s, %s) Tj\n", summary.VillageName, time.Now().Format("02 Jan 2006")))
 	body.WriteString("0 -14 Td\n")
-	body.WriteString("(Bidan Desa Penanggung Jawab                                               Koordinator Gizi Puskesmas) Tj\n")
+	body.WriteString("(Bidan Desa Penanggung Jawab                                               Kepala Desa / Penanggung Jawab) Tj\n")
 	body.WriteString("0 -36 Td\n")
-	body.WriteString("(( Bidan Rina Kartika, A.Md.Keb )                                          ( ________________________ )) Tj\n")
+	body.WriteString(fmt.Sprintf("(( Bidan Rina Kartika, A.Md.Keb )                                          ( %s )) Tj\n", headName))
 	body.WriteString("ET\n")
 
 	streamBytes := body.Bytes()

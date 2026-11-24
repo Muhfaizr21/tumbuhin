@@ -3,6 +3,7 @@ package balita
 import (
 	"fmt"
 	"net/http"
+	"tumbuhin-backend/middlewares"
 	kaderBalitaRepo "tumbuhin-backend/repositories/kader/balita"
 	kaderBalitaSvc "tumbuhin-backend/services/kader/balita"
 	"tumbuhin-backend/views"
@@ -40,6 +41,18 @@ func (ctrl *Controller) HandleCreateChild(c *gin.Context) {
 	if err := c.ShouldBindJSON(&input); err != nil {
 		views.BadRequest(c, "Format data tidak valid", err.Error())
 		return
+	}
+
+	// Bind Posyandu & Village from RBAC JWT Claims configured by Super Admin
+	if claimsVal, exists := c.Get("user_claims"); exists {
+		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && claims != nil {
+			if input.PosyanduName == "" && claims.PosyanduName != "" {
+				input.PosyanduName = claims.PosyanduName
+			}
+			if input.VillageName == "" && claims.VillageName != "" {
+				input.VillageName = claims.VillageName
+			}
+		}
 	}
 
 	data, err := ctrl.service.CreateChild(c.Request.Context(), input)

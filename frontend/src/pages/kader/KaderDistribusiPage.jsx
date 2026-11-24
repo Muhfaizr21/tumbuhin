@@ -5,7 +5,8 @@ import {
   CheckCircle2, 
   Share2, 
   MessageSquare,
-  RefreshCw
+  RefreshCw,
+  Search
 } from 'lucide-react'
 import { fetchRoleDashboardData } from '../../lib/authApi'
 import {
@@ -14,6 +15,7 @@ import {
   normalizeWhatsAppNumber,
 } from '../../lib/magicLink'
 import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
+import PaginationBar from '../../components/ui/PaginationBar'
 
 export default function KaderDistribusiPage() {
   const [balitaList, setBalitaList] = useState([])
@@ -21,15 +23,25 @@ export default function KaderDistribusiPage() {
   const [selectedBalita, setSelectedBalita] = useState(null)
   const [copied, setCopied] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [waTemplate, setWaTemplate] = useState('')
+  const pageSize = 5
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true)
-        const data = await fetchRoleDashboardData('/kader/balita')
+        const [data, settingsData] = await Promise.all([
+          fetchRoleDashboardData('/kader/balita'),
+          fetchRoleDashboardData('/kader/settings').catch(() => null),
+        ])
         if (Array.isArray(data) && data.length > 0) {
           setBalitaList(data)
           setSelectedBalita(data[0])
+        }
+        if (settingsData?.settings?.wa_template) {
+          setWaTemplate(settingsData.settings.wa_template)
         }
       } catch (err) {
         console.error('Failed to load balita for distribution:', err)
@@ -41,7 +53,18 @@ export default function KaderDistribusiPage() {
   }, [])
 
   const magicLink = selectedBalita ? buildMagicLink(selectedBalita.magic_token) : ''
-  const waMessage = selectedBalita ? buildWhatsAppMessage(selectedBalita, magicLink) : ''
+  const waMessage = selectedBalita ? buildWhatsAppMessage(selectedBalita, magicLink, waTemplate) : ''
+
+  const filteredBalita = balitaList.filter((b) => {
+    if (!searchTerm.trim()) return true
+    const q = searchTerm.toLowerCase()
+    return (
+      (b.nama || '').toLowerCase().includes(q) ||
+      (b.nama_ibu || b.namaOrtu || '').toLowerCase().includes(q)
+    )
+  })
+  const safePage = Math.min(currentPage, Math.max(1, Math.ceil(filteredBalita.length / pageSize)))
+  const paginatedBalita = filteredBalita.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   const handleCopy = async () => {
     if (!magicLink) {
@@ -94,19 +117,34 @@ export default function KaderDistribusiPage() {
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white border border-black/8 rounded-3xl p-6 shadow-2xs space-y-4">
             <h3 className="font-bold text-[#070709]">Pilih Kartu Gizi Balita</h3>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Cari nama balita atau ibu..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2597d0]"
+              />
+            </div>
             
             {loading ? (
               <div className="py-12 flex flex-col items-center justify-center text-slate-400">
                 <RefreshCw className="w-6 h-6 mb-2 animate-spin text-[#2597d0]" />
                 <p className="text-xs">Memuat data dari database...</p>
               </div>
-            ) : balitaList.length === 0 ? (
+            ) : filteredBalita.length === 0 ? (
               <div className="py-8 text-center text-xs text-gray-400 italic">
-                Belum ada data balita di database.
+                Belum ada data balita yang sesuai.
               </div>
             ) : (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                {balitaList.map(b => (
+              <div className="space-y-3">
+                <div className="space-y-2 pr-1">
+                  {paginatedBalita.map(b => (
                   <div
                     key={b.id}
                     onClick={() => setSelectedBalita(b)}
@@ -127,6 +165,15 @@ export default function KaderDistribusiPage() {
                     </span>
                   </div>
                 ))}
+                </div>
+                <PaginationBar
+                  totalItems={filteredBalita.length}
+                  currentPage={safePage}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  itemLabel="balita"
+                  compact={true}
+                />
               </div>
             )}
           </div>

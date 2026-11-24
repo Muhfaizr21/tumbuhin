@@ -58,6 +58,8 @@ type ChildInput struct {
 	Alergi       string  `json:"alergi"`
 	Latitude     float64 `json:"latitude"`
 	Longitude    float64 `json:"longitude"`
+	PosyanduName string  `json:"posyandu_name,omitempty"`
+	VillageName  string  `json:"village_name,omitempty"`
 }
 
 type Repository interface {
@@ -190,16 +192,40 @@ func generateMagicToken() string {
 }
 
 func (r *repository) CreateChild(ctx context.Context, input ChildInput) (string, error) {
+	posyanduName := strings.TrimSpace(input.PosyanduName)
+	if posyanduName == "" {
+		posyanduName = "Posyandu Melati 04"
+	}
+	villageName := strings.TrimSpace(input.VillageName)
+	if villageName == "" {
+		villageName = "Desa Sukamaju"
+	}
+
+	rtCode := "01"
+	rwCode := "04"
+	if parts := strings.Split(input.RTRw, "/"); len(parts) == 2 {
+		rtClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[0])), "RT"))
+		rwClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[1])), "RW"))
+		if rtClean != "" {
+			rtCode = rtClean
+		}
+		if rwClean != "" {
+			rwCode = rwClean
+		}
+	}
+
 	query := `
 	INSERT INTO children (
 		full_name, gender, birth_date, birth_weight, birth_height, 
 		parent_name, parent_father_name, parent_phone, rt_code, rw_code, notes,
-		village_name, posyandu_name, nik_hash, magic_token, latitude, longitude
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Desa Sukamaju', 'Posyandu Melati 04', $12, $13, $14, $15)
+		village_name, posyandu_name, posyandu_id, nik_hash, magic_token, latitude, longitude
+	) VALUES (
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+		(SELECT id FROM posyandus WHERE name = $13 LIMIT 1),
+		$14, $15, $16, $17
+	)
 	RETURNING id::text;
 	`
-	// Sync antrean offline mengirim hash SHA-256 penuh lewat NikHash.
-	// Registrasi reguler memakai hash bersama agar tidak menyimpan NIK mentah.
 	nikHash := strings.ToLower(strings.TrimSpace(input.NikHash))
 	if nikHash == "" {
 		nik := strings.TrimSpace(input.Nik)
@@ -207,14 +233,15 @@ func (r *repository) CreateChild(ctx context.Context, input ChildInput) (string,
 			sum := sha256.Sum256([]byte(nik))
 			nikHash = hex.EncodeToString(sum[:])
 		} else {
-			nikHash = "unknown"
+			nikHash = fmt.Sprintf("nik_%d", time.Now().UnixNano())
 		}
 	}
 
 	var id string
 	err := r.db.QueryRow(ctx, query,
 		input.Nama, input.JenisKelamin, input.TanggalLahir, input.BeratLahir, input.PanjangLahir,
-		input.NamaIbu, input.NamaAyah, input.NoWa, "01", "04", input.Alergi, nikHash,
+		input.NamaIbu, input.NamaAyah, input.NoWa, rtCode, rwCode, input.Alergi,
+		villageName, posyanduName, nikHash,
 		generateMagicToken(), input.Latitude, input.Longitude,
 	).Scan(&id)
 

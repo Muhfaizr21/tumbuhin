@@ -15,17 +15,25 @@ export function normalizeWhatsAppNumber(raw) {
   return digits
 }
 
-export function buildWhatsAppMessage(balita, magicLink) {
+export function buildWhatsAppMessage(balita, magicLink, customTemplate = '') {
   const parentName = balita?.nama_ibu || balita?.namaOrtu || 'Orang Tua'
   const status = balita?.status_gizi || balita?.statusGizi || 'Normal'
-  const weight = Number(balita?.berat_terakhir || 0) > 0
-    ? `${Number(balita.berat_terakhir).toFixed(1)} kg`
-    : 'sesuai kurva KMS'
-  const height = Number(balita?.tinggi_terakhir || 0) > 0
-    ? `${Number(balita.tinggi_terakhir).toFixed(1)} cm`
-    : '-'
+  const weightNum = Number(balita?.berat_terakhir || 0)
+  const heightNum = Number(balita?.tinggi_terakhir || 0)
+  const weight = weightNum > 0 ? `${weightNum.toFixed(1)} kg` : 'sesuai kurva KMS'
+  const height = heightNum > 0 ? `${heightNum.toFixed(1)} cm` : '-'
   const date = balita?.tanggal_timbang ? ` (${balita.tanggal_timbang})` : ''
   const note = balita?.catatan_bidan || balita?.catatanBidan || 'Pertumbuhan terpantau baik.'
+
+  if (customTemplate && customTemplate.trim()) {
+    return customTemplate
+      .replace(/\{parent_name\}/g, parentName)
+      .replace(/\{child_name\}/g, balita?.nama || 'Ananda')
+      .replace(/\{weight_kg\}/g, weightNum > 0 ? weightNum.toFixed(1) : '-')
+      .replace(/\{height_cm\}/g, heightNum > 0 ? heightNum.toFixed(1) : '-')
+      .replace(/\{nutrition_status\}/g, status)
+      .replace(/\{magic_link\}/g, magicLink)
+  }
 
   return [
     `Halo Ibu ${parentName}, berikut ringkasan hasil posyandu *${balita?.nama || 'Ananda'}*${date}:`,

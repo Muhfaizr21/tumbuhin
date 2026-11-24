@@ -6,7 +6,7 @@ import (
 	adminDashRepo "tumbuhin-backend/repositories/admin/dashboard"
 )
 
-// Service defines business logic for Super Admin dashboard
+// Service defines business logic for Super Admin dashboard overview (Module 3.1)
 type Service interface {
 	GetOverview(ctx context.Context) (*adminDashRepo.SystemStats, error)
 }

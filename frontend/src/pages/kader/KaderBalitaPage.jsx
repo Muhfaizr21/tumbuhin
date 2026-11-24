@@ -18,6 +18,7 @@ import {
 import BalitaRegistrationForm from '../../components/ui/BalitaRegistrationForm'
 import BalitaDetailModal from '../../components/ui/BalitaDetailModal'
 import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
+import PaginationBar from '../../components/ui/PaginationBar'
 import { fetchRoleDashboardData, deleteRoleData } from '../../lib/authApi'
 
 export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
@@ -31,6 +32,8 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
   const [showDetail, setShowDetail] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(6)
 
   const loadBalitaData = async () => {
     setLoading(true)
@@ -66,6 +69,10 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     
     return matchesSearch
   })
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedBalita = filteredList.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   const handleRegSuccess = (result) => {
     setShowRegForm(false)
@@ -218,7 +225,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {!loading && filteredList.map((balita) => (
+              {!loading && paginatedBalita.map((balita) => (
                 <tr 
                   key={balita.id}
                   onClick={() => {
@@ -305,6 +312,21 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
           <div className="py-20 flex flex-col items-center justify-center text-slate-400">
             <Baby className="w-12 h-12 mb-3 opacity-20" />
             <p className="text-sm italic">Tidak menemukan balita dengan kriteria tersebut di database.</p>
+          </div>
+        )}
+
+        {!loading && filteredList.length > 0 && (
+          <div className="px-6 pb-4">
+            <PaginationBar
+              totalItems={filteredList.length}
+              currentPage={safePage}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 10, 20]}
+              itemLabel="balita"
+              compact={true}
+            />
           </div>
         )}
       </div>

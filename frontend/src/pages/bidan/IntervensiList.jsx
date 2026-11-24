@@ -19,6 +19,7 @@ import {
   postRoleData,
   putRoleData,
 } from '../../lib/authApi'
+import PaginationBar from '../../components/ui/PaginationBar'
 
 const INITIAL_FORM_STATE = {
   child_id: '',
@@ -79,6 +80,8 @@ export default function IntervensiList({ user, embedded = false }) {
   const [filterStatus, setFilterStatus] = useState('ALL')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [actionNotice, setActionNotice] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(6)
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -131,6 +134,10 @@ export default function IntervensiList({ user, embedded = false }) {
       (i.visit_date || '').includes(kw)
     return matchStatus && matchSearch
   })
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedInterventions = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   function handleOpenCreateModal() {
     setModalMode('create')
@@ -451,7 +458,7 @@ export default function IntervensiList({ user, embedded = false }) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((item, idx) => {
+                paginatedInterventions.map((item, idx) => {
                   const badge = getStatusBadge(item.visit_status)
                   return (
                     <tr
@@ -550,6 +557,20 @@ export default function IntervensiList({ user, embedded = false }) {
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div className="px-5 pb-4">
+            <PaginationBar
+              totalItems={filtered.length}
+              currentPage={safePage}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[6, 10, 20]}
+              itemLabel="kunjungan rumah"
+              compact={true}
+            />
+          </div>
+        )}
       </div>
 
       {/* CRUD Modal */}

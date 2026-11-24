@@ -38,6 +38,11 @@ type EPPGBMRow struct {
 // ReportSummary encapsulates village-level epidemiological totals for the period.
 type ReportSummary struct {
 	VillageName      string  `json:"village_name"`
+	DistrictName     string  `json:"district_name"`
+	RegencyName      string  `json:"regency_name"`
+	ProvinceName     string  `json:"province_name"`
+	VillageHeadName  string  `json:"village_head_name"`
+	PuskesmasName    string  `json:"puskesmas_name"`
 	PeriodMonth      int     `json:"period_month"`
 	PeriodYear       int     `json:"period_year"`
 	TotalChildren    int     `json:"total_children"`
@@ -74,16 +79,36 @@ func (r *postgresRepository) GetReportData(ctx context.Context, villageName stri
 	}
 
 	summary := &ReportSummary{
-		VillageName: villageName,
-		PeriodMonth: month,
-		PeriodYear:  year,
-		GeneratedAt: time.Now().Format("2006-01-02 15:04:05"),
+		VillageName:     villageName,
+		DistrictName:    "Kecamatan Cibinong",
+		RegencyName:     "Kabupaten Bogor",
+		ProvinceName:    "Jawa Barat",
+		VillageHeadName: "H. Suryadi Pratama, S.AP",
+		PuskesmasName:   "UPTD Puskesmas Sukamaju",
+		PeriodMonth:     month,
+		PeriodYear:      year,
+		GeneratedAt:     time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	rowsResult := make([]EPPGBMRow, 0)
 	if r.db == nil {
 		return rowsResult, summary, nil
 	}
+
+	// Load village governance metadata configured by Super Admin in village_settings
+	_ = r.db.QueryRow(ctx, `
+		SELECT village_name, district_name, regency_name, province_name, village_head_name, puskesmas_name
+		FROM village_settings
+		ORDER BY updated_at DESC
+		LIMIT 1
+	`).Scan(
+		&summary.VillageName,
+		&summary.DistrictName,
+		&summary.RegencyName,
+		&summary.ProvinceName,
+		&summary.VillageHeadName,
+		&summary.PuskesmasName,
+	)
 
 	// Query each child in village with their latest measurement within or up to this period
 	sql := `

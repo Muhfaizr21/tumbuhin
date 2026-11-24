@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 import Footer from './components/layout/Footer'
@@ -13,18 +13,18 @@ import {
   clearAuthSession,
   getRoleDashboardPath,
   getStoredUser,
+  loginWithBackend,
   saveAuthSession,
 } from './lib/authApi'
-import AdminDashboard from './pages/admin/Dashboard'
-import BidanDashboard from './pages/bidan/BidanDashboard'
-import HomeVisitPage from './pages/bidan/HomeVisitPage'
-import PMTEvaluationPage from './pages/bidan/PMTEvaluationPage'
-import SupervisiPage from './pages/bidan/SupervisiPage'
-import LaporanExportPage from './pages/bidan/LaporanExportPage'
-import PetaGIS from './pages/bidan/PetaGIS'
-import PrioritasList from './pages/bidan/PrioritasList'
-import KaderDashboard from './pages/kader/KaderDashboard'
-import OrtuDashboard from './pages/ortu/OrtuDashboard'
+
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const BidanDashboard = lazy(() => import('./pages/bidan/BidanDashboard'))
+const HomeVisitPage = lazy(() => import('./pages/bidan/HomeVisitPage'))
+const PMTEvaluationPage = lazy(() => import('./pages/bidan/PMTEvaluationPage'))
+const SupervisiPage = lazy(() => import('./pages/bidan/SupervisiPage'))
+const LaporanExportPage = lazy(() => import('./pages/bidan/LaporanExportPage'))
+const KaderDashboard = lazy(() => import('./pages/kader/KaderDashboard'))
+const OrtuDashboard = lazy(() => import('./pages/ortu/OrtuDashboard'))
 
 function parseQueryString(raw) {
   const query = {}
@@ -60,6 +60,9 @@ function parseViewFromHash(hash) {
       token = pathPart.replace(/^p\/?/, '')
     } else {
       token = pathPart.replace(/^ortu\/?/, '')
+    }
+    if (token === 'dashboard') {
+      token = ''
     }
     return {
       type: 'dashboard',
@@ -169,13 +172,35 @@ function AppContent() {
       },
     }
 
+    const rolePasswords = {
+      kader: 'kadersehat2026',
+      bidan: 'bidansiaga2026',
+      admin: 'adminsehat2026',
+      ortu: 'ortusehat2026',
+    }
+
     const nextUser = rolePresets[targetRole] || rolePresets.kader
     saveAuthSession(null, nextUser)
     setCurrentUser(nextUser)
     const targetPath = getRoleDashboardPath(targetRole)
     window.location.hash = `#${targetPath}`
-    setViewState({ type: 'dashboard', role: targetRole })
+    setViewState(parseViewFromHash(`#${targetPath}`))
     window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    // Transparently obtain a matching JWT token from the backend for the switched role
+    loginWithBackend({
+      identifier: nextUser.email,
+      email: nextUser.email,
+      password: rolePasswords[targetRole] || 'kadersehat2026',
+    })
+      .then((authData) => {
+        if (authData?.user) {
+          setCurrentUser(authData.user)
+        }
+      })
+      .catch(() => {
+        // Offline or backend not running; keep preset user in state
+      })
   }
 
   const handleScrollToSimulation = () => {
@@ -196,81 +221,96 @@ function AppContent() {
   }
 
   if (viewState.type === 'dashboard') {
-    if (viewState.role === 'bidan') {
-      // Batch 2 pages own their routes so BidanDashboard keeps its mockup intact.
-      if (viewState.subPage === 'intervensi') {
+    const renderDashboardView = () => {
+      if (viewState.role === 'bidan') {
+        if (viewState.subPage === 'intervensi') {
+          return (
+            <HomeVisitPage
+              key={viewState.query.child_id || 'home-visit'}
+              user={currentUser}
+              prefill={viewState.query}
+              onLogout={handleLogout}
+              onSwitchRole={handleSwitchRole}
+            />
+          )
+        }
+        if (viewState.subPage === 'pmt-evaluasi') {
+          return (
+            <PMTEvaluationPage
+              user={currentUser}
+              onLogout={handleLogout}
+              onSwitchRole={handleSwitchRole}
+            />
+          )
+        }
+        if (viewState.subPage === 'supervisi') {
+          return (
+            <SupervisiPage
+              user={currentUser}
+              onLogout={handleLogout}
+              onSwitchRole={handleSwitchRole}
+            />
+          )
+        }
+        if (viewState.subPage === 'laporan') {
+          return (
+            <LaporanExportPage
+              user={currentUser}
+              onLogout={handleLogout}
+              onSwitchRole={handleSwitchRole}
+            />
+          )
+        }
         return (
-          <HomeVisitPage
-            key={viewState.query.child_id || 'home-visit'}
+          <BidanDashboard
             user={currentUser}
-            prefill={viewState.query}
+            currentSubPage={viewState.subPage}
             onLogout={handleLogout}
             onSwitchRole={handleSwitchRole}
           />
         )
       }
-      if (viewState.subPage === 'pmt-evaluasi') {
+      if (viewState.role === 'admin') {
         return (
-          <PMTEvaluationPage
+          <AdminDashboard
             user={currentUser}
             onLogout={handleLogout}
             onSwitchRole={handleSwitchRole}
           />
         )
       }
-      if (viewState.subPage === 'supervisi') {
+      if (viewState.role === 'ortu') {
         return (
-          <SupervisiPage
+          <OrtuDashboard
             user={currentUser}
+            magicToken={viewState.magicToken}
             onLogout={handleLogout}
             onSwitchRole={handleSwitchRole}
-          />
-        )
-      }
-      if (viewState.subPage === 'laporan') {
-        return (
-          <LaporanExportPage
-            user={currentUser}
-            onLogout={handleLogout}
-            onSwitchRole={handleSwitchRole}
+            tts={tts}
           />
         )
       }
       return (
-        <BidanDashboard
+        <KaderDashboard
           user={currentUser}
-          currentSubPage={viewState.subPage}
           onLogout={handleLogout}
           onSwitchRole={handleSwitchRole}
         />
       )
     }
-    if (viewState.role === 'admin') {
-      return (
-        <AdminDashboard
-          user={currentUser}
-          onLogout={handleLogout}
-          onSwitchRole={handleSwitchRole}
-        />
-      )
-    }
-    if (viewState.role === 'ortu') {
-      return (
-        <OrtuDashboard
-          user={currentUser}
-          magicToken={viewState.magicToken}
-          onLogout={handleLogout}
-          onSwitchRole={handleSwitchRole}
-          tts={tts}
-        />
-      )
-    }
+
     return (
-      <KaderDashboard
-        user={currentUser}
-        onLogout={handleLogout}
-        onSwitchRole={handleSwitchRole}
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-dvh bg-[#f6f9fc] flex items-center justify-center p-6">
+            <div className="px-5 py-3.5 rounded-2xl bg-white border border-slate-100 shadow-xs text-[13px] font-semibold text-slate-600">
+              Memuat ruang kerja modul...
+            </div>
+          </div>
+        }
+      >
+        {renderDashboardView()}
+      </Suspense>
     )
   }
 

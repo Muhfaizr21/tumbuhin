@@ -44,19 +44,20 @@ ${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
 }
 
-const LOCAL_FOODS = [
+const DEFAULT_LOCAL_FOODS = [
   { id: 'telur', name: 'Telur Ayam', price: 2000, unit: 'butir', cat: 'Protein Hewani' },
   { id: 'lele', name: 'Ikan Lele', price: 5000, unit: 'ekor', cat: 'Protein Hewani' },
   { id: 'hati', name: 'Hati Ayam', price: 3000, unit: 'potong', cat: 'Protein Hewani' },
   { id: 'tempe', name: 'Tempe', price: 1000, unit: 'potong', cat: 'Protein Nabati' },
   { id: 'bayam', name: 'Bayam', price: 2000, unit: 'ikat', cat: 'Sayur' },
-  { id: 'kelor', name: 'Daun Kelor', price: 0, unit: 'petik', cat: 'Sayur' },
+  { id: 'kelor', name: 'Daun Kelor', price: 500, unit: 'genggam', cat: 'Sayur' },
   { id: 'labu', name: 'Labu Kuning', price: 2000, unit: 'potong', cat: 'Sayur' },
-  { id: 'minyak', name: 'Minyak Kelapa', price: 500, unit: 'sdm', cat: 'Lemak' },
+  { id: 'minyak', name: 'Minyak Kelapa', price: 500, unit: 'sdt', cat: 'Lemak' },
 ]
 
 export default function KaderNutriChefPage() {
   const [balitaList, setBalitaList] = useState([])
+  const [localFoods, setLocalFoods] = useState(DEFAULT_LOCAL_FOODS)
   const [loading, setLoading] = useState(true)
   const [selectedBalitaId, setSelectedBalitaId] = useState('')
   const [budget, setBudget] = useState(15000)
@@ -68,9 +69,26 @@ export default function KaderNutriChefPage() {
     async function loadData() {
       try {
         setLoading(true)
-        const data = await fetchRoleDashboardData('/kader/balita')
+        const [data, foodRows] = await Promise.all([
+          fetchRoleDashboardData('/kader/balita'),
+          fetchRoleDashboardData('/kader/local-foods').catch(() => null),
+        ])
         if (Array.isArray(data)) {
           setBalitaList(data)
+        }
+        if (Array.isArray(foodRows) && foodRows.length > 0) {
+          const available = foodRows
+            .filter((f) => f.is_available !== false)
+            .map((f) => ({
+              id: f.food_key,
+              name: f.name,
+              price: f.estimated_price_idr,
+              unit: f.unit_label,
+              cat: f.category,
+            }))
+          if (available.length > 0) {
+            setLocalFoods(available)
+          }
         }
       } catch (err) {
         console.error('Failed to load balita:', err)
@@ -176,9 +194,14 @@ export default function KaderNutriChefPage() {
 
             {/* Food Selection */}
             <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-gray-700">Bahan Lokal Tersedia</label>
-              <div className="grid grid-cols-2 gap-2">
-                {LOCAL_FOODS.map(food => (
+              <div className="flex items-center justify-between">
+                <label className="text-[13px] font-semibold text-gray-700">Bahan Lokal Tersedia</label>
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Sinkron Pasar Desa ({localFoods.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                {localFoods.map(food => (
                   <button
                     key={food.id}
                     onClick={() => toggleFood(food.id)}
@@ -189,7 +212,7 @@ export default function KaderNutriChefPage() {
                     }`}
                   >
                     <p className="text-[11px] font-bold text-gray-700">{food.name}</p>
-                    <p className="text-[9px] text-gray-400">Rp {food.price} / {food.unit}</p>
+                    <p className="text-[9px] text-gray-400">Rp {Number(food.price).toLocaleString('id-ID')} / {food.unit}</p>
                   </button>
                 ))}
               </div>
