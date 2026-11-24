@@ -76,7 +76,7 @@ func main() {
 	bidanSupervisiRepository := bidanSupervisiRepo.NewRepository(cfg.DBPool)
 	bidanLaporanRepository := bidanLaporanRepo.NewRepository(cfg.DBPool)
 	adminDashRepository := adminDashRepo.NewRepository()
-	ortuDashRepository := ortuDashRepo.NewRepository()
+	ortuDashRepository := ortuDashRepo.NewRepository(cfg.DBPool)
 
 	// 4. Initialize Services (Business Logic Layer)
 	userService := services.NewUserService(userRepository)

@@ -21,9 +21,9 @@ import {
 } from 'recharts'
 
 export default function BalitaDetailModal({ balita, onClose, onNavigate }) {
-  if (!balita) return null
-
   const [chartMetric, setChartMetric] = useState('bb') // 'bb' | 'tb'
+
+  if (!balita) return null
 
   // Data KMS yang lebih realistis
   const kmsData = chartMetric === 'bb' ? [

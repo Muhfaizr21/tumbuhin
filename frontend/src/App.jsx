@@ -54,7 +54,19 @@ function parseViewFromHash(hash) {
   }
   if (clean.startsWith('admin')) return { type: 'dashboard', role: 'admin' }
   if (clean.startsWith('ortu') || clean.startsWith('p/')) {
-    return { type: 'dashboard', role: 'ortu' }
+    const [pathPart, queryPart] = clean.split('?')
+    let token = ''
+    if (pathPart.startsWith('p/')) {
+      token = pathPart.replace(/^p\/?/, '')
+    } else {
+      token = pathPart.replace(/^ortu\/?/, '')
+    }
+    return {
+      type: 'dashboard',
+      role: 'ortu',
+      magicToken: token || 'magic-balita-andi-2026-tumbuhin-sehat',
+      query: parseQueryString(queryPart),
+    }
   }
   return { type: 'landing' }
 }
@@ -246,6 +258,7 @@ function AppContent() {
       return (
         <OrtuDashboard
           user={currentUser}
+          magicToken={viewState.magicToken}
           onLogout={handleLogout}
           onSwitchRole={handleSwitchRole}
           tts={tts}
