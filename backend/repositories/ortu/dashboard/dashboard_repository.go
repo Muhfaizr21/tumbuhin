@@ -19,17 +19,17 @@ var ErrNotFound = errors.New("balita dengan magic link tersebut tidak ditemukan"
 // ChildGrowthCard is the comprehensive data model for the Orang Tua portal.
 type ChildGrowthCard struct {
 	// Profil Balita
-	ChildID       string `json:"child_id"`
-	ChildName     string `json:"child_name"`
-	MaskedNIK     string `json:"masked_nik"`
-	Gender        string `json:"gender"`
-	BirthDate     string `json:"birth_date"`
-	AgeMonths     int    `json:"age_months"`
-	ParentName    string `json:"parent_name"`
-	ParentPhone   string `json:"parent_phone"`
-	PosyanduName  string `json:"posyandu_name"`
-	VillageName   string `json:"village_name"`
-	MagicToken    string `json:"magic_token"`
+	ChildID      string `json:"child_id"`
+	ChildName    string `json:"child_name"`
+	MaskedNIK    string `json:"masked_nik"`
+	Gender       string `json:"gender"`
+	BirthDate    string `json:"birth_date"`
+	AgeMonths    int    `json:"age_months"`
+	ParentName   string `json:"parent_name"`
+	ParentPhone  string `json:"parent_phone"`
+	PosyanduName string `json:"posyandu_name"`
+	VillageName  string `json:"village_name"`
+	MagicToken   string `json:"magic_token"`
 
 	// Hasil Timbang Terakhir
 	LastMeasuredDate string  `json:"last_measured_date"`
@@ -116,6 +116,8 @@ type BidanNoteDetail struct {
 	CompliancePercent float64 `json:"compliance_percent"`
 	FollowUpDate      string  `json:"follow_up_date"`
 }
+
+var ErrChildNotFound = errors.New("kartu gizi tidak ditemukan")
 
 // NextPosyanduDetail captures schedule info for upcoming visits.
 type NextPosyanduDetail struct {

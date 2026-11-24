@@ -8,8 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// RunExtendedMigrations executes DDL for the clinical, GIS, home visit, and PMT evaluation tables.
-// All migrations (Batch 1 & Batch 2) are unified in this file and are idempotent (safe to run on every boot).
 func RunExtendedMigrations(db *pgxpool.Pool) error {
 	if db == nil {
 		log.Println("[MIGRATION] Skipped: database pool is nil")
@@ -58,7 +56,11 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		latitude DOUBLE PRECISION DEFAULT -6.5950378,
 		longitude DOUBLE PRECISION DEFAULT 106.816635,
 		parent_name VARCHAR(150) DEFAULT '',
+		parent_father_name VARCHAR(150) DEFAULT '',
 		parent_phone VARCHAR(30) DEFAULT '',
+		birth_weight DOUBLE PRECISION DEFAULT 0.0,
+		birth_height DOUBLE PRECISION DEFAULT 0.0,
+		notes TEXT DEFAULT '',
 		magic_token VARCHAR(128) DEFAULT '',
 		is_active BOOLEAN DEFAULT TRUE,
 		created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -67,6 +69,13 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION DEFAULT -6.5950378;
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION DEFAULT 106.816635;
+	ALTER TABLE children ALTER COLUMN magic_token SET DEFAULT ('magic-' || replace(gen_random_uuid()::text, '-', ''));
+	UPDATE children
+	SET magic_token = 'magic-' || replace(gen_random_uuid()::text, '-', '')
+	WHERE COALESCE(magic_token, '') = '';
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_children_magic_token
+	ON children(magic_token)
+	WHERE COALESCE(magic_token, '') <> '';
 
 	-- 4. WHO LMS Reference Standards
 	CREATE TABLE IF NOT EXISTS who_lms_standards (
@@ -85,9 +94,12 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		child_id UUID NOT NULL REFERENCES children(id) ON DELETE CASCADE,
 		measured_at DATE NOT NULL DEFAULT CURRENT_DATE,
-		age_months INT NOT NULL,
+		age_months INT DEFAULT 12,
 		weight_kg DOUBLE PRECISION NOT NULL,
 		height_cm DOUBLE PRECISION NOT NULL,
+		head_circumference DOUBLE PRECISION DEFAULT 0.0,
+		arm_circumference DOUBLE PRECISION DEFAULT 0.0,
+		measurement_pos VARCHAR(10) DEFAULT 'berdiri',
 		zscore_wfa DOUBLE PRECISION DEFAULT 0.0,
 		zscore_hfa DOUBLE PRECISION DEFAULT 0.0,
 		zscore_wfh DOUBLE PRECISION DEFAULT 0.0,
@@ -183,6 +195,26 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		UNIQUE(village_name, posyandu_id, period_month, period_year)
 	);
 	CREATE INDEX IF NOT EXISTS idx_supervision_locks_village ON supervision_locks(village_name, period_year, period_month);
+
+	-- 12. Server-side audit log + idempotency gate for the offline IndexedDB queue
+	CREATE TABLE IF NOT EXISTS offline_sync_items (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		kader_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL,
+		client_id VARCHAR(160) NOT NULL,
+		item_type VARCHAR(30) NOT NULL,
+		status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+			CHECK (status IN ('PENDING','SYNCED','CONFLICT','FAILED')),
+		server_ref_id VARCHAR(120) DEFAULT '',
+		message TEXT DEFAULT '',
+		payload JSONB DEFAULT '{}'::jsonb,
+		attempts INT NOT NULL DEFAULT 1,
+		synced_at TIMESTAMPTZ,
+		created_at TIMESTAMPTZ DEFAULT NOW(),
+		updated_at TIMESTAMPTZ DEFAULT NOW(),
+		UNIQUE(kader_id, client_id)
+	);
+	CREATE INDEX IF NOT EXISTS idx_offline_sync_items_kader_status ON offline_sync_items(kader_id, status);
+	CREATE INDEX IF NOT EXISTS idx_offline_sync_items_updated_at ON offline_sync_items(updated_at DESC);
 	`
 
 	if _, err := db.Exec(ctx, ddlSQL); err != nil {
@@ -192,7 +224,6 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 
 	log.Println("[MIGRATION] Extended clinical, GIS & PMT tables created successfully.")
 
-	// Seed Posyandu master data if empty
 	seedPosyanduSQL := `
 	INSERT INTO posyandus (name, village_name, rw_code, rt_code, latitude, longitude)
 	SELECT name, village_name, rw_code, rt_code, latitude, longitude
@@ -212,7 +243,6 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Printf("[MIGRATION WARNING] Failed seeding posyandus: %v", err)
 	}
 
-	// Seed WHO LMS reference standards sample (idempotent ON CONFLICT DO NOTHING)
 	seedWhoSQL := `
 	INSERT INTO who_lms_standards (indicator, gender, age_months, l_val, m_val, s_val)
 	VALUES
@@ -232,7 +262,6 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		log.Printf("[MIGRATION WARNING] Failed seeding WHO standards: %v", err)
 	}
 
-	// Pembersihan data dummy/seeder balita agar database murni hanya berisi data riil pengguna
 	cleanupDummySQL := `
 	DELETE FROM children 
 	WHERE nik_hash IN ('nik_hash_001', 'nik_hash_002', 'nik_hash_003', 'nik_hash_004') 
@@ -247,7 +276,6 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 	return nil
 }
 
-// RunBatch2Migrations is retained for compatibility, delegating to the unified migration runner.
 func RunBatch2Migrations(db *pgxpool.Pool) error {
 	return nil
 }

@@ -1,22 +1,44 @@
-import { useState } from 'react'
-import { ArrowRight, MoreVertical } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowRight } from 'lucide-react'
+import { fetchRoleDashboardData } from '../../lib/authApi'
 
 export default function BalitaListCard({
-  balitaList = [],
   onSelectBalita,
   onLihatSemua,
 }) {
-  const [activeTab, setActiveTab] = useState('hari_ini') // 'hari_ini' | 'belum_timbang' | 'warning'
+  const [activeTab, setActiveTab] = useState('hari_ini')
+  const [balitaList, setBalitaList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadBalita() {
+      try {
+        setLoading(true)
+        const data = await fetchRoleDashboardData('/kader/balita')
+        if (Array.isArray(data)) {
+          setBalitaList(data)
+        }
+      } catch (err) {
+        console.error('Failed to load balita:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadBalita()
+  }, [])
 
   const filteredList = balitaList.filter((b) => {
+    const statusTimbang = b.status_timbang || 'Belum Ditimbang'
+    const statusGizi = b.status_gizi || 'Normal'
+    
     if (activeTab === 'belum_timbang') {
-      return b.statusTimbang === 'Belum Ditimbang'
+      return statusTimbang === 'Belum Ditimbang'
     }
     if (activeTab === 'warning') {
-      return b.skorRisiko === 'Tinggi' || b.statusGizi === 'Stunted' || b.statusGizi === 'Wasted'
+      return statusGizi === 'Stunted' || statusGizi === 'Wasted' || statusGizi === 'Berisiko'
     }
     // 'hari_ini'
-    return b.statusTimbang === 'Sudah Ditimbang'
+    return statusTimbang === 'Sudah Ditimbang'
   })
 
   const statusBadgeConfig = {
@@ -30,15 +52,15 @@ export default function BalitaListCard({
   }
 
   return (
-    <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/6 shadow-2xs clinicflow-card flex flex-col justify-between">
+    <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-100 shadow-2xs clinicflow-card flex flex-col justify-between">
       <div>
         {/* Header with Title & "Lihat Semua →" */}
-        <div className="flex items-center justify-between pb-3 border-b border-black/6">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-[16px] font-bold text-gray-900 tracking-tight">
+            <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">
               Daftar Balita Posyandu
             </h2>
-            <p className="text-[11.5px] text-gray-500">
+            <p className="text-[11.5px] text-slate-500">
               Presensi & status gizi balita Meja 3 RW 04
             </p>
           </div>
@@ -54,7 +76,7 @@ export default function BalitaListCard({
         </div>
 
         {/* Tab Filter (ClinicFlow-inspired) */}
-        <div className="flex items-center gap-1 mt-3 p-1 rounded-xl bg-gray-100 text-[11.5px] font-medium text-gray-600">
+        <div className="flex items-center gap-1 mt-3 p-1 rounded-xl bg-slate-50 text-[11.5px] font-medium text-slate-600">
           {[
             { id: 'hari_ini', label: 'Hari Ini' },
             { id: 'belum_timbang', label: 'Belum Ditimbang' },
@@ -67,7 +89,7 @@ export default function BalitaListCard({
               className={`flex-1 py-1.5 px-2 rounded-lg text-center transition-colors cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-white text-blue-600 font-semibold shadow-2xs'
-                  : 'hover:text-gray-900'
+                  : 'hover:text-slate-800'
               }`}
             >
               {tab.label}
@@ -76,14 +98,24 @@ export default function BalitaListCard({
         </div>
 
         {/* List of Balita */}
-        <div className="divide-y divide-black/6 mt-3 max-h-[310px] overflow-y-auto pr-1">
-          {filteredList.length === 0 ? (
-            <div className="py-8 text-center text-gray-400 text-[12px] italic">
+        <div className="divide-y divide-slate-100 mt-4 space-y-1 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+          {loading ? (
+            <div className="py-12 text-center text-slate-400 text-[12px] italic">
+              Memuat data dari server...
+            </div>
+          ) : filteredList.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-[12px] italic">
               Tidak ada data balita pada filter ini
             </div>
           ) : (
-            filteredList.slice(0, 6).map((item) => {
-              const initials = item.nama
+            filteredList.map((item) => {
+              const nama = item.nama || item.full_name || '-'
+              const usia = item.usia || `${item.usia_bulan || 0} Bulan`
+              const jk = item.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'
+              const rtRw = item.rt_rw || '-'
+              const statusGizi = item.status_gizi || 'Normal'
+
+              const initials = nama
                 .split(' ')
                 .slice(0, 2)
                 .map((n) => n[0])
@@ -93,43 +125,31 @@ export default function BalitaListCard({
                 <div
                   key={item.id}
                   onClick={() => onSelectBalita && onSelectBalita(item)}
-                  className="py-2.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 rounded-xl px-2 transition-colors cursor-pointer group"
+                  className="py-3 flex items-center justify-between gap-4 hover:bg-slate-50 rounded-2xl px-3 transition-all cursor-pointer group border border-transparent hover:border-slate-100"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-blue-100/70 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 border border-blue-200/50 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0 border border-slate-200 group-hover:bg-[#1e293b] group-hover:text-white transition-colors">
                       {initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate leading-snug">
-                        {item.nama}
+                      <p className="text-[13.5px] font-bold text-slate-800 truncate leading-snug group-hover:text-[#1e293b]">
+                        {nama}
                       </p>
-                      <p className="text-[11px] text-gray-500 truncate">
-                        {item.usia} • {item.jenisKelamin === 'L' ? 'L' : 'P'} • {item.rtRw}
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                        {usia} • {jk} • {rtRw}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${
-                        statusBadgeConfig[item.statusGizi] ||
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
+                        statusBadgeConfig[statusGizi] ||
                         statusBadgeConfig['Sudah Ditimbang']
                       }`}
                     >
-                      {item.statusGizi}
+                      {statusGizi}
                     </span>
-
-                    <button
-                      type="button"
-                      className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
-                      aria-label={`Aksi untuk ${item.nama}`}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (onSelectBalita) onSelectBalita(item)
-                      }}
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               )

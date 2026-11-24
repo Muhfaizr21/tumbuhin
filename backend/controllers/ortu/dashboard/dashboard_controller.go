@@ -33,8 +33,8 @@ func (ctrl *Controller) HandleGetPortal(c *gin.Context) {
 
 	data, err := ctrl.service.GetChildCard(c.Request.Context(), magicToken)
 	if err != nil {
-		if errors.Is(err, ortuDashRepo.ErrNotFound) {
-			views.NotFound(c, "Data balita dengan Magic Link tersebut tidak ditemukan atau tautan sudah tidak aktif")
+		if errors.Is(err, ortuDashRepo.ErrChildNotFound) {
+			views.NotFound(c, "Kartu Gizi Digital tidak ditemukan atau tautan sudah tidak berlaku")
 			return
 		}
 		views.InternalServerError(c, "Gagal memuat Kartu Gizi Digital balita")

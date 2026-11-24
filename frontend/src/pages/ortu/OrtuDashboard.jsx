@@ -80,19 +80,17 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
   return (
     <div
       style={{ fontSize: `${fontSizeScale}%` }}
-      className={`min-h-screen transition-colors duration-200 pb-28 font-inter ${
-        isHighContrast
+      className={`min-h-screen transition-colors duration-200 pb-28 font-inter ${isHighContrast
           ? 'bg-black text-white selection:bg-yellow-400 selection:text-black'
           : 'bg-[#f8fafc] text-[#070709] selection:bg-[#2597d0] selection:text-white'
-      }`}
+        }`}
     >
       {/* Top Bar Navigation (Clean Medical Instrument Header) */}
       <header
-        className={`w-full border-b sticky top-0 z-40 backdrop-blur-md transition-all ${
-          isHighContrast
+        className={`w-full border-b sticky top-0 z-40 backdrop-blur-md transition-all ${isHighContrast
             ? 'bg-black/95 border-yellow-400 text-white'
             : 'bg-white/95 border-black/8 text-[#070709]'
-        }`}
+          }`}
       >
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -123,22 +121,20 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
               <button
                 type="button"
                 onClick={() => handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                  effectiveToken.includes('andi')
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${effectiveToken.includes('andi')
                     ? 'bg-[#070709] text-white'
                     : 'bg-[#f5f5f5] text-[#60606c] hover:bg-[#e8e8e8] border border-black/5'
-                }`}
+                  }`}
               >
                 Andi (Pita Hijau)
               </button>
               <button
                 type="button"
                 onClick={() => handleSwitchDemoChild('magic-balita-siti-2026-tumbuhin-pantau')}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                  effectiveToken.includes('siti')
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${effectiveToken.includes('siti')
                     ? 'bg-[#070709] text-white'
                     : 'bg-[#f5f5f5] text-[#60606c] hover:bg-[#e8e8e8] border border-black/5'
-                }`}
+                  }`}
               >
                 Siti (Pita Kuning/PMT)
               </button>
@@ -208,11 +204,10 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
           <>
             {/* Header Profil Balita (Kartu Identitas - 18/24px rounded card floating on hairline shadow) */}
             <div
-              className={`p-6 sm:p-7 rounded-3xl border transition-all ${
-                isHighContrast
+              className={`p-6 sm:p-7 rounded-3xl border transition-all ${isHighContrast
                   ? 'bg-black text-white border-yellow-400'
                   : 'bg-white text-[#070709] border-black/8 shadow-2xs'
-              }`}
+                }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -246,22 +241,20 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
                 {/* Status Pita KMS Badge */}
                 <div className="self-start sm:self-auto shrink-0">
                   <span
-                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-medium text-xs tracking-tight ${
-                      childData.color_pita === 'hijau'
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-medium text-xs tracking-tight ${childData.color_pita === 'hijau'
                         ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
                         : childData.color_pita === 'kuning'
-                        ? 'bg-amber-50 text-amber-900 border border-amber-200/80'
-                        : 'bg-rose-50 text-rose-900 border border-rose-200/80'
-                    }`}
+                          ? 'bg-amber-50 text-amber-900 border border-amber-200/80'
+                          : 'bg-rose-50 text-rose-900 border border-rose-200/80'
+                      }`}
                   >
                     <span
-                      className={`w-2 h-2 rounded-full ${
-                        childData.color_pita === 'hijau'
+                      className={`w-2 h-2 rounded-full ${childData.color_pita === 'hijau'
                           ? 'bg-emerald-500'
                           : childData.color_pita === 'kuning'
-                          ? 'bg-amber-500'
-                          : 'bg-rose-500'
-                      }`}
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
+                        }`}
                     />
                     Pita {childData.color_pita?.toUpperCase() || 'HIJAU'} KMS
                   </span>
@@ -275,18 +268,16 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
                   <button
                     type="button"
                     onClick={() => handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')}
-                    className={`px-3 py-1 rounded-full text-[10px] font-medium ${
-                      effectiveToken.includes('andi') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
-                    }`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-medium ${effectiveToken.includes('andi') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
+                      }`}
                   >
                     Andi (Hijau)
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSwitchDemoChild('magic-balita-siti-2026-tumbuhin-pantau')}
-                    className={`px-3 py-1 rounded-full text-[10px] font-medium ${
-                      effectiveToken.includes('siti') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
-                    }`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-medium ${effectiveToken.includes('siti') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
+                      }`}
                   >
                     Siti (Kuning)
                   </button>
@@ -297,11 +288,10 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
             {/* Sticky Navigation Tabs (Pill Segmented Navigation Bar) */}
             <nav aria-label="Navigasi Menu Orang Tua" className="sticky top-14 z-30 py-2 backdrop-blur-md bg-transparent">
               <div
-                className={`p-1.5 rounded-full border flex items-center justify-between gap-1 shadow-2xs transition-all ${
-                  isHighContrast
+                className={`p-1.5 rounded-full border flex items-center justify-between gap-1 shadow-2xs transition-all ${isHighContrast
                     ? 'bg-black text-white border-yellow-400'
                     : 'bg-white/95 border-black/8'
-                }`}
+                  }`}
               >
                 {TABS.map((tab) => {
                   const Icon = tab.icon
@@ -311,15 +301,14 @@ export default function OrtuDashboard({ user, magicToken, onSwitchRole }) {
                       type="button"
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 rounded-full font-medium text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        isActive
+                      className={`flex-1 py-2 sm:py-2.5 px-3 rounded-full font-medium text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all cursor-pointer ${isActive
                           ? isHighContrast
                             ? 'bg-yellow-400 text-black shadow-xs font-semibold'
                             : 'bg-[#070709] text-white shadow-2xs font-semibold'
                           : isHighContrast
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-[#60606c] hover:text-[#070709] hover:bg-[#f5f5f5]'
-                      }`}
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-[#60606c] hover:text-[#070709] hover:bg-[#f5f5f5]'
+                        }`}
                     >
                       <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#2597d0]' : 'text-current'}`} />
                       <span className="truncate">{tab.label}</span>

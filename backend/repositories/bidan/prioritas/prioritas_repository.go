@@ -131,11 +131,7 @@ func (r *repository) GetPriorityList(ctx context.Context, villageName string) ([
 			FROM measurements
 			ORDER BY child_id, measured_at DESC
 		) m ON m.child_id = c.id
-		WHERE (c.village_name = $1 OR c.village_name = 'Desa Sukamaju' OR c.village_name IS NULL OR c.village_name = '') AND (
-			m.nutrition_status IN ('severely_stunted', 'stunted', 'severely_wasted', 'wasted')
-			OR m.faltering_risk_score >= 70.0
-			OR c.created_at >= (CURRENT_TIMESTAMP - interval '7 days')
-		)
+		WHERE (c.village_name = $1 OR c.village_name = 'Desa Sukamaju' OR c.village_name IS NULL OR c.village_name = '')
 		ORDER BY 
 			c.created_at DESC,
 			CASE 

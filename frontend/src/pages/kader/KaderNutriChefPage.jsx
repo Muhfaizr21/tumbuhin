@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   ChefHat, 
   Utensils, 
@@ -11,7 +11,38 @@ import {
   BookOpen,
   Info
 } from 'lucide-react'
-import { MOCK_BALITA_LIST } from '../../services/mock/kaderMock'
+import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+
+// Helper kirim WA
+const sendWhatsApp = (balita, recipe) => {
+  if (!balita || !recipe) return
+  let phone = String(recipe.recipientWa || balita.no_wa || balita.noWA || '').replace(/[^0-9]/g, '')
+  if (!phone || phone === '-') {
+    alert('Nomor WhatsApp Ibu belum terisi. Lengkapi data balita dulu.')
+    return
+  }
+  if (phone.startsWith('0')) phone = '62' + phone.slice(1)
+  if (!phone.startsWith('62')) phone = '62' + phone
+
+  const message = `*Rekomendasi Resep MPASI Lokal (AI Nutri-Chef)*
+Untuk: ${recipe.balitaNama || balita.nama}
+
+Menu: ${recipe.title}
+Target Usia: ${recipe.targetAge}
+Tekstur: ${recipe.texture}
+Energi: ${recipe.energy} | Protein: ${recipe.protein}
+Estimasi Biaya: Rp ${recipe.totalCost}
+
+*Bahan:*
+${recipe.ingredients.map((i) => `- ${i.name} (${i.qty})`).join('\n')}
+
+*Langkah Memasak:*
+${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+*Sumber:* ${recipe.citation}`
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+}
 
 const LOCAL_FOODS = [
   { id: 'telur', name: 'Telur Ayam', price: 2000, unit: 'butir', cat: 'Protein Hewani' },
@@ -25,13 +56,32 @@ const LOCAL_FOODS = [
 ]
 
 export default function KaderNutriChefPage() {
+  const [balitaList, setBalitaList] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedBalitaId, setSelectedBalitaId] = useState('')
   const [budget, setBudget] = useState(15000)
   const [selectedFoods, setSelectedFoods] = useState(['telur', 'bayam', 'minyak'])
   const [isGenerating, setIsGenerating] = useState(false)
   const [recipe, setRecipe] = useState(null)
 
-  const selectedBalita = MOCK_BALITA_LIST.find(b => b.id === selectedBalitaId)
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const data = await fetchRoleDashboardData('/kader/balita')
+        if (Array.isArray(data)) {
+          setBalitaList(data)
+        }
+      } catch (err) {
+        console.error('Failed to load balita:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const selectedBalita = balitaList.find(b => b.id === selectedBalitaId)
 
   const toggleFood = (id) => {
     setSelectedFoods(prev => 
@@ -39,36 +89,22 @@ export default function KaderNutriChefPage() {
     )
   }
 
-  const generateRecipe = () => {
+  const generateRecipe = async () => {
     if (!selectedBalitaId) return
     setIsGenerating(true)
     
-    // Simulasi RAG AI + Gemini Structured Output
-    setTimeout(() => {
-      setRecipe({
-        title: 'Bubur Lumat Telur Bayam Gurih',
-        targetAge: '6-8 Bulan',
-        texture: 'Lumat / Saring',
-        energy: '145 kkal',
-        protein: '8.2 g',
-        ingredients: [
-          { name: 'Telur Ayam', qty: '1 butir', cost: 2000 },
-          { name: 'Bayam', qty: '1/2 ikat', cost: 1000 },
-          { name: 'Nasi Tim', qty: '3 sdm', cost: 500 },
-          { name: 'Minyak Kelapa', qty: '1 sdt', cost: 200 },
-        ],
-        steps: [
-          'Cuci bersih bayam dan ambil daunnya saja.',
-          'Rebus telur hingga matang, lalu ambil kuningnya.',
-          'Masak nasi tim bersama bayam hingga lunak.',
-          'Saring bubur menggunakan saringan kawat hingga lumat.',
-          'Campurkan kuning telur dan minyak kelapa, aduk rata.'
-        ],
-        citation: 'Buku KIA Kemenkes RI 2024, Hal 42: PMBA Usia 6-8 Bulan.',
-        totalCost: 3700
-      })
-      setIsGenerating(false)
-    }, 2000)
+    try {
+        const result = await postRoleData('/kader/nutrichef/generate', {
+            balitaId: selectedBalitaId,
+            budget: budget,
+            foods: selectedFoods
+        })
+        setRecipe(result)
+    } catch (err) {
+        alert('Gagal generate resep: ' + err.message)
+    } finally {
+        setIsGenerating(false)
+    }
   }
 
   const handleSpeak = () => {
@@ -102,17 +138,18 @@ export default function KaderNutriChefPage() {
               <select 
                 value={selectedBalitaId}
                 onChange={e => setSelectedBalitaId(e.target.value)}
+                disabled={loading}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none"
               >
-                <option value="">-- Pilih Balita --</option>
-                {MOCK_BALITA_LIST.map(b => (
+                <option value="">{loading ? 'Memuat data...' : '-- Pilih Balita --'}</option>
+                {balitaList.map(b => (
                   <option key={b.id} value={b.id}>{b.nama} ({b.usia})</option>
                 ))}
               </select>
               {selectedBalita && (
                 <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 mt-2">
                   <p className="text-[11px] text-blue-700 leading-tight">
-                    <strong>Status:</strong> {selectedBalita.statusGizi} • 
+                    <strong>Status:</strong> {selectedBalita.status_gizi || selectedBalita.statusGizi || '-'} • 
                     <strong> Alergi:</strong> {selectedBalita.alergi || 'Tidak Ada'}
                   </p>
                 </div>
@@ -192,6 +229,9 @@ export default function KaderNutriChefPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">Target: {recipe.targetAge}</span>
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">
+                    {recipe.source === 'gemini-structured' ? 'Gemini Structured' : 'Rule-based'}
+                  </span>
                   <h3 className="text-xl font-black mt-1">{recipe.title}</h3>
                 </div>
                 <div className="text-right">
@@ -253,6 +293,15 @@ export default function KaderNutriChefPage() {
                 <div>
                   <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Sitasi Resmi Kemenkes RI</p>
                   <p className="text-[11px] text-emerald-700 italic">{recipe.citation}</p>
+                  {recipe.ragSources?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {recipe.ragSources.map((src, i) => (
+                        <li key={i} className="text-[10px] text-emerald-700">
+                          [{i + 1}] {src.sourceDoc} · kemiripan {Math.round(src.score * 100)}%
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 
@@ -265,7 +314,10 @@ export default function KaderNutriChefPage() {
                   <Volume2 className="w-4 h-4" />
                   Dengar Suara
                 </button>
-                <button className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                <button
+                  onClick={() => sendWhatsApp(selectedBalita, recipe)}
+                  className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                >
                   <Send className="w-4 h-4" />
                   Kirim WA Ibu
                 </button>

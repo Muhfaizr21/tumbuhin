@@ -11,13 +11,16 @@ import (
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
 	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
 	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
+	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPMTEvalCtrl "tumbuhin-backend/controllers/bidan/pmt_evaluations"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
 	bidanSupervisiCtrl "tumbuhin-backend/controllers/bidan/supervisi"
-	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
-	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	kaderBalitaCtrl "tumbuhin-backend/controllers/kader/balita"
+	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
+	kaderNutriChefCtrl "tumbuhin-backend/controllers/kader/nutrichef"
+	kaderSyncCtrl "tumbuhin-backend/controllers/kader/sinkronisasi"
+	kaderTimbangCtrl "tumbuhin-backend/controllers/kader/timbang"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/middlewares"
 	"tumbuhin-backend/models"
@@ -34,6 +37,9 @@ type RouteDependencies struct {
 	AuthRegisterCtrl       *authRegisterCtrl.Controller
 	KaderDashCtrl          *kaderDashCtrl.Controller
 	KaderBalitaCtrl        *kaderBalitaCtrl.Controller
+	KaderTimbangCtrl       *kaderTimbangCtrl.Controller
+	KaderSyncCtrl          *kaderSyncCtrl.Controller
+	KaderNutriChefCtrl     *kaderNutriChefCtrl.Controller
 	BidanDashCtrl          *bidanDashCtrl.Controller
 	BidanGISCtrl           *bidanGISCtrl.Controller
 	BidanPrioritasCtrl     *bidanPrioritasCtrl.Controller
@@ -90,6 +96,13 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		{
 			kaderGroup.GET("/dashboard", deps.KaderDashCtrl.HandleGetOverview)
 			kaderGroup.GET("/balita", deps.KaderBalitaCtrl.HandleGetChildren)
+			kaderGroup.POST("/balita", deps.KaderBalitaCtrl.HandleCreateChild)
+			kaderGroup.PUT("/balita/:id", deps.KaderBalitaCtrl.HandleUpdateChild)
+			kaderGroup.DELETE("/balita/:id", deps.KaderBalitaCtrl.HandleDeleteChild)
+			kaderGroup.POST("/timbang", deps.KaderTimbangCtrl.HandleSaveMeasurement)
+			kaderGroup.POST("/sinkronisasi/batch", deps.KaderSyncCtrl.HandleBatchSync)
+			kaderGroup.GET("/sinkronisasi/status", deps.KaderSyncCtrl.HandleSyncStatus)
+			kaderGroup.POST("/nutrichef/generate", deps.KaderNutriChefCtrl.HandleGenerateRecipe)
 		}
 
 		// Role 2: Bidan Desa Routes (/api/v1/bidan/...)
@@ -149,6 +162,15 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			users.DELETE("/:id", deps.UserCtrl.Delete)
 		}
 	}
+
+	// Offline batch sync aliases documented in the technical specification.
+	syncRoles := []gin.HandlerFunc{
+		middlewares.RequireAuth(cfg.JWTSecret),
+		middlewares.RequireRoles(models.RoleKader, models.RoleBidan, models.RoleAdmin),
+	}
+	router.POST("/api/measurements/sync", append(syncRoles, deps.KaderSyncCtrl.HandleBatchSync)...)
+	router.GET("/api/measurements/sync/status", append(syncRoles, deps.KaderSyncCtrl.HandleSyncStatus)...)
+	router.POST("/api/v1/measurements/sync", append(syncRoles, deps.KaderSyncCtrl.HandleBatchSync)...)
 
 	// Graceful JSON fallback for undefined routes / methods
 	router.NoRoute(func(c *gin.Context) {

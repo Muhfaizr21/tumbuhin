@@ -1,25 +1,83 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
-  Send, 
   QrCode, 
   Copy, 
   CheckCircle2, 
   Share2, 
   MessageSquare,
-  Smartphone
+  RefreshCw
 } from 'lucide-react'
-import { MOCK_BALITA_LIST } from '../../services/mock/kaderMock'
+import { fetchRoleDashboardData } from '../../lib/authApi'
+import {
+  buildMagicLink,
+  buildWhatsAppMessage,
+  normalizeWhatsAppNumber,
+} from '../../lib/magicLink'
+import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
 
 export default function KaderDistribusiPage() {
-  const [selectedBalita, setSelectedBalita] = useState(MOCK_BALITA_LIST[0])
+  const [balitaList, setBalitaList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedBalita, setSelectedBalita] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
 
-  const magicLink = `https://tumbuhin.id/p/token_${selectedBalita.id}_998877`
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const data = await fetchRoleDashboardData('/kader/balita')
+        if (Array.isArray(data) && data.length > 0) {
+          setBalitaList(data)
+          setSelectedBalita(data[0])
+        }
+      } catch (err) {
+        console.error('Failed to load balita for distribution:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(magicLink)
+  const magicLink = selectedBalita ? buildMagicLink(selectedBalita.magic_token) : ''
+  const waMessage = selectedBalita ? buildWhatsAppMessage(selectedBalita, magicLink) : ''
+
+  const handleCopy = async () => {
+    if (!magicLink) {
+      alert('Magic token belum tersedia. Muat ulang data balita terlebih dahulu.')
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(magicLink)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = magicLink
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSendWhatsApp = () => {
+    if (!selectedBalita) return
+    if (!magicLink) {
+      alert('Magic token belum tersedia. Muat ulang data balita terlebih dahulu.')
+      return
+    }
+    const phone = normalizeWhatsAppNumber(selectedBalita.no_wa || selectedBalita.noWA)
+    if (!phone) {
+      alert('Nomor WhatsApp orang tua belum terisi. Lengkapi data balita dulu.')
+      return
+    }
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(waMessage)}`,
+      '_blank',
+      'noopener,noreferrer',
+    )
   }
 
   return (
@@ -37,89 +95,119 @@ export default function KaderDistribusiPage() {
           <div className="bg-white border border-black/8 rounded-3xl p-6 shadow-2xs space-y-4">
             <h3 className="font-bold text-[#070709]">Pilih Kartu Gizi Balita</h3>
             
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-              {MOCK_BALITA_LIST.map(b => (
-                <div
-                  key={b.id}
-                  onClick={() => setSelectedBalita(b)}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                    selectedBalita.id === b.id 
-                      ? 'bg-blue-50/50 border-[#2597d0] shadow-xs' 
-                      : 'bg-white border-gray-100 hover:bg-gray-50'
-                  }`}
-                >
-                  <div>
-                    <h4 className="font-bold text-sm text-[#070709]">{b.nama}</h4>
-                    <p className="text-xs text-gray-500">Ortu: {b.namaOrtu} ({b.noWA})</p>
+            {loading ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                <RefreshCw className="w-6 h-6 mb-2 animate-spin text-[#2597d0]" />
+                <p className="text-xs">Memuat data dari database...</p>
+              </div>
+            ) : balitaList.length === 0 ? (
+              <div className="py-8 text-center text-xs text-gray-400 italic">
+                Belum ada data balita di database.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                {balitaList.map(b => (
+                  <div
+                    key={b.id}
+                    onClick={() => setSelectedBalita(b)}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      selectedBalita?.id === b.id 
+                        ? 'bg-blue-50/50 border-[#2597d0] shadow-xs' 
+                        : 'bg-white border-gray-100 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div>
+                      <h4 className="font-bold text-sm text-[#070709]">{b.nama}</h4>
+                      <p className="text-xs text-gray-500">Ortu: {b.nama_ibu || b.namaOrtu || '-'} ({b.no_wa || b.noWA || '-'})</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      (b.status_gizi || b.statusGizi) === 'Normal' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                    }`}>
+                      {b.status_gizi || b.statusGizi || 'Normal'}
+                    </span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    b.statusGizi === 'Normal' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                  }`}>
-                    {b.statusGizi}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Kolom Kanan: Preview & Share */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white border border-black/8 rounded-3xl p-6 shadow-2xs space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-black/5">
-              <div>
-                <h3 className="font-bold text-lg text-[#070709]">{selectedBalita.nama}</h3>
-                <p className="text-xs text-gray-500">Nomor WhatsApp: {selectedBalita.noWA}</p>
+          {selectedBalita ? (
+            <div className="bg-white border border-black/8 rounded-3xl p-6 shadow-2xs space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-black/5">
+                <div>
+                  <h3 className="font-bold text-lg text-[#070709]">{selectedBalita.nama}</h3>
+                  <p className="text-xs text-gray-500">Nomor WhatsApp: {selectedBalita.no_wa || selectedBalita.noWA || '-'}</p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-[#2597d0]/10 flex items-center justify-center text-[#2597d0]">
+                  <Share2 className="w-6 h-6" />
+                </div>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-[#2597d0]/10 flex items-center justify-center text-[#2597d0]">
-                <Share2 className="w-6 h-6" />
-              </div>
-            </div>
 
-            {/* Preview Pesan WA */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Pratinjau Pesan WhatsApp</label>
-              <div className="p-4 rounded-2xl bg-[#f5f8fc] border border-black/5 font-mono text-xs text-gray-700 space-y-2 leading-relaxed">
-                <p>Halo Ibu {selectedBalita.namaOrtu}, berikut ringkasan hasil posyandu <strong>{selectedBalita.nama}</strong> bulan ini:</p>
-                <p>• Status Gizi: *{selectedBalita.statusGizi}*<br />• Berat Badan: *Sesuai Kurva KMS*<br />• Catatan: *{selectedBalita.catatanBidan}*</p>
-                <p>Buka Kartu Gizi Digital & Resep MPASI pribadi tanpa login melalui tautan berikut:<br />
-                <span className="text-[#2597d0] underline">{magicLink}</span></p>
+              {/* Preview Pesan WA */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Pratinjau Pesan WhatsApp</label>
+                <div className="p-4 rounded-2xl bg-[#f5f8fc] border border-black/5 font-mono text-xs text-gray-700 leading-relaxed whitespace-pre-line">
+                  {waMessage || 'Magic token belum tersedia untuk balita ini. Muat ulang data balita.'}
+                </div>
               </div>
-            </div>
 
-            {/* Magic Link Box */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Magic Link Tautan Unik</label>
-              <div className="flex gap-2">
-                <input 
-                  readOnly
-                  value={magicLink}
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono text-gray-600 outline-none"
-                />
+              {/* Magic Link Box */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Magic Link Tautan Unik</label>
+                <div className="flex gap-2">
+                  <input 
+                    readOnly
+                    value={magicLink}
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono text-gray-600 outline-none"
+                  />
+                  <button 
+                    onClick={handleCopy}
+                    className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-black transition-all shrink-0"
+                  >
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    <span>{copied ? 'Disalin!' : 'Salin'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <button 
-                  onClick={handleCopy}
-                  className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-black transition-all shrink-0"
+                  onClick={handleSendWhatsApp}
+                  disabled={!magicLink}
+                  className="py-3.5 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  <span>{copied ? 'Disalin!' : 'Salin'}</span>
+                  <MessageSquare className="w-4 h-4" />
+                  Kirim ke WhatsApp Ibu
+                </button>
+                <button
+                  onClick={() => setShowQR(true)}
+                  disabled={!magicLink}
+                  className="py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Cetak QR Code Buku KIA
                 </button>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <button className="py-3.5 rounded-2xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
-                <MessageSquare className="w-4 h-4" />
-                Kirim ke WhatsApp Ibu
-              </button>
-              <button className="py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-200">
-                <QrCode className="w-4 h-4" />
-                Cetak QR Code Buku KIA
-              </button>
+          ) : (
+            <div className="bg-white border border-black/8 rounded-3xl p-12 text-center text-gray-400">
+              Pilih balita dari daftar di sebelah kiri untuk melihat pratinjau pesan.
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {showQR && selectedBalita && (
+        <BalitaQRCodeModal
+          balita={selectedBalita}
+          magicLink={magicLink}
+          onClose={() => setShowQR(false)}
+        />
+      )}
     </div>
   )
 }

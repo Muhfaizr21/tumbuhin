@@ -105,7 +105,7 @@ export default function KaderNavigationShell({
           </div>
 
           <div>
-            <h2 className="text-[18px] font-bold text-slate-800 tracking-tight mb-3.5">Modul Kader</h2>
+            <h2 className="text-[18px] font-bold text-slate-800 tracking-tight mb-3.5">Menu Kader</h2>
 
             <div className="space-y-2.5">
               {featuredMenus.map((item) => {

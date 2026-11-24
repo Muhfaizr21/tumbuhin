@@ -11,3 +11,5 @@ backend/.env
 *.exe
 *.test
 *.out
+
+backend/*.log
