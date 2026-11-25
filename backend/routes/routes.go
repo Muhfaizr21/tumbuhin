@@ -25,6 +25,7 @@ import (
 	kaderBalitaCtrl "tumbuhin-backend/controllers/kader/balita"
 	kaderDashCtrl "tumbuhin-backend/controllers/kader/dashboard"
 	kaderNutriChefCtrl "tumbuhin-backend/controllers/kader/nutrichef"
+	kaderParentCtrl "tumbuhin-backend/controllers/kader/parents"
 	kaderSyncCtrl "tumbuhin-backend/controllers/kader/sinkronisasi"
 	kaderTimbangCtrl "tumbuhin-backend/controllers/kader/timbang"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
@@ -42,6 +43,7 @@ type RouteDependencies struct {
 	AuthRegisterCtrl       *authRegisterCtrl.Controller
 	KaderDashCtrl          *kaderDashCtrl.Controller
 	KaderBalitaCtrl        *kaderBalitaCtrl.Controller
+	KaderParentCtrl        *kaderParentCtrl.Controller
 	KaderTimbangCtrl       *kaderTimbangCtrl.Controller
 	KaderSyncCtrl          *kaderSyncCtrl.Controller
 	KaderNutriChefCtrl     *kaderNutriChefCtrl.Controller
@@ -110,6 +112,9 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			kaderGroup.POST("/balita", deps.KaderBalitaCtrl.HandleCreateChild)
 			kaderGroup.PUT("/balita/:id", deps.KaderBalitaCtrl.HandleUpdateChild)
 			kaderGroup.DELETE("/balita/:id", deps.KaderBalitaCtrl.HandleDeleteChild)
+			kaderGroup.GET("/parents", deps.KaderParentCtrl.HandleListParents)
+			kaderGroup.POST("/parents/register", deps.KaderParentCtrl.HandleRegisterParent)
+			kaderGroup.PUT("/parents/:parentId/children", deps.KaderParentCtrl.HandleUpdateParentChildren)
 			kaderGroup.POST("/timbang", deps.KaderTimbangCtrl.HandleSaveMeasurement)
 			kaderGroup.POST("/sinkronisasi/batch", deps.KaderSyncCtrl.HandleBatchSync)
 			kaderGroup.GET("/sinkronisasi/status", deps.KaderSyncCtrl.HandleSyncStatus)

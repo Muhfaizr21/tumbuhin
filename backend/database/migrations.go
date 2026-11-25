@@ -58,6 +58,7 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		parent_name VARCHAR(150) DEFAULT '',
 		parent_father_name VARCHAR(150) DEFAULT '',
 		parent_phone VARCHAR(30) DEFAULT '',
+		parent_user_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL,
 		birth_weight DOUBLE PRECISION DEFAULT 0.0,
 		birth_height DOUBLE PRECISION DEFAULT 0.0,
 		notes TEXT DEFAULT '',
@@ -66,6 +67,12 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		created_at TIMESTAMPTZ DEFAULT NOW(),
 		updated_at TIMESTAMPTZ DEFAULT NOW()
 	);
+
+	ALTER TABLE children ADD COLUMN IF NOT EXISTS parent_user_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL;
+	CREATE INDEX IF NOT EXISTS idx_children_parent_user_id ON children(parent_user_id);
+	UPDATE children
+	SET parent_user_id = (SELECT id FROM tumbuhin_users WHERE email = 'ortu@tumbuhin.id' LIMIT 1)
+	WHERE magic_token = 'magic-balita-andi-2026-tumbuhin-sehat' AND parent_user_id IS NULL;
 
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION DEFAULT -6.5950378;
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION DEFAULT 106.816635;
