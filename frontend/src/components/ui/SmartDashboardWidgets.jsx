@@ -150,7 +150,7 @@ export function SmartSidebarShell({
             </div>
           )}
 
-          <nav aria-label="Daftar Modul" className="space-y-1">
+          <nav aria-label="Daftar Modul" className={menus.length >= 8 ? 'space-y-0.5' : 'space-y-1'}>
             {menus.map((item) => {
               const Icon = item.icon || LayoutGrid
               const isActive = item.id === activeMenuId
@@ -162,7 +162,7 @@ export function SmartSidebarShell({
                     type="button"
                     onClick={() => onSelectMenu(item)}
                     title={item.label}
-                    className={`w-11 h-11 mx-auto rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                    className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                       isActive
                         ? 'bg-[#f26522] text-white shadow-xs'
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
@@ -178,7 +178,7 @@ export function SmartSidebarShell({
                   key={item.id}
                   type="button"
                   onClick={() => onSelectMenu(item)}
-                  className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between gap-2 transition-all cursor-pointer relative ${
+                  className={`w-full px-3 ${menus.length >= 8 ? 'py-2' : 'py-2.5'} rounded-xl text-left flex items-center justify-between gap-2 transition-all cursor-pointer relative ${
                     isActive
                       ? 'bg-orange-50/90 text-[#f26522] font-bold border border-orange-200/70 shadow-2xs before:content-[""] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3.5px] before:rounded-r-full before:bg-[#f26522]'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/90 font-medium border border-transparent'

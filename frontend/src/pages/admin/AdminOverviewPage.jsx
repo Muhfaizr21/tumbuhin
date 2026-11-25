@@ -74,8 +74,8 @@ export default function AdminOverviewPage({
     },
     {
       id: 'pengguna',
-      label: 'Akun RBAC',
-      valueLabel: `${stats?.active_users ?? 4} Akun`,
+      label: 'Data User',
+      valueLabel: `${stats?.active_users ?? 4} User`,
       percent: 82,
       tone: 'teal',
     },
@@ -119,10 +119,17 @@ export default function AdminOverviewPage({
     },
     {
       id: 'pengguna',
-      title: 'Otorisasi RBAC & JWT',
-      metric: `${stats?.active_users ?? 4} Petugas Aktif`,
+      title: 'Manajemen Data User',
+      metric: `${stats?.active_users ?? 4} Pengguna Terdaftar`,
       status: 'healthy',
       onClick: () => onNavigate && onNavigate('pengguna'),
+    },
+    {
+      id: 'rbac',
+      title: 'Otorisasi RBAC & Token',
+      metric: '4 Role & Row-Level Scope',
+      status: 'healthy',
+      onClick: () => onNavigate && onNavigate('rbac'),
     },
     {
       id: 'pangan-lokal',
@@ -245,9 +252,9 @@ export default function AdminOverviewPage({
           onClick={() => onNavigate && onNavigate('pangan-lokal')}
         />
         <SmartSparkKpiCard
-          title="Otorisasi RBAC & Sync"
+          title="Data User & Otorisasi RBAC"
           value="Running"
-          subtitle={`${stats?.active_users ?? 4} Akun RBAC • ${stats?.pending_sync_items ?? 0} Pending`}
+          subtitle={`${stats?.active_users ?? 4} Data User • 4 Role RBAC`}
           icon={Users}
           visualType="pulse"
           accentColor="#f26522"
@@ -307,9 +314,9 @@ export default function AdminOverviewPage({
               {
                 id: 'comp-sha',
                 value: '100%',
-                title: 'Anonimisasi NIK (SHA-256)',
+                title: 'Anonimisasi NIK (SHA-256) & RBAC',
                 subtitle: 'Zero Raw-NIK Exposure di PostgreSQL',
-                onClick: () => onNavigate && onNavigate('pengguna'),
+                onClick: () => onNavigate && onNavigate('rbac'),
               },
               {
                 id: 'comp-who',
