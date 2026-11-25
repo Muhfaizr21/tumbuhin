@@ -69,6 +69,14 @@ export const kaderApi = {
   deleteBalita: (id) =>
     withKaderAuth(() => deleteRoleData(`/kader/balita/${id}`)),
 
+  // 1.2b Akun Orang Tua & Penautan Anak
+  listParents: () =>
+    withKaderAuth(() => fetchRoleDashboardData('/kader/parents')),
+  registerParent: (payload) =>
+    withKaderAuth(() => postRoleData('/kader/parents/register', payload)),
+  updateParentChildren: (parentId, childIds) =>
+    withKaderAuth(() => putRoleData(`/kader/parents/${parentId}/children`, { child_ids: childIds })),
+
   // 1.3 Input Timbangan & Z-Score WHO
   postTimbang: (payload) =>
     withKaderAuth(() => postRoleData('/kader/timbang', payload)),

@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"tumbuhin-backend/middlewares"
 	accountsRepo "tumbuhin-backend/repositories/ortu/accounts"
 	accountsSvc "tumbuhin-backend/services/ortu/accounts"
-	"tumbuhin-backend/middlewares"
 	"tumbuhin-backend/views"
 
 	"github.com/gin-gonic/gin"
@@ -48,12 +48,9 @@ func (ctrl *Controller) HandleRegisterParent(c *gin.Context) {
 		return
 	}
 
-	input.PosyanduName = middlewares.PosyanduFromContext(c, input.PosyanduName)
-	input.VillageName = middlewares.VillageFromContext(c, input.VillageName)
-
 	scope := accountsRepo.Scope{
-		PosyanduName: input.PosyanduName,
-		VillageName:  input.VillageName,
+		PosyanduName: middlewares.PosyanduFromContext(c, ""),
+		VillageName:  middlewares.VillageFromContext(c, ""),
 	}
 
 	parent, err := ctrl.service.Register(c.Request.Context(), input, scope)

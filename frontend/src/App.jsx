@@ -35,7 +35,16 @@ function parseViewFromHash(hash) {
   const clean = hash.replace(/^#\/?/, '')
   if (clean === 'login') return { type: 'auth', mode: 'login' }
   if (clean === 'register') return { type: 'auth', mode: 'register' }
-  if (clean.startsWith('kader')) return { type: 'dashboard', role: 'kader' }
+  if (clean.startsWith('kader')) {
+    const [pathPart, queryPart] = clean.split('?')
+    const sub = pathPart.replace(/^kader\/?/, '')
+    return {
+      type: 'dashboard',
+      role: 'kader',
+      subPage: sub || 'dashboard',
+      query: parseQueryString(queryPart),
+    }
+  }
   if (clean.startsWith('bidan')) {
     const [pathPart, queryPart] = clean.split('?')
     let sub = pathPart.replace(/^bidan\/?/, '')
@@ -229,6 +238,7 @@ function AppContent() {
         <KaderDashboard
           user={currentUser}
           onLogout={handleLogout}
+          currentSubPage={viewState.subPage}
 
         />
       )

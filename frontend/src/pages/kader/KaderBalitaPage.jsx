@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ShieldCheck,
   QrCode,
+  Users,
   Edit,
   Trash2,
   Eye,
@@ -171,6 +172,13 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate, searchQuer
             title="Muat Ulang Data"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => onNavigate?.('orang-tua')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[#f26522]/20 bg-[#fff7f2] text-[#f26522] text-sm font-bold hover:bg-[#ffeddf] transition-all"
+          >
+            <Users className="w-4 h-4" />
+            <span>Buat Akun Ortu</span>
           </button>
           <button 
             onClick={() => setShowRegForm(true)}

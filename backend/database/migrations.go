@@ -68,16 +68,13 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 		updated_at TIMESTAMPTZ DEFAULT NOW()
 	);
 
-	ALTER TABLE children ADD COLUMN IF NOT EXISTS parent_user_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL;
-	CREATE INDEX IF NOT EXISTS idx_children_parent_user_id ON children(parent_user_id);
 	UPDATE children
 	SET parent_user_id = (SELECT id FROM tumbuhin_users WHERE email = 'ortu@tumbuhin.id' LIMIT 1)
 	WHERE magic_token = 'magic-balita-andi-2026-tumbuhin-sehat' AND parent_user_id IS NULL;
+	CREATE INDEX IF NOT EXISTS idx_children_parent_user_id ON children(parent_user_id);
 
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION DEFAULT -6.5950378;
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION DEFAULT 106.816635;
-	ALTER TABLE children ADD COLUMN IF NOT EXISTS parent_user_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL;
-	CREATE INDEX IF NOT EXISTS idx_children_parent_user_id ON children(parent_user_id);
 
 	-- Ensure tumbuhin_users role constraint supports 'ortu' safely
 	DO $$

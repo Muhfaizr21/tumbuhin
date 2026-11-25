@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Scale,
   Send,
+  UserPlus,
 } from 'lucide-react'
 import { SmartTopHeader } from '../../components/ui/SmartDashboardWidgets'
 import { kaderApi } from '../../lib/kaderApi'
@@ -19,6 +20,7 @@ import KaderDistribusiPage from './KaderDistribusiPage'
 import KaderHomePage from './KaderHomePage'
 import KaderNutriChefPage from './KaderNutriChefPage'
 import KaderOCRPage from './KaderOCRPage'
+import KaderParentAccountsPage from './KaderParentAccountsPage'
 import KaderSinkronisasiPage from './KaderSinkronisasiPage'
 import KaderTimbangPage from './KaderTimbangPage'
 import KaderNavigationShell from './components/KaderNavigationShell'
@@ -41,6 +43,15 @@ const KADER_MENUS = [
     icon: Baby,
     description: 'Direktori profil balita RW, registrasi anak baru, dan profil kesehatan.',
     features: ['Enkripsi NIK SHA-256', 'Pencarian & filter RT/RW', 'Magic Token ortu'],
+  },
+  {
+    id: 'orang-tua',
+    label: 'Akun Orang Tua',
+    shortLabel: 'Akun Orang Tua',
+    route: '/kader/orang-tua',
+    icon: UserPlus,
+    description: 'Buat akun login orang tua dan tautkan balita di posyandu Anda.',
+    features: ['Registrasi akun ortu', 'Tautkan banyak balita', 'Bagikan kredensial via WA'],
   },
   {
     id: 'timbang',
@@ -92,8 +103,10 @@ const KADER_MENUS = [
   },
 ]
 
-export default function KaderDashboard({ user, onLogout }) {
-  const [activeMenuId, setActiveMenuId] = useState('dashboard')
+export default function KaderDashboard({ user, onLogout, currentSubPage = 'dashboard' }) {
+  const [activeMenuId, setActiveMenuId] = useState(() =>
+    KADER_MENUS.some((menu) => menu.id === currentSubPage) ? currentSubPage : 'dashboard',
+  )
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [globalSearch, setGlobalSearch] = useState('')
@@ -113,6 +126,12 @@ export default function KaderDashboard({ user, onLogout }) {
   const [showNotifications, setShowNotifications] = useState(false)
   const [readNotifications, setReadNotifications] = useState({})
   const notificationRef = useRef(null)
+
+  useEffect(() => {
+    if (KADER_MENUS.some((menu) => menu.id === currentSubPage)) {
+      setActiveMenuId(currentSubPage)
+    }
+  }, [currentSubPage])
 
   const notifications = useMemo(() => {
     const belumHadir = Math.max((stats.totalBalita || 0) - (stats.sudahDitimbang || 0), 0)
@@ -241,9 +260,13 @@ export default function KaderDashboard({ user, onLogout }) {
   const currentMenu = KADER_MENUS.find((m) => m.id === activeMenuId) || KADER_MENUS[0]
 
   const handleSelectMenu = (itemOrId) => {
-    const id = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id || 'dashboard'
+    const item = typeof itemOrId === 'string' ? KADER_MENUS.find((menu) => menu.id === itemOrId) : itemOrId
+    const id = item?.id || 'dashboard'
     setActiveMenuId(id)
     setMobileMenuOpen(false)
+    if (item?.route && window.location.hash !== `#${item.route}`) {
+      window.location.hash = `#${item.route}`
+    }
   }
 
   const renderContent = () => {
@@ -258,6 +281,8 @@ export default function KaderDashboard({ user, onLogout }) {
             searchQuery={globalSearch}
           />
         )
+      case 'orang-tua':
+        return <KaderParentAccountsPage user={user} searchQuery={globalSearch} />
       case 'timbang':
         return <KaderTimbangPage user={user} />
       case 'ocr-kms':

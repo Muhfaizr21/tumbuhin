@@ -64,7 +64,7 @@ func (s *service) Register(ctx context.Context, input accountsRepo.NewParent, sc
 
 func (s *service) UpdateChildren(ctx context.Context, parentID int64, childIDs []string, scope accountsRepo.Scope) (*accountsRepo.ParentRecord, error) {
 	childIDs = normalizeChildIDs(childIDs)
-	if parentID <= 0 || len(childIDs) == 0 {
+	if parentID <= 0 {
 		return nil, ErrValidation
 	}
 	return s.repo.UpdateChildren(ctx, parentID, childIDs, scope)

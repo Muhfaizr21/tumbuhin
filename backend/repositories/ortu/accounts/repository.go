@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -12,11 +11,11 @@ import (
 )
 
 var (
-	ErrUserAlreadyExists  = errors.New("email atau nomor telepon sudah terdaftar")
-	ErrParentNotFound     = errors.New("akun orang tua tidak ditemukan")
-	ErrChildNotFound      = errors.New("balita tidak ditemukan")
-	ErrChildOutOfScope    = errors.New("balita di luar lingkup posyandu kader")
-	ErrChildAlreadyLinked = errors.New("balita sudah tertaut ke akun orang tua lain")
+	ErrUserAlreadyExists   = errors.New("email atau nomor telepon sudah terdaftar")
+	ErrParentNotFound      = errors.New("akun orang tua tidak ditemukan")
+	ErrChildNotFound       = errors.New("balita tidak ditemukan")
+	ErrChildOutOfScope     = errors.New("balita di luar lingkup posyandu kader")
+	ErrChildAlreadyLinked  = errors.New("balita sudah tertaut ke akun orang tua lain")
 	ErrDatabaseUnavailable = errors.New("database tidak tersedia")
 )
 
@@ -56,8 +55,8 @@ type ChildOption struct {
 }
 
 type ListResult struct {
-	Parents           []ParentRecord `json:"parents"`
-	AvailableChildren []ChildOption  `json:"available_children"`
+	Parents          []ParentRecord `json:"parents"`
+	UnlinkedChildren []ChildOption  `json:"unlinked_children"`
 }
 
 type NewParent struct {
@@ -100,8 +99,8 @@ func isDuplicate(err error) bool {
 
 func (r *repository) List(ctx context.Context, scope Scope) (*ListResult, error) {
 	payload := &ListResult{
-		Parents:           []ParentRecord{},
-		AvailableChildren: []ChildOption{},
+		Parents:          []ParentRecord{},
+		UnlinkedChildren: []ChildOption{},
 	}
 	if r.db == nil {
 		return payload, nil
@@ -206,7 +205,7 @@ func (r *repository) List(ctx context.Context, scope Scope) (*ListResult, error)
 		); err != nil {
 			return nil, err
 		}
-		payload.AvailableChildren = append(payload.AvailableChildren, child)
+		payload.UnlinkedChildren = append(payload.UnlinkedChildren, child)
 	}
 	if err := availableRows.Err(); err != nil {
 		return nil, err
@@ -299,7 +298,7 @@ func (r *repository) UpdateChildren(ctx context.Context, parentID int64, childID
 
 func linkChildren(ctx context.Context, tx pgx.Tx, parentID int64, childIDs []string, scope Scope) error {
 	if len(childIDs) == 0 {
-		return fmt.Errorf("pilih minimal satu balita")
+		return nil
 	}
 
 	rows, err := tx.Query(ctx, `
