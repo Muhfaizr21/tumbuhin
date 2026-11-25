@@ -8,9 +8,11 @@ const CHILDREN_LIST_CACHE_KEY = 'sigapgizi_ortu_children_list'
 /**
  * Fetch list of children owned by the logged-in parent account.
  */
-export async function getAuthenticatedParentChildren() {
+export async function getAuthenticatedParentChildren(userId = 'default') {
   const token = getStoredToken()
   if (!token) throw new Error('UNAUTHENTICATED')
+
+  const listCacheKey = `${CHILDREN_LIST_CACHE_KEY}_${userId || 'default'}`
 
   try {
     const res = await fetch(`${API_BASE_URL}/ortu/children`, {
@@ -26,7 +28,7 @@ export async function getAuthenticatedParentChildren() {
     const json = await res.json()
     if (json.success && Array.isArray(json.data)) {
       try {
-        localStorage.setItem(CHILDREN_LIST_CACHE_KEY, JSON.stringify(json.data))
+        localStorage.setItem(listCacheKey, JSON.stringify(json.data))
       } catch {
         // ignore storage quota errors
       }
@@ -35,7 +37,7 @@ export async function getAuthenticatedParentChildren() {
     throw new Error(json.message || 'Gagal memuat daftar anak')
   } catch (err) {
     try {
-      const cachedRaw = localStorage.getItem(CHILDREN_LIST_CACHE_KEY)
+      const cachedRaw = localStorage.getItem(listCacheKey)
       if (cachedRaw) {
         return { children: JSON.parse(cachedRaw), isOffline: true }
       }

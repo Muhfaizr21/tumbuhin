@@ -51,8 +51,10 @@ func (s *service) enrichChildCard(card *ortuDashRepo.ChildGrowthCard) *ortuDashR
 	targetKBM := getKBMTarget(card.AgeMonths)
 	card.TargetKBMGrams = targetKBM
 
-	// 2. Evaluate KBM Achievement
-	if card.DeltaWeightGrams >= targetKBM {
+	// 2. Evaluate KBM Achievement (only if >= 2 measurements exist; otherwise don't penalize first weighing)
+	if len(card.HistoricalMeasurements) < 2 {
+		card.IsKBMAchieved = true
+	} else if card.DeltaWeightGrams >= targetKBM {
 		card.IsKBMAchieved = true
 	} else {
 		card.IsKBMAchieved = false

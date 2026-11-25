@@ -235,7 +235,15 @@ func (r *repository) GetChildrenByParentUserID(ctx context.Context, parentUserID
 				'normal'
 			) AS nutrition_status
 		FROM children c
-		WHERE c.parent_user_id = $1 AND COALESCE(c.is_active, TRUE) = TRUE
+		WHERE (
+			c.parent_user_id = $1
+			OR (
+				c.parent_user_id IS NULL
+				AND COALESCE(c.parent_phone, '') <> ''
+				AND c.parent_phone = (SELECT phone FROM tumbuhin_users WHERE id = $1 LIMIT 1)
+			)
+		)
+		AND COALESCE(c.is_active, TRUE) = TRUE
 		ORDER BY c.birth_date DESC, c.full_name ASC
 	`
 	rows, err := r.db.Query(ctx, query, parentUserID)
@@ -303,7 +311,11 @@ func (r *repository) GetChildByIDForParent(ctx context.Context, childID string, 
 
 	if !allowBypass {
 		if ownerID == nil || *ownerID != parentUserID {
-			return nil, ErrForbidden
+			var userPhone string
+			_ = r.db.QueryRow(ctx, "SELECT COALESCE(phone, '') FROM tumbuhin_users WHERE id = $1 LIMIT 1", parentUserID).Scan(&userPhone)
+			if ownerID != nil || parentPhone == "" || userPhone == "" || parentPhone != userPhone {
+				return nil, ErrForbidden
+			}
 		}
 	}
 
@@ -405,6 +417,30 @@ func (r *repository) populateChildCardDetails(
 				card.DeltaWeightGrams = int((latest.WeightKg - secondLatest.WeightKg) * 1000)
 			} else {
 				card.DeltaWeightGrams = 350
+			}
+		} else {
+			// Fallback to birth measurements when child has 0 monthly weighings yet
+			var bWeight, bHeight float64
+			_ = r.db.QueryRow(ctx, `SELECT COALESCE(birth_weight, 0.0), COALESCE(birth_height, 0.0) FROM children WHERE id = $1`, childID).Scan(&bWeight, &bHeight)
+			card.LastMeasuredDate = "Data Lahir (" + card.BirthDate + ")"
+			card.LastWeightKg = bWeight
+			card.LastHeightCm = bHeight
+			card.LastHeadCircumCm = 35.0
+			card.NutritionStatus = "normal"
+			if bWeight > 0 || bHeight > 0 {
+				card.HistoricalMeasurements = []HistoricalMeasurement{
+					{
+						AgeMonths:       0,
+						MeasuredAt:      card.BirthDate,
+						WeightKg:        bWeight,
+						HeightCm:        bHeight,
+						HeadCircumCm:    35.0,
+						NutritionStatus: "normal",
+						KBMStatus:       "-",
+					},
+				}
+			} else {
+				card.HistoricalMeasurements = []HistoricalMeasurement{}
 			}
 		}
 	}

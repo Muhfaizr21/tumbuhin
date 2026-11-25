@@ -1,41 +1,84 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import {
+  AlertTriangle,
   Baby,
   CalendarCheck,
   ChefHat,
   LineChart,
   RefreshCw,
-  WifiOff,
-  AlertTriangle,
-  LogOut,
-  Users
+  Scale,
+  ShieldCheck,
 } from 'lucide-react'
-import { getStoredToken } from '../../lib/authApi'
-import {
-  getChildPortalByToken,
-  getAuthenticatedParentChildren,
-  getAuthenticatedChildDashboard
-} from '../../services/ortuService'
-import OrtuSummaryTab from '../../components/ortu/OrtuSummaryTab'
-import KmsInteractiveChart from '../../components/ortu/KmsInteractiveChart'
-import MpasiRecipeCard from '../../components/ortu/MpasiRecipeCard'
 import BidanNotesAndSchedule from '../../components/ortu/BidanNotesAndSchedule'
 import FloatingAccessibilityBar from '../../components/ortu/FloatingAccessibilityBar'
+import KmsInteractiveChart from '../../components/ortu/KmsInteractiveChart'
+import MpasiRecipeCard from '../../components/ortu/MpasiRecipeCard'
+import OrtuSummaryTab from '../../components/ortu/OrtuSummaryTab'
+import {
+  SmartDotProgressCard,
+  SmartSidebarShell,
+  SmartSparkKpiCard,
+  SmartTopHeader,
+} from '../../components/ui/SmartDashboardWidgets'
+import { getStoredToken, getStoredUser } from '../../lib/authApi'
+import {
+  getAuthenticatedChildDashboard,
+  getAuthenticatedParentChildren,
+  getChildPortalByToken,
+} from '../../services/ortuService'
 
-const TABS = [
-  { id: 'ringkasan', label: 'Ringkasan', icon: Baby },
-  { id: 'kurva', label: 'Kurva KMS', icon: LineChart },
-  { id: 'resep', label: 'Resep MPASI', icon: ChefHat },
-  { id: 'pesan', label: 'Pesan & Jadwal', icon: CalendarCheck }
+const ORTU_MENUS = [
+  {
+    id: 'ringkasan',
+    label: 'Ringkasan Tumbuh Kembang',
+    shortLabel: 'Ringkasan Anak',
+    icon: Baby,
+    badge: 'KMS',
+  },
+  {
+    id: 'kurva',
+    label: 'Kurva Pertumbuhan KMS',
+    shortLabel: 'Kurva KMS Digital',
+    icon: LineChart,
+    badge: 'WHO',
+  },
+  {
+    id: 'resep',
+    label: 'Resep MPASI Pangan Lokal',
+    shortLabel: 'Resep AI MPASI',
+    icon: ChefHat,
+    badge: 'AI',
+  },
+  {
+    id: 'pesan',
+    label: 'Catatan Bidan & Jadwal',
+    shortLabel: 'Pesan & Jadwal',
+    icon: CalendarCheck,
+  },
 ]
+
+function formatChildTabLabel(child) {
+  const firstName = (child?.full_name || 'Anak').split(' ')[0]
+  const pitaLabel =
+    child?.color_pita === 'hijau'
+      ? 'Pita Hijau'
+      : child?.color_pita === 'kuning'
+      ? 'Pita Kuning'
+      : 'Pita Merah'
+  return `${firstName} (${pitaLabel})`
+}
 
 export default function OrtuDashboard({
   user,
   magicToken,
   isPublicMagicLink = false,
-  onLogout
+  tts,
+  onLogout,
 }) {
   const [activeTab, setActiveTab] = useState('ringkasan')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [childData, setChildData] = useState(null)
@@ -47,13 +90,17 @@ export default function OrtuDashboard({
 
   // Accessibility State
   const [isHighContrast, setIsHighContrast] = useState(false)
-  const [fontSizeScale, setFontSizeScale] = useState(100) // 100%, 125%, 150%
+  const [fontSizeScale, setFontSizeScale] = useState(100)
 
+  const activeUser = user || getStoredUser()
   const hasAuthToken = Boolean(getStoredToken())
-  const isAuthenticatedMode = !isPublicMagicLink && hasAuthToken && user?.role === 'ortu'
+  const isAuthenticatedMode =
+    !isPublicMagicLink &&
+    hasAuthToken &&
+    String(activeUser?.role || '').toLowerCase() === 'ortu'
   const effectiveToken = magicToken || 'magic-balita-andi-2026-tumbuhin-sehat'
 
-  const loadAuthenticatedChild = useCallback(async (childId) => {
+  const loadAuthenticatedChild = async (childId) => {
     setLoading(true)
     setError(null)
     try {
@@ -61,31 +108,31 @@ export default function OrtuDashboard({
       setChildData(res.data)
       setIsOffline(res.isOffline || false)
     } catch (err) {
-      console.error('Error loading authenticated child dashboard:', err)
       setError(
         err.message === 'FORBIDDEN'
           ? 'FORBIDDEN'
           : err.message === 'NOT_FOUND'
           ? 'TOKEN_NOT_FOUND'
-          : 'NETWORK_ERROR'
+          : 'NETWORK_ERROR',
       )
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
-  const loadPortal = useCallback(async () => {
+  const loadData = async () => {
     setLoading(true)
     setError(null)
     try {
       if (isAuthenticatedMode) {
-        const listRes = await getAuthenticatedParentChildren()
+        const listRes = await getAuthenticatedParentChildren(activeUser?.id)
         const list = listRes.children || []
         setMyChildren(list)
         if (list.length > 0) {
-          const targetId = selectedChildId && list.some((c) => c.child_id === selectedChildId)
-            ? selectedChildId
-            : list[0].child_id
+          const targetId =
+            selectedChildId && list.some((c) => c.child_id === selectedChildId)
+              ? selectedChildId
+              : list[0].child_id
           setSelectedChildId(targetId)
           const dashRes = await getAuthenticatedChildDashboard(targetId)
           setChildData(dashRes.data)
@@ -97,30 +144,22 @@ export default function OrtuDashboard({
         return
       }
 
-      // Public Magic Link Mode
       setMyChildren([])
       const res = await getChildPortalByToken(effectiveToken)
       setChildData(res.data)
       setIsOffline(res.isOffline || false)
     } catch (err) {
-      console.error('Error loading child portal:', err)
       setError(err.message === 'NOT_FOUND' ? 'TOKEN_NOT_FOUND' : 'NETWORK_ERROR')
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticatedMode, effectiveToken, selectedChildId])
-
-  useEffect(() => {
-    loadPortal()
-  }, [isAuthenticatedMode, effectiveToken])
-
-  const handleSelectChild = async (childId) => {
-    if (!childId || childId === selectedChildId) return
-    setSelectedChildId(childId)
-    await loadAuthenticatedChild(childId)
   }
 
-  // Contextual text for Text-to-Speech
+  useEffect(() => {
+    setSelectedChildId('')
+    loadData()
+  }, [isAuthenticatedMode, activeUser?.id, effectiveToken])
+
   const getContextualSpeechText = () => {
     if (!childData) return 'Kartu Gizi Digital SigapGizi Tumbuhin.'
     if (activeTab === 'ringkasan') {
@@ -138,168 +177,184 @@ export default function OrtuDashboard({
     return childData.friendly_explanation
   }
 
+  const handleSpeakNow = () => {
+    const text = getContextualSpeechText()
+    if (tts?.speak) {
+      tts.speak(text)
+      return
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utter = new SpeechSynthesisUtterance(text)
+      utter.lang = 'id-ID'
+      window.speechSynthesis.speak(utter)
+    }
+  }
+
+  const handleSearchChange = (q) => {
+    setSearchQuery(q)
+    const lower = (q || '').toLowerCase()
+    if (!lower) return
+    if (lower.includes('kurva') || lower.includes('kms') || lower.includes('grafik') || lower.includes('berat') || lower.includes('tinggi')) {
+      setActiveTab('kurva')
+    } else if (lower.includes('resep') || lower.includes('mpasi') || lower.includes('makan') || lower.includes('protein')) {
+      setActiveTab('resep')
+    } else if (lower.includes('bidan') || lower.includes('jadwal') || lower.includes('pesan') || lower.includes('posyandu')) {
+      setActiveTab('pesan')
+    } else if (lower.includes('ringkasan') || lower.includes('status')) {
+      setActiveTab('ringkasan')
+    }
+  }
+
   const handleSwitchDemoChild = (targetToken) => {
     window.location.hash = `#/p/${targetToken}`
+  }
+
+  const currentMenu = ORTU_MENUS.find((m) => m.id === activeTab) || ORTU_MENUS[0]
+  const modeTabs = isAuthenticatedMode && myChildren.length > 0
+    ? myChildren.map((c) => formatChildTabLabel(c))
+    : ['Andi (Pita Hijau)', 'Siti (Pita Kuning)']
+
+  const activeChildMode = isAuthenticatedMode && myChildren.length > 0
+    ? formatChildTabLabel(myChildren.find((c) => c.child_id === selectedChildId) || myChildren[0])
+    : effectiveToken.includes('siti')
+    ? 'Siti (Pita Kuning)'
+    : 'Andi (Pita Hijau)'
+
+  const handleModeTabChange = async (mode) => {
+    if (isAuthenticatedMode && myChildren.length > 0) {
+      const target = myChildren.find((c) => formatChildTabLabel(c) === mode)
+      if (target && target.child_id !== selectedChildId) {
+        setSelectedChildId(target.child_id)
+        await loadAuthenticatedChild(target.child_id)
+      }
+      return
+    }
+    if (mode.includes('Siti')) {
+      handleSwitchDemoChild('magic-balita-siti-2026-tumbuhin-pantau')
+    } else {
+      handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')
+    }
+  }
+
+  const sidebarUser = activeUser || {
+    full_name: childData?.parent_name || 'Ibu Dewi Lestari',
+    posyandu_name: childData?.posyandu_name || 'Posyandu Melati 04',
   }
 
   return (
     <div
       style={{ fontSize: `${fontSizeScale}%` }}
-      className={`min-h-screen transition-colors duration-200 pb-28 font-inter ${
-        isHighContrast
+      className={`min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col lg:flex-row font-sans transition-colors duration-200 pb-20 lg:pb-0 ${isHighContrast
           ? 'bg-black text-white selection:bg-yellow-400 selection:text-black'
-          : 'bg-[#f8fafc] text-[#070709] selection:bg-[#2597d0] selection:text-white'
-      }`}
-    >
-      {/* Top Bar Navigation (Clean Medical Instrument Header) */}
-      <header
-        className={`w-full border-b sticky top-0 z-40 backdrop-blur-md transition-all ${
-          isHighContrast
-            ? 'bg-black/95 border-yellow-400 text-white'
-            : 'bg-white/95 border-black/8 text-[#070709]'
+          : 'bg-[#f5f6f8] text-slate-800 selection:bg-[#f26522] selection:text-white'
         }`}
-      >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#070709] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-              <Baby className="w-4 h-4 text-[#2597d0]" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold tracking-tight text-[#2597d0] block uppercase font-runde">
-                SigapGizi • Tumbuhin
-              </span>
-              <h1 className="text-sm font-semibold tracking-tight text-[#070709] font-runde">
-                {isAuthenticatedMode ? `Portal Orang Tua • ${user?.full_name || 'Ibu'}` : 'Kartu Gizi Digital'}
-              </h1>
-            </div>
-          </div>
+    >
+      {/* Mobile Sidebar Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex bg-slate-900/40 backdrop-blur-xs">
+          <SmartSidebarShell
+            brandSubtitle="KARTU GIZI DIGITAL ORTU"
 
-          <div className="flex items-center gap-2">
-            {isOffline && (
-              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                <WifiOff className="w-3 h-3" /> Offline
-              </span>
-            )}
+            roleTitle="Orang Tua Balita"
+            menus={ORTU_MENUS}
+            activeMenuId={activeTab}
+            user={sidebarUser}
+            sidebarCollapsed={false}
+            onToggleCollapse={() => setMobileMenuOpen(false)}
+            onSelectMenu={(item) => {
+              setActiveTab(item.id)
+              setMobileMenuOpen(false)
+            }}
+            onOpenQuickAdd={handleSpeakNow}
+            quickAddLabel="Bacakan Kartu Gizi (TTS)"
 
-            {/* Demo switcher when in Public Magic Link mode */}
-            {!isAuthenticatedMode && (
-              <div className="hidden sm:flex items-center gap-1.5 text-xs">
-                <span className="text-[11px] text-[#8b8b8b]">Contoh:</span>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')}
-                  className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
-                    effectiveToken.includes('andi')
-                      ? 'bg-[#070709] text-white'
-                      : 'bg-[#f5f5f5] text-[#60606c] hover:bg-[#e8e8e8] border border-black/5'
-                  }`}
-                >
-                  Andi (Pita Hijau)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchDemoChild('magic-balita-siti-2026-tumbuhin-pantau')}
-                  className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
-                    effectiveToken.includes('siti')
-                      ? 'bg-[#070709] text-white'
-                      : 'bg-[#f5f5f5] text-[#60606c] hover:bg-[#e8e8e8] border border-black/5'
-                  }`}
-                >
-                  Siti (Pita Kuning/PMT)
-                </button>
-              </div>
-            )}
-
-            {/* Logout button only when parent is logged in with JWT */}
-            {isAuthenticatedMode && onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="text-[11px] font-medium px-3 py-1.5 rounded-full bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#070709] border border-black/8 inline-flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" /> Keluar
-              </button>
-            )}
-          </div>
+            onLogout={onLogout}
+          />
+          <button
+            type="button"
+            aria-label="Tutup menu"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex-1"
+          />
         </div>
-      </header>
+      )}
 
-      {/* Main Workspace Container */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Multi-Child Switcher (Authenticated Mode when parent has children) */}
-        {isAuthenticatedMode && myChildren.length > 0 && (
-          <section
-            aria-label="Pilih Anak"
-            className={`p-4 rounded-3xl border transition-all ${
-              isHighContrast
-                ? 'bg-black text-white border-yellow-400'
-                : 'bg-white border-black/8 shadow-2xs'
-            }`}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#60606c]">
-                <Users className="w-4 h-4 text-[#2597d0]" />
-                <span>
-                  {myChildren.length > 1
-                    ? `Pilih Profil Anak (${myChildren.length} Balita Terhubung):`
-                    : 'Profil Balita Terhubung:'}
-                </span>
-              </div>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex">
+        <SmartSidebarShell
+          brandSubtitle="KARTU GIZI DIGITAL ORTU"
 
-              <div className="flex flex-wrap gap-2">
-                {myChildren.map((child) => {
-                  const active = child.child_id === selectedChildId
-                  return (
-                    <button
-                      type="button"
-                      key={child.child_id}
-                      onClick={() => handleSelectChild(child.child_id)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium inline-flex items-center gap-2 transition-all cursor-pointer ${
-                        active
-                          ? isHighContrast
-                            ? 'bg-yellow-400 text-black font-bold'
-                            : 'bg-[#070709] text-white font-semibold shadow-2xs'
-                          : isHighContrast
-                          ? 'bg-white/10 text-white border border-white/20'
-                          : 'bg-[#f5f5f5] text-[#60606c] hover:text-[#070709] border border-black/5'
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          child.color_pita === 'hijau'
-                            ? 'bg-emerald-500'
-                            : child.color_pita === 'kuning'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                        }`}
-                      />
-                      <span>{child.full_name}</span>
-                      <span className="opacity-75 text-[11px]">({child.age_months} bln)</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </section>
-        )}
+          roleTitle="Orang Tua Balita"
+          menus={ORTU_MENUS}
+          activeMenuId={activeTab}
+          user={sidebarUser}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          onSelectMenu={(item) => setActiveTab(item.id)}
+          onOpenQuickAdd={handleSpeakNow}
+          quickAddLabel="Bacakan Kartu Gizi (TTS)"
 
-        {/* Loading Skeleton */}
+          onLogout={onLogout}
+        />
+      </div>
+
+      {/* Main Content Workspace */}
+      <main className="flex-1 min-w-0 lg:h-dvh p-4 sm:p-6 overflow-y-auto space-y-5">
+        <SmartTopHeader
+          user={sidebarUser}
+          roleLabel="Orang Tua / Wali Balita"
+          pageTitle={
+            childData
+              ? `Kartu Gizi Digital — Ananda ${childData.child_name}`
+              : 'Portal Kartu Gizi Digital Balita'
+          }
+          breadcrumbs={[
+            'Dashboard',
+            childData?.posyandu_name || 'Posyandu Melati 04',
+            currentMenu.shortLabel || currentMenu.label,
+          ]}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder="Cari panduan gizi, bahan MPASI, atau jadwal Posyandu..."
+          greenBadgeText={
+            childData
+              ? `Usia ${childData.age_months} Bln • ${childData.last_weight_kg} kg`
+              : 'Kartu Gizi Aktif'
+          }
+          redBadgeText={
+            childData
+              ? `Pita ${(childData.color_pita || 'Hijau').toUpperCase()} KMS`
+              : 'Pita Hijau KMS'
+          }
+          modeTabs={modeTabs}
+          activeModeTab={activeChildMode}
+          onModeTabChange={handleModeTabChange}
+          onNotificationClick={() => setActiveTab('pesan')}
+          unreadCount={1}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+        />
+
+        {/* Loading State */}
         {loading && (
           <div className="space-y-4 animate-pulse">
-            <div className="h-32 rounded-3xl bg-white border border-black/8" />
-            <div className="h-12 rounded-full bg-[#f5f5f5]" />
-            <div className="h-64 rounded-3xl bg-white border border-black/8" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-28 rounded-2xl bg-white border border-slate-200/70" />
+              ))}
+            </div>
+            <div className="h-64 rounded-2xl bg-white border border-slate-200/70" />
           </div>
         )}
 
         {/* Error State */}
         {!loading && error && (
-          <div className="p-8 rounded-3xl bg-white border border-black/8 text-center space-y-4 shadow-2xs">
+          <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center space-y-4 shadow-2xs">
             <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-100">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold text-[#070709] font-runde">
+              <h2 className="text-xl font-bold text-slate-800">
                 {error === 'NO_LINKED_CHILDREN'
                   ? 'Belum Ada Balita yang Ditautkan'
                   : error === 'FORBIDDEN'
@@ -308,21 +363,21 @@ export default function OrtuDashboard({
                   ? 'Tautan Magic Link Tidak Ditemukan'
                   : 'Gangguan Koneksi Jaringan'}
               </h2>
-              <p className="text-xs sm:text-sm text-[#60606c] max-w-md mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
                 {error === 'NO_LINKED_CHILDREN'
                   ? 'Akun Anda belum terhubung ke data balita. Silakan hubungi Bidan Desa atau Kader Posyandu untuk menautkan profil si kecil ke akun Anda.'
                   : error === 'FORBIDDEN'
-                  ? 'Anda tidak memiliki izin untuk melihat data balita tersebut.'
+                  ? 'Anda tidak memiliki izin untuk mengakses data balita ini.'
                   : error === 'TOKEN_NOT_FOUND'
                   ? 'Pastikan tautan yang Anda buka sesuai dengan pesan WhatsApp dari Kader Posyandu desa Anda.'
-                  : 'Gagal memuat data dari server. Periksa koneksi internet Anda atau coba muat kembali.'}
+                  : 'Gagal memuat data dari server. Periksa koneksi internet Anda.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={loadPortal}
-                className="px-5 py-2.5 rounded-full bg-[#070709] hover:bg-[#151515] text-white text-xs font-medium flex items-center gap-2 transition-all cursor-pointer"
+                onClick={() => loadData()}
+                className="px-5 py-2.5 rounded-xl bg-[#f26522] hover:bg-[#d94e0f] text-white text-xs font-bold flex items-center gap-2 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Muat Ulang Halaman
               </button>
@@ -330,7 +385,7 @@ export default function OrtuDashboard({
                 <button
                   type="button"
                   onClick={() => handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')}
-                  className="px-5 py-2.5 rounded-full bg-white text-[#070709] border border-black/15 hover:bg-[#f5f5f5] text-xs font-medium transition-all cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 text-xs font-bold cursor-pointer"
                 >
                   Buka Contoh Balita Andi
                 </button>
@@ -339,169 +394,189 @@ export default function OrtuDashboard({
           </div>
         )}
 
-        {/* Content State */}
+        {/* Active Child Portal Content */}
         {!loading && !error && childData && (
-          <>
-            {/* Header Profil Balita */}
-            <div
-              className={`p-6 sm:p-7 rounded-3xl border transition-all ${
-                isHighContrast
-                  ? 'bg-black text-white border-yellow-400'
-                  : 'bg-white text-[#070709] border-black/8 shadow-2xs'
-              }`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-[#2597d0]/10 text-[#2597d0] border border-[#2597d0]/20 flex items-center justify-center font-bold text-lg font-runde shrink-0">
-                    {childData.child_name ? childData.child_name.slice(0, 2).toUpperCase() : 'BL'}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <h2 className="text-xl sm:text-2xl font-semibold text-[#070709] tracking-tight font-runde">
-                        {childData.child_name}
-                      </h2>
-                      <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#f5f5f5] text-[#60606c] border border-black/5">
-                        {childData.gender === 'L' ? 'Laki-Laki' : 'Perempuan'}
-                      </span>
+          <div className="space-y-5">
+            {/* Row 1: 4 SmartHR Sparkline KPI Cards for the Child */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <SmartSparkKpiCard
+                title="Berat Badan Terakhir"
+                value={`${childData.last_weight_kg} kg`}
+                subtitle={`Selisih ${childData.delta_weight_grams >= 0 ? '+' : ''}${childData.delta_weight_grams}g dari bulan lalu`}
+                icon={Scale}
+                visualType="area"
+                accentColor="#f26522"
+                onClick={() => setActiveTab('kurva')}
+              />
+              <SmartSparkKpiCard
+                title="Tinggi / Panjang Badan"
+                value={`${childData.last_height_cm} cm`}
+                subtitle={`Target BB bulan depan: ${childData.next_month_target_kg} kg`}
+                icon={LineChart}
+                visualType="equalizer"
+                accentColor="#f26522"
+                onClick={() => setActiveTab('kurva')}
+              />
+              <SmartSparkKpiCard
+                title="Status Pita KMS WHO"
+                value={`Pita ${(childData.color_pita || 'Hijau').toUpperCase()}`}
+                subtitle={childData.friendly_status_title || 'Pertumbuhan Sesuai Usia'}
+                icon={Baby}
+                visualType="bars"
+                accentColor="#0f4c5c"
+                onClick={() => setActiveTab('ringkasan')}
+              />
+              <SmartSparkKpiCard
+                title="Rekomendasi MPASI Lokal"
+                value={`Rp ${Number(childData.mpasi_recipe?.daily_budget_idr || 12000).toLocaleString('id-ID')}`}
+                subtitle={childData.mpasi_recipe?.title || 'Menu Pangan Lokal Desa'}
+                icon={ChefHat}
+                visualType="pulse"
+                accentColor="#f26522"
+                onClick={() => setActiveTab('resep')}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+              {/* Left 8 Cols: Child Profile Header + Active Tab Content */}
+              <div className="xl:col-span-8 space-y-5">
+                {/* Child Profile Card */}
+                <div
+                  className={`p-5 rounded-2xl border transition-all ${isHighContrast
+                      ? 'bg-black text-white border-yellow-400'
+                      : 'bg-white text-slate-800 border-slate-200/80 shadow-2xs'
+                    }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#f26522] border border-orange-200 flex items-center justify-center font-extrabold text-base shrink-0">
+                        {(childData.child_name || 'AN').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[18px] font-extrabold text-[#1b2537]">
+                            {childData.child_name}
+                          </h2>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+                            {childData.gender === 'L' ? 'Laki-Laki' : 'Perempuan'} •{' '}
+                            {childData.age_months} Bulan
+                          </span>
+                        </div>
+                        <p className="text-[12px] text-slate-500 mt-0.5">
+                          Wali: <strong className="text-slate-800">{childData.parent_name}</strong> •{' '}
+                          {childData.posyandu_name} ({childData.village_name}) • NIK:{' '}
+                          <span className="font-mono">{childData.masked_nik}</span>
+                        </p>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-[#60606c] mt-1 flex flex-wrap items-center gap-2">
-                      <span>Usia: <strong className="text-[#070709]">{childData.age_months} Bulan</strong></span>
-                      <span className="text-[#8b8b8b]">•</span>
-                      <span>Lahir: {childData.birth_date}</span>
-                      <span className="text-[#8b8b8b]">•</span>
-                      <span>NIK: {childData.masked_nik}</span>
-                    </p>
-
-                    <p className="text-xs text-[#60606c] mt-0.5">
-                      Ibu/Wali: <strong className="text-[#070709]">{childData.parent_name || 'Ibu Balita'}</strong> • {childData.posyandu_name} ({childData.village_name})
-                    </p>
-                  </div>
-                </div>
-
-                {/* Status Pita KMS Badge */}
-                <div className="self-start sm:self-auto shrink-0">
-                  <span
-                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-medium text-xs tracking-tight ${
-                      childData.color_pita === 'hijau'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                        : childData.color_pita === 'kuning'
-                        ? 'bg-amber-50 text-amber-900 border border-amber-200/80'
-                        : 'bg-rose-50 text-rose-900 border border-rose-200/80'
-                    }`}
-                  >
                     <span
-                      className={`w-2 h-2 rounded-full ${
-                        childData.color_pita === 'hijau'
-                          ? 'bg-emerald-500'
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-bold text-xs ${childData.color_pita === 'hijau'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           : childData.color_pita === 'kuning'
-                          ? 'bg-amber-500'
-                          : 'bg-rose-500'
-                      }`}
-                    />
-                    Pita {childData.color_pita?.toUpperCase() || 'HIJAU'} KMS
-                  </span>
-                </div>
-              </div>
+                            ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                            : 'bg-rose-50 text-rose-900 border border-rose-200'
+                        }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${childData.color_pita === 'hijau'
+                            ? 'bg-emerald-500'
+                            : childData.color_pita === 'kuning'
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                          }`}
+                      />
+                      Pita {childData.color_pita?.toUpperCase() || 'HIJAU'} KMS
+                    </span>
+                  </div>
 
-              {/* Mobile Demo Selector Pills */}
-              {!isAuthenticatedMode && (
-                <div className="mt-4 pt-3 border-t border-black/5 flex sm:hidden items-center justify-between text-[11px]">
-                  <span className="text-[#8b8b8b]">Pilih data contoh:</span>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchDemoChild('magic-balita-andi-2026-tumbuhin-sehat')}
-                      className={`px-3 py-1 rounded-full text-[10px] font-medium ${
-                        effectiveToken.includes('andi') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
-                      }`}
-                    >
-                      Andi (Hijau)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchDemoChild('magic-balita-siti-2026-tumbuhin-pantau')}
-                      className={`px-3 py-1 rounded-full text-[10px] font-medium ${
-                        effectiveToken.includes('siti') ? 'bg-[#070709] text-white' : 'bg-[#f5f5f5] text-[#60606c]'
-                      }`}
-                    >
-                      Siti (Kuning)
-                    </button>
+                  {/* 4 Pill Tabs Bar */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-100">
+                    {ORTU_MENUS.map((tab) => {
+                      const Icon = tab.icon
+                      const isActive = activeTab === tab.id
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`py-2 px-3 rounded-xl font-bold text-[12px] flex items-center justify-center gap-2 transition-all cursor-pointer ${isActive
+                              ? 'bg-[#f26522] text-white shadow-2xs'
+                              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{tab.shortLabel}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Sticky Navigation Tabs (Pill Segmented Navigation Bar) */}
-            <nav aria-label="Navigasi Menu Orang Tua" className="sticky top-14 z-30 py-2 backdrop-blur-md bg-transparent">
-              <div
-                className={`p-1.5 rounded-full border flex items-center justify-between gap-1 shadow-2xs transition-all ${
-                  isHighContrast
-                    ? 'bg-black text-white border-yellow-400'
-                    : 'bg-white/95 border-black/8'
-                }`}
-              >
-                {TABS.map((tab) => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
-                  return (
-                    <button
-                      type="button"
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 py-2 sm:py-2.5 px-3 rounded-full font-medium text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        isActive
-                          ? isHighContrast
-                            ? 'bg-yellow-400 text-black shadow-xs font-semibold'
-                            : 'bg-[#070709] text-white shadow-2xs font-semibold'
-                          : isHighContrast
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-[#60606c] hover:text-[#070709] hover:bg-[#f5f5f5]'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#2597d0]' : 'text-current'}`} />
-                      <span className="truncate">{tab.label}</span>
-                    </button>
-                  )
-                })}
+                {/* Active Tab Body */}
+                <div>
+                  {activeTab === 'ringkasan' && (
+                    <OrtuSummaryTab
+                      data={childData}
+                      isHighContrast={isHighContrast}
+                      onSelectTab={(tabId) => setActiveTab(tabId)}
+                    />
+                  )}
+                  {activeTab === 'kurva' && (
+                    <KmsInteractiveChart data={childData} isHighContrast={isHighContrast} />
+                  )}
+                  {activeTab === 'resep' && (
+                    <MpasiRecipeCard
+                      recipe={childData.mpasi_recipe}
+                      isHighContrast={isHighContrast}
+                      childName={childData.child_name}
+                    />
+                  )}
+                  {activeTab === 'pesan' && (
+                    <BidanNotesAndSchedule
+                      bidanNote={childData.bidan_note}
+                      nextPosyandu={childData.next_posyandu}
+                      isHighContrast={isHighContrast}
+                      childName={childData.child_name}
+                    />
+                  )}
+                </div>
               </div>
-            </nav>
 
-            {/* Tab Views */}
-            <div className="pt-2">
-              {activeTab === 'ringkasan' && (
-                <OrtuSummaryTab
-                  data={childData}
-                  isHighContrast={isHighContrast}
-                  onSelectTab={(tabId) => setActiveTab(tabId)}
+              <div className="xl:col-span-4 space-y-5">
+                <SmartDotProgressCard
+                  title="Kepatuhan Timbang & Imunisasi"
+                  icon={ShieldCheck}
+                  subtitle={`Kehadiran rutin Ananda ${childData.child_name} di Posyandu`}
+                  percentage={childData.color_pita === 'hijau' ? 94 : 82}
+                  totalDots={16}
                 />
-              )}
 
-              {activeTab === 'kurva' && (
-                <KmsInteractiveChart
-                  data={childData}
-                  isHighContrast={isHighContrast}
-                />
-              )}
-
-              {activeTab === 'resep' && (
-                <MpasiRecipeCard
-                  recipe={childData.mpasi_recipe}
-                  isHighContrast={isHighContrast}
-                  childName={childData.child_name}
-                />
-              )}
-
-              {activeTab === 'pesan' && (
-                <BidanNotesAndSchedule
-                  bidanNote={childData.bidan_note}
-                  nextPosyandu={childData.next_posyandu}
-                  isHighContrast={isHighContrast}
-                  childName={childData.child_name}
-                />
-              )}
+                {/* Next Posyandu Schedule Card */}
+                <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[14.5px] font-extrabold text-[#1b2537] flex items-center gap-2">
+                      <CalendarCheck className="w-4 h-4 text-[#f26522]" />
+                      <span>Jadwal Posyandu Berikutnya</span>
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-md bg-orange-50 text-[#f26522] text-[10.5px] font-bold">
+                      Wajib Hadir
+                    </span>
+                  </div>
+                  <p className="text-[13px] font-bold text-slate-800">
+                    {childData.next_posyandu?.activity_date || 'Sabtu Minggu Ke-2 Bulan Depan'}
+                  </p>
+                  <p className="text-[12px] text-slate-500">
+                    Lokasi: {childData.next_posyandu?.location || childData.posyandu_name}
+                  </p>
+                  <p className="text-[11.5px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    {childData.bidan_note?.clinical_note ||
+                      'Pastikan Ananda membawa Buku KIA dan hadir tepat waktu untuk penimbangan rutin.'}
+                  </p>
+                </div>
+              </div>
             </div>
-          </>
+          </div>
         )}
       </main>
 
