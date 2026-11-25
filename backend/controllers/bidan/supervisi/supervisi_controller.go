@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"tumbuhin-backend/middlewares"
 	supervisiRepo "tumbuhin-backend/repositories/bidan/supervisi"
@@ -24,36 +23,9 @@ func NewController(service supervisi.Service) *Controller {
 	return &Controller{service: service}
 }
 
-func villageFromClaims(c *gin.Context) string {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && strings.TrimSpace(claims.VillageName) != "" {
-			return claims.VillageName
-		}
-	}
-	return "Desa Sukamaju"
-}
-
-func userIDFromClaims(c *gin.Context) int64 {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok {
-			return claims.UserID
-		}
-	}
-	return 0
-}
-
-func userNameFromClaims(c *gin.Context) string {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && strings.TrimSpace(claims.FullName) != "" {
-			return claims.FullName
-		}
-	}
-	return "Bidan Desa"
-}
-
 // HandleGetSupervision handles GET /api/v1/bidan/supervision
 func (ctrl *Controller) HandleGetSupervision(c *gin.Context) {
-	village := villageFromClaims(c)
+	village := middlewares.VillageFromContext(c, "Desa Sukamaju")
 	month, _ := strconv.Atoi(c.DefaultQuery("period_month", "0"))
 	year, _ := strconv.Atoi(c.DefaultQuery("period_year", "0"))
 	posyanduID := c.Query("posyandu_id")
@@ -69,9 +41,9 @@ func (ctrl *Controller) HandleGetSupervision(c *gin.Context) {
 
 // HandleLockSupervision handles POST /api/v1/bidan/supervision/lock
 func (ctrl *Controller) HandleLockSupervision(c *gin.Context) {
-	village := villageFromClaims(c)
-	uid := userIDFromClaims(c)
-	uName := userNameFromClaims(c)
+	village := middlewares.VillageFromContext(c, "Desa Sukamaju")
+	uid := middlewares.UserIDFromContext(c)
+	uName := middlewares.UserNameFromContext(c, "Bidan Desa")
 
 	var req supervisiRepo.LockRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

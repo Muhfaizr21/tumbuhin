@@ -12,7 +12,7 @@ import {
   Send,
 } from 'lucide-react'
 import { SmartTopHeader } from '../../components/ui/SmartDashboardWidgets'
-import { fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import { countQueue, subscribeQueue } from '../../lib/offlineQueue'
 import KaderBalitaPage from './KaderBalitaPage'
 import KaderDistribusiPage from './KaderDistribusiPage'
@@ -192,7 +192,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const data = await fetchRoleDashboardData('/kader/dashboard')
+        const data = await kaderApi.getOverview()
         if (data) {
           const total = data.total_balita || 2
           const weighed = data.sudah_ditimbang_bulan_ini || 2
@@ -255,6 +255,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
             onLogout={onLogout}
             onSwitchRole={onSwitchRole}
             onNavigate={setActiveMenuId}
+            searchQuery={globalSearch}
           />
         )
       case 'timbang':
@@ -266,7 +267,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
       case 'sinkronisasi':
         return <KaderSinkronisasiPage />
       case 'distribusi':
-        return <KaderDistribusiPage />
+        return <KaderDistribusiPage searchQuery={globalSearch} />
       default:
         return (
           <KaderHomePage

@@ -21,19 +21,9 @@ func NewController(service prioritasService.Service) *Controller {
 	return &Controller{service: service}
 }
 
-func getVillageNameFromContext(c *gin.Context) string {
-	villageName := "Desa Sukamaju"
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && claims.VillageName != "" {
-			villageName = claims.VillageName
-		}
-	}
-	return villageName
-}
-
 // HandleGetPriorityList processes GET /api/v1/bidan/priority-list
 func (ctrl *Controller) HandleGetPriorityList(c *gin.Context) {
-	villageName := getVillageNameFromContext(c)
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 
 	list, err := ctrl.service.GetPriorityList(c.Request.Context(), villageName)
 	if err != nil {
@@ -46,7 +36,7 @@ func (ctrl *Controller) HandleGetPriorityList(c *gin.Context) {
 
 // HandleCreatePriorityChild processes POST /api/v1/bidan/priority-list
 func (ctrl *Controller) HandleCreatePriorityChild(c *gin.Context) {
-	villageName := getVillageNameFromContext(c)
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 
 	var req prioritasRepo.CreatePriorityRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -65,7 +55,7 @@ func (ctrl *Controller) HandleCreatePriorityChild(c *gin.Context) {
 
 // HandleUpdatePriorityChild processes PUT /api/v1/bidan/priority-list/:id
 func (ctrl *Controller) HandleUpdatePriorityChild(c *gin.Context) {
-	villageName := getVillageNameFromContext(c)
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 	childID := c.Param("id")
 	if childID == "" {
 		views.BadRequest(c, "Parameter ID balita harus diisi", nil)
@@ -89,7 +79,7 @@ func (ctrl *Controller) HandleUpdatePriorityChild(c *gin.Context) {
 
 // HandleDeletePriorityChild processes DELETE /api/v1/bidan/priority-list/:id
 func (ctrl *Controller) HandleDeletePriorityChild(c *gin.Context) {
-	villageName := getVillageNameFromContext(c)
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 	childID := c.Param("id")
 	if childID == "" {
 		views.BadRequest(c, "Parameter ID balita harus diisi", nil)

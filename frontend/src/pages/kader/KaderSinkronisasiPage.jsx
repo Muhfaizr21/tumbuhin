@@ -10,7 +10,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react'
-import { fetchRoleDashboardData, postRoleData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import {
   countQueue,
   getLastSyncAt,
@@ -75,7 +75,7 @@ export default function KaderSinkronisasiPage() {
 
   const loadBackendStatus = async () => {
     try {
-      const data = await fetchRoleDashboardData('/kader/sinkronisasi/status?limit=30')
+      const data = await kaderApi.getSyncStatus(30)
       setBackendStatus(data)
       setBackendError('')
       if (data?.last_synced_at) {
@@ -125,7 +125,7 @@ export default function KaderSinkronisasiPage() {
 
     try {
       const items = await Promise.all(queueItems.map(toSyncItem))
-      const result = await postRoleData('/kader/sinkronisasi/batch', {
+      const result = await kaderApi.postSyncBatch({
         batchId: `batch-${Date.now()}`,
         deviceId: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 120) : '',
         items

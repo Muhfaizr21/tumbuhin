@@ -8,7 +8,7 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react'
-import { fetchRoleDashboardData, patchRoleData } from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 import BidanNavigationShell from './components/BidanNavigationShell'
 import { BIDAN_MENUS } from './bidanMenuItems'
 
@@ -108,7 +108,7 @@ export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
     setLoading(true)
     setLoadError('')
     try {
-      const data = await fetchRoleDashboardData(`/bidan/pmt-evaluations?${buildQuery(filters, page, pageSize)}`)
+      const data = await bidanApi.listPmtEvaluations(buildQuery(filters, page, pageSize))
       setItems(Array.isArray(data?.items) ? data.items : [])
       setSummary(data?.summary || null)
       setTotalFiltered(Number(data?.total_filtered) || 0)
@@ -156,7 +156,7 @@ export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
 
     setDetailLoading(true)
     try {
-      const data = await fetchRoleDashboardData(`/bidan/pmt-evaluations/${child.child_id}`)
+      const data = await bidanApi.getPmtChildDetail(child.child_id)
       setDetail(data)
     } catch (err) {
       setDetailError(err.message || 'Detail evaluasi tidak dapat dimuat.')
@@ -244,7 +244,7 @@ export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
 
     setSaving(true)
     try {
-      await patchRoleData(`/bidan/pmt-evaluations/${activeChild.child_id}/compliance`, {
+      await bidanApi.updatePmtCompliance(activeChild.child_id, {
         consumption_compliance_percent: consumption,
         distribution_compliance_percent: distribution,
         notes: compliance.notes.trim(),

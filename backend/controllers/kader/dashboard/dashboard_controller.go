@@ -3,6 +3,7 @@ package dashboard
 import (
 	"net/http"
 
+	"tumbuhin-backend/middlewares"
 	kaderDashService "tumbuhin-backend/services/kader/dashboard"
 	"tumbuhin-backend/views"
 
@@ -21,7 +22,8 @@ func NewController(service kaderDashService.Service) *Controller {
 
 // HandleGetOverview processes GET /api/v1/kader/dashboard
 func (ctrl *Controller) HandleGetOverview(c *gin.Context) {
-	data, err := ctrl.service.GetOverview(c.Request.Context(), "Posyandu Melati 04")
+	posyanduName := middlewares.PosyanduFromContext(c, "Posyandu Melati 04")
+	data, err := ctrl.service.GetOverview(c.Request.Context(), posyanduName)
 	if err != nil {
 		views.InternalServerError(c, "Gagal memuat ringkasan dasbor kader")
 		return

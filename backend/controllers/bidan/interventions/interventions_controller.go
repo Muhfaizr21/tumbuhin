@@ -24,26 +24,6 @@ func NewController(service interventions.Service) *Controller {
 	return &Controller{service: service}
 }
 
-// villageFromClaims reads the caller's village scope from the JWT claims so
-// every query stays inside the bidan's own desa.
-func villageFromClaims(c *gin.Context) string {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && strings.TrimSpace(claims.VillageName) != "" {
-			return claims.VillageName
-		}
-	}
-	return "Desa Sukamaju"
-}
-
-func userIDFromClaims(c *gin.Context) int64 {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok {
-			return claims.UserID
-		}
-	}
-	return 0
-}
-
 func respondValidationError(c *gin.Context, err error) bool {
 	var verr *interventions.ValidationError
 	if errors.As(err, &verr) {
@@ -68,7 +48,7 @@ func (ctrl *Controller) HandleListHomeVisits(c *gin.Context) {
 		Offset:   offset,
 	}
 
-	result, err := ctrl.service.ListHomeVisits(c.Request.Context(), villageFromClaims(c), filter)
+	result, err := ctrl.service.ListHomeVisits(c.Request.Context(), middlewares.VillageFromContext(c, "Desa Sukamaju"), filter)
 	if err != nil {
 		if respondValidationError(c, err) {
 			return
@@ -90,8 +70,8 @@ func (ctrl *Controller) HandleCreateHomeVisit(c *gin.Context) {
 
 	created, err := ctrl.service.CreateHomeVisit(
 		c.Request.Context(),
-		villageFromClaims(c),
-		userIDFromClaims(c),
+		middlewares.VillageFromContext(c, "Desa Sukamaju"),
+		middlewares.UserIDFromContext(c),
 		input,
 	)
 	if err != nil {
@@ -119,7 +99,7 @@ func (ctrl *Controller) HandleUpdateHomeVisitStatus(c *gin.Context) {
 		return
 	}
 
-	updated, err := ctrl.service.UpdateStatus(c.Request.Context(), villageFromClaims(c), id, input)
+	updated, err := ctrl.service.UpdateStatus(c.Request.Context(), middlewares.VillageFromContext(c, "Desa Sukamaju"), id, input)
 	if err != nil {
 		if respondValidationError(c, err) {
 			return
@@ -133,4 +113,67 @@ func (ctrl *Controller) HandleUpdateHomeVisitStatus(c *gin.Context) {
 	}
 
 	views.Success(c, http.StatusOK, "Status kunjungan berhasil diperbarui", updated)
+}
+
+// HandleUpdateHomeVisit handles PUT /api/v1/bidan/interventions/:id
+func (ctrl *Controller) HandleUpdateHomeVisit(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		views.BadRequest(c, "ID kunjungan harus diisi", nil)
+		return
+	}
+
+	var input interventions.CreateInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		views.BadRequest(c, "Format data kunjungan rumah tidak valid", err.Error())
+		return
+	}
+
+	updated, err := ctrl.service.UpdateHomeVisit(
+		c.Request.Context(),
+		middlewares.VillageFromContext(c, "Desa Sukamaju"),
+		id,
+		input,
+	)
+	if err != nil {
+		if respondValidationError(c, err) {
+			return
+		}
+		if errors.Is(err, interventionsRepo.ErrNotFound) {
+			views.NotFound(c, "Kunjungan rumah tidak ditemukan di desa Anda")
+			return
+		}
+		views.InternalServerError(c, "Gagal memperbarui kunjungan rumah: "+err.Error())
+		return
+	}
+
+	views.Success(c, http.StatusOK, "Kunjungan rumah berhasil diperbarui", updated)
+}
+
+// HandleDeleteHomeVisit handles DELETE /api/v1/bidan/interventions/:id
+func (ctrl *Controller) HandleDeleteHomeVisit(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		views.BadRequest(c, "ID kunjungan harus diisi", nil)
+		return
+	}
+
+	err := ctrl.service.DeleteHomeVisit(
+		c.Request.Context(),
+		middlewares.VillageFromContext(c, "Desa Sukamaju"),
+		id,
+	)
+	if err != nil {
+		if respondValidationError(c, err) {
+			return
+		}
+		if errors.Is(err, interventionsRepo.ErrNotFound) {
+			views.NotFound(c, "Kunjungan rumah tidak ditemukan di desa Anda")
+			return
+		}
+		views.InternalServerError(c, "Gagal menghapus kunjungan rumah: "+err.Error())
+		return
+	}
+
+	views.Success(c, http.StatusOK, "Kunjungan rumah berhasil dihapus", gin.H{"deleted_id": id})
 }

@@ -9,71 +9,7 @@ import {
 } from 'lucide-react'
 
 /**
- * Sidebar menu for the Batch 2 Bidan pages that render outside BidanDashboard.
- * Routes mirror fitur.md "Struktur Menu Sidebar Bidan" so navigation keeps
- * working when the user jumps between the two shells.
- */
-export const BIDAN_MENU_ITEMS = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard Epidemiologi Desa',
-    route: '/bidan/dashboard',
-    icon: LayoutDashboard,
-    badge: 'Surveilans',
-    description: 'Agregasi status gizi seluruh Posyandu desa dan tren prevalensi 12 bulan.',
-  },
-  {
-    id: 'peta-gis',
-    label: 'Peta GIS & Klaster Risiko',
-    route: '/bidan/peta-gis',
-    icon: MapPin,
-    badge: 'GIS',
-    description: 'Pemetaan spasial RT/RW dengan indikator warna tingkat risiko gizi.',
-  },
-  {
-    id: 'prioritas',
-    label: 'Daftar Prioritas Intervensi',
-    route: '/bidan/prioritas',
-    icon: AlertTriangle,
-    badge: 'Triase',
-    description: 'Tabel triase medis otomatis untuk balita Stunted, Wasted, dan pre-stunting.',
-  },
-  {
-    id: 'intervensi',
-    label: 'Kunjungan Rumah (Home Visit)',
-    route: '/bidan/intervensi',
-    icon: HeartPulse,
-    badge: 'SOAP',
-    description: 'Penjadwalan kunjungan lapangan dan pencatatan klinis format SOAP oleh Bidan Desa.',
-  },
-  {
-    id: 'pmt-evaluasi',
-    label: 'Evaluasi Program PMT',
-    route: '/bidan/pmt-evaluasi',
-    icon: Activity,
-    badge: '90 Hari',
-    description: 'Monitoring kohor balita penerima PMT 90 hari untuk mengukur kenaikan berat badan dan graduasi.',
-  },
-  {
-    id: 'supervisi',
-    label: 'Supervisi Posyandu & Audit',
-    route: '/bidan/supervisi',
-    icon: ClipboardCheck,
-    description: 'Audit kualitas input antropometri petugas dan monitoring ketepatan waktu pelaporan.',
-  },
-  {
-    id: 'laporan',
-    label: 'Laporan & Ekspor e-PPGBM',
-    route: '/bidan/laporan',
-    icon: FileSpreadsheet,
-    badge: 'CSV',
-    description: 'Generator laporan gizi bulanan tingkat desa siap ekspor format e-PPGBM.',
-  },
-]
-
-/**
- * BIDAN_MENUS — full format required by BidanNavigationShell
- * (includes shortLabel, icon, badge, route for the dual-sidebar navigation).
+ * Single Source of Truth for Role 2: Bidan Desa Navigation Menus.
  */
 export const BIDAN_MENUS = [
   {
@@ -83,7 +19,9 @@ export const BIDAN_MENUS = [
     route: '/bidan/dashboard',
     icon: LayoutDashboard,
     badge: 'Surveilans',
-    description: 'Agregasi status gizi seluruh Posyandu desa, grafik tren prevalensi Stunting dan Wasting 12 bulan.',
+    backendPath: 'bidan/dashboard/dashboard_controller.go',
+    description:
+      'Agregasi status gizi seluruh Posyandu desa, grafik tren prevalensi Stunting dan Wasting 12 bulan, serta perbandingan indikator SKDN.',
   },
   {
     id: 'peta-gis',
@@ -92,7 +30,9 @@ export const BIDAN_MENUS = [
     route: '/bidan/peta-gis',
     icon: MapPin,
     badge: 'GIS',
-    description: 'Pemetaan spasial interaktif tingkat RT/RW dengan indikator warna tingkat risiko stunting.',
+    backendPath: 'bidan/petagis/petagis_controller.go',
+    description:
+      'Pemetaan spasial interaktif tingkat RT/RW dengan indikator warna tingkat risiko stunting untuk identifikasi kantong kerawanan gizi.',
   },
   {
     id: 'prioritas',
@@ -101,7 +41,9 @@ export const BIDAN_MENUS = [
     route: '/bidan/prioritas',
     icon: AlertTriangle,
     badge: 'Triase',
-    description: 'Tabel triase medis otomatis yang mengurutkan balita Stunted/Wasted serta balita pre-stunting.',
+    backendPath: 'bidan/prioritas/prioritas_controller.go',
+    description:
+      'Tabel triase medis otomatis yang mengurutkan balita Stunted/Wasted serta balita Normal dengan skor prediksi ML Growth Faltering tinggi.',
   },
   {
     id: 'intervensi',
@@ -110,7 +52,9 @@ export const BIDAN_MENUS = [
     route: '/bidan/intervensi',
     icon: HeartPulse,
     badge: 'SOAP',
-    description: 'Penjadwalan kunjungan lapangan dan pencatatan klinis format SOAP oleh Bidan Desa.',
+    backendPath: 'bidan/interventions/interventions_controller.go',
+    description:
+      'Penjadwalan kunjungan lapangan dan pencatatan klinis format SOAP oleh Bidan Desa beserta pemberian paket PMT dan rujukan Puskesmas.',
   },
   {
     id: 'pmt-evaluasi',
@@ -118,7 +62,10 @@ export const BIDAN_MENUS = [
     shortLabel: 'Evaluasi PMT 90H',
     route: '/bidan/pmt-evaluasi',
     icon: Activity,
-    description: 'Monitoring kohor balita penerima intervensi PMT 90 hari untuk mengukur dampak kenaikan BB.',
+    badge: '90 Hari',
+    backendPath: 'bidan/pmt_evaluations/pmt_evaluations_controller.go',
+    description:
+      'Monitoring kohor balita penerima intervensi PMT 90 hari untuk mengukur dampak kenaikan berat badan dan graduasi status gizi.',
   },
   {
     id: 'supervisi',
@@ -126,7 +73,9 @@ export const BIDAN_MENUS = [
     shortLabel: 'Supervisi & Audit',
     route: '/bidan/supervisi',
     icon: ClipboardCheck,
-    description: 'Audit kualitas input antropometri petugas dan monitoring ketepatan waktu pelaporan bulanan.',
+    backendPath: 'bidan/supervisi/supervisi_controller.go',
+    description:
+      'Audit kualitas input antropometri petugas (deteksi outlier Z-Score ekstrem) dan monitoring ketepatan waktu pelaporan bulanan tiap RW.',
   },
   {
     id: 'laporan',
@@ -135,6 +84,10 @@ export const BIDAN_MENUS = [
     route: '/bidan/laporan',
     icon: FileSpreadsheet,
     badge: 'CSV/PDF',
-    description: 'Generator laporan gizi bulanan resmi tingkat desa yang siap diekspor ke format e-PPGBM.',
+    backendPath: 'bidan/laporan/laporan_controller.go',
+    description:
+      'Generator laporan gizi bulanan resmi tingkat desa yang siap diekspor ke format kompatibel e-PPGBM Kemenkes.',
   },
 ]
+
+export const BIDAN_MENU_ITEMS = BIDAN_MENUS

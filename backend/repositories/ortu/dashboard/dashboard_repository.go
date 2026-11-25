@@ -214,15 +214,15 @@ func (r *repository) GetChildByMagicToken(ctx context.Context, magicToken string
 	// 3. Query historical measurements (ordered chronologically)
 	queryMeas := `
 		SELECT 
-			measured_at, age_months, weight_kg, height_cm,
+			measured_at, COALESCE(age_months, $2), weight_kg, height_cm,
 			COALESCE(zscore_wfa, 0.0), COALESCE(zscore_hfa, 0.0), COALESCE(zscore_wfh, 0.0),
 			COALESCE(nutrition_status, 'normal')
 		FROM measurements
 		WHERE child_id = $1
-		ORDER BY age_months ASC, measured_at ASC;
+		ORDER BY COALESCE(age_months, $2) ASC, measured_at ASC;
 	`
 
-	rows, err := r.db.Query(ctx, queryMeas, childID)
+	rows, err := r.db.Query(ctx, queryMeas, childID, ageMonths)
 	if err == nil {
 		defer rows.Close()
 		var hist []HistoricalMeasurement
@@ -298,16 +298,7 @@ func (r *repository) GetChildByMagicToken(ctx context.Context, magicToken string
 
 	errMpasi := r.db.QueryRow(ctx, queryMpasi, childID).Scan(&dailyBudget, &recipeRaw, &citation)
 	if errMpasi == nil && len(recipeRaw) > 0 {
-		var parsed MpasiRecipeDetail
-		if jsonErr := json.Unmarshal(recipeRaw, &parsed); jsonErr == nil {
-			parsed.DailyBudgetIDR = dailyBudget
-			if citation != "" {
-				parsed.KemenkesCitation = citation
-			}
-			card.MpasiRecipe = parsed
-		} else {
-			card.MpasiRecipe = generateSmartMpasiFallback(card.AgeMonths)
-		}
+		card.MpasiRecipe = parseMpasiRecipePayload(recipeRaw, dailyBudget, citation, card.AgeMonths)
 	} else {
 		card.MpasiRecipe = generateSmartMpasiFallback(card.AgeMonths)
 	}
@@ -392,6 +383,130 @@ func (r *repository) GetChildByMagicToken(ctx context.Context, magicToken string
 }
 
 // Helpers
+
+type nutriChefRawPayload struct {
+	Title              string   `json:"title"`
+	TargetAge          string   `json:"targetAge"`
+	TargetAgeRange     string   `json:"target_age_range"`
+	Texture            string   `json:"texture"`
+	Energy             string   `json:"energy"`
+	Protein            string   `json:"protein"`
+	CaloriesKcal       int      `json:"calories_kcal"`
+	AnimalProteinGrams float64  `json:"animal_protein_grams"`
+	TotalCost          int      `json:"totalCost"`
+	DailyBudgetIDR     int      `json:"daily_budget_idr"`
+	Steps              []string `json:"steps"`
+	CookingSteps       []string `json:"cooking_steps"`
+	ServingTips        string   `json:"serving_tips"`
+	Citation           string   `json:"citation"`
+	KemenkesCitation   string   `json:"kemenkes_citation"`
+	Ingredients        []struct {
+		Name           string `json:"name"`
+		Qty            string `json:"qty"`
+		Amount         string `json:"amount"`
+		Category       string `json:"category"`
+		Cost           int    `json:"cost"`
+		EstimatedPrice int    `json:"estimated_price"`
+	} `json:"ingredients"`
+}
+
+func parseMpasiRecipePayload(recipeRaw []byte, dailyBudget int, citation string, ageMonths int) MpasiRecipeDetail {
+	var raw nutriChefRawPayload
+	if err := json.Unmarshal(recipeRaw, &raw); err != nil || strings.TrimSpace(raw.Title) == "" {
+		return generateSmartMpasiFallback(ageMonths)
+	}
+
+	targetAge := strings.TrimSpace(raw.TargetAgeRange)
+	if targetAge == "" {
+		targetAge = strings.TrimSpace(raw.TargetAge)
+	}
+	if targetAge == "" {
+		targetAge = "12-23 Bulan"
+	}
+
+	budget := dailyBudget
+	if budget <= 0 {
+		if raw.DailyBudgetIDR > 0 {
+			budget = raw.DailyBudgetIDR
+		} else if raw.TotalCost > 0 {
+			budget = raw.TotalCost
+		} else {
+			budget = 13500
+		}
+	}
+
+	calories := raw.CaloriesKcal
+	if calories <= 0 && raw.Energy != "" {
+		_, _ = fmt.Sscanf(raw.Energy, "%d", &calories)
+	}
+	if calories <= 0 {
+		calories = 285
+	}
+
+	protein := raw.AnimalProteinGrams
+	if protein <= 0 && raw.Protein != "" {
+		_, _ = fmt.Sscanf(raw.Protein, "%f", &protein)
+	}
+	if protein <= 0 {
+		protein = 14.0
+	}
+
+	steps := raw.CookingSteps
+	if len(steps) == 0 {
+		steps = raw.Steps
+	}
+
+	ings := make([]RecipeIngredient, 0, len(raw.Ingredients))
+	for _, ing := range raw.Ingredients {
+		amount := strings.TrimSpace(ing.Amount)
+		if amount == "" {
+			amount = strings.TrimSpace(ing.Qty)
+		}
+		price := ing.EstimatedPrice
+		if price <= 0 {
+			price = ing.Cost
+		}
+		cat := strings.TrimSpace(ing.Category)
+		if cat == "" {
+			cat = "Pangan Lokal Desa"
+		}
+		ings = append(ings, RecipeIngredient{
+			Name:           ing.Name,
+			Amount:         amount,
+			Category:       cat,
+			EstimatedPrice: price,
+		})
+	}
+
+	finalCitation := strings.TrimSpace(citation)
+	if finalCitation == "" {
+		finalCitation = strings.TrimSpace(raw.KemenkesCitation)
+	}
+	if finalCitation == "" {
+		finalCitation = strings.TrimSpace(raw.Citation)
+	}
+	if finalCitation == "" {
+		finalCitation = "Pedoman Pemberian Makanan Bayi dan Anak (PMBA) Kemenkes RI."
+	}
+
+	tips := strings.TrimSpace(raw.ServingTips)
+	if tips == "" {
+		tips = "Sajikan selagi hangat 3 kali sehari dengan suasana makan menyenangkan."
+	}
+
+	return MpasiRecipeDetail{
+		Title:              raw.Title,
+		TargetAgeRange:     targetAge,
+		Texture:            raw.Texture,
+		DailyBudgetIDR:     budget,
+		CaloriesKcal:       calories,
+		AnimalProteinGrams: protein,
+		Ingredients:        ings,
+		CookingSteps:       steps,
+		ServingTips:        tips,
+		KemenkesCitation:   finalCitation,
+	}
+}
 
 func calculateAgeInMonths(birthDate, now time.Time) int {
 	years := now.Year() - birthDate.Year()

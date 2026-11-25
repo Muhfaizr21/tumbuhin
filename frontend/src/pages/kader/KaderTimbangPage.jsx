@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Scale, Ruler, CircleDot, Calendar, CheckCircle2, AlertTriangle, Info, ChevronRight, Save, Baby, RefreshCw } from 'lucide-react'
-import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import { enqueueItem, isBrowserOffline, isOfflineError } from '../../lib/offlineQueue'
 
 export default function KaderTimbangPage({ user }) {
@@ -26,7 +26,7 @@ export default function KaderTimbangPage({ user }) {
   const loadBalitaData = async () => {
     try {
       setLoading(true)
-      const data = await fetchRoleDashboardData('/kader/balita')
+      const data = await kaderApi.getBalitaList()
       setBalitaList(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Gagal memuat balita:', err)
@@ -42,18 +42,46 @@ export default function KaderTimbangPage({ user }) {
   const selectedBalita = balitaList.find(b => b.id === selectedBalitaId)
 
   const calculateZScore = () => {
-    // Simulasi kalkulasi Z-Score (Logika backend akan mengembalikan hasil riil)
-    if (berat && tinggi) {
-      setResults({
-        bbu: -0.5,
-        tbu: -1.2,
-        bbtb: -0.8,
-        status: "Gizi Baik",
-        risk: 15,
-        riskLevel: "LOW",
-        adjustedTinggi: parseFloat(tinggi)
-      })
+    const w = parseFloat(berat)
+    const h = parseFloat(tinggi)
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return
+
+    const ageMonths = Number(selectedBalita?.usia_bulan) || parseInt(selectedBalita?.usia, 10) || 12
+    const posLower = (posisi || '').toLowerCase()
+    let adjustedTinggi = h
+    if (ageMonths < 24 && posLower === 'berdiri') {
+      adjustedTinggi = h + 0.7
+    } else if (ageMonths >= 24 && posLower === 'terlentang') {
+      adjustedTinggi = h - 0.7
     }
+
+    const expectedWeight = 3.3 + ageMonths * 0.48
+    const expectedHeight = 50 + ageMonths * 1.45
+    const bbu = Number(((w - expectedWeight) / 1.15).toFixed(2))
+    const tbu = Number(((adjustedTinggi - expectedHeight) / 2.6).toFixed(2))
+    const expectedWfh = Math.max(2.5, (adjustedTinggi - 45) * 0.26 + 2.4)
+    const bbtb = Number(((w - expectedWfh) / 1.1).toFixed(2))
+
+    let status = 'Gizi Baik'
+    if (tbu < -3) status = 'Sangat Pendek (Severely Stunted)'
+    else if (bbtb < -3) status = 'Gizi Buruk (Severely Wasted)'
+    else if (tbu < -2) status = 'Pendek (Stunted)'
+    else if (bbtb < -2) status = 'Gizi Kurang (Wasted)'
+    else if (bbu < -2) status = 'Berat Badan Kurang'
+
+    const minZ = Math.min(bbu, tbu, bbtb)
+    const risk = Math.max(8, Math.min(95, Math.round(25 - minZ * 22)))
+    const riskLevel = risk >= 70 ? 'HIGH' : risk >= 40 ? 'MEDIUM' : 'LOW'
+
+    setResults({
+      bbu,
+      tbu,
+      bbtb,
+      status,
+      risk,
+      riskLevel,
+      adjustedTinggi: Number(adjustedTinggi.toFixed(1)),
+    })
   }
 
   const handleSimpanTimbang = async () => {
@@ -85,7 +113,7 @@ export default function KaderTimbangPage({ user }) {
         return
       }
 
-      const result = await postRoleData('/kader/timbang', payload)
+      const result = await kaderApi.postTimbang(payload)
       setResults(result)
       alert('Data penimbangan berhasil disimpan ke database!')
     } catch (err) {

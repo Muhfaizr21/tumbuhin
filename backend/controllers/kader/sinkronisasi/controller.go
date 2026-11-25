@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"tumbuhin-backend/middlewares"
 	kaderSyncSvc "tumbuhin-backend/services/kader/sinkronisasi"
 	"tumbuhin-backend/views"
 
@@ -20,8 +21,8 @@ func NewController(service kaderSyncSvc.Service) *Controller {
 
 // HandleBatchSync processes POST /api/v1/kader/sinkronisasi/batch
 func (ctrl *Controller) HandleBatchSync(c *gin.Context) {
-	kaderID, ok := currentUserID(c)
-	if !ok {
+	kaderID := middlewares.UserIDFromContext(c)
+	if kaderID <= 0 {
 		views.Unauthorized(c, "Identitas kader tidak ditemukan pada token")
 		return
 	}
@@ -52,8 +53,8 @@ func (ctrl *Controller) HandleBatchSync(c *gin.Context) {
 
 // HandleSyncStatus processes GET /api/v1/kader/sinkronisasi/status
 func (ctrl *Controller) HandleSyncStatus(c *gin.Context) {
-	kaderID, ok := currentUserID(c)
-	if !ok {
+	kaderID := middlewares.UserIDFromContext(c)
+	if kaderID <= 0 {
 		views.Unauthorized(c, "Identitas kader tidak ditemukan pada token")
 		return
 	}
@@ -72,22 +73,4 @@ func (ctrl *Controller) HandleSyncStatus(c *gin.Context) {
 	}
 
 	views.Success(c, http.StatusOK, "Status sinkronisasi berhasil dimuat", result)
-}
-
-func currentUserID(c *gin.Context) (int64, bool) {
-	value, exists := c.Get("user_id")
-	if !exists {
-		return 0, false
-	}
-
-	switch typed := value.(type) {
-	case int64:
-		return typed, typed > 0
-	case int:
-		return int64(typed), typed > 0
-	case float64:
-		return int64(typed), typed > 0
-	default:
-		return 0, false
-	}
 }

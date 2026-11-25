@@ -10,7 +10,7 @@ import {
   Save,
   Trash2
 } from 'lucide-react'
-import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import { recognizeKmsImage } from '../../lib/kmsOcr'
 
 export default function KaderOCRPage() {
@@ -26,7 +26,7 @@ export default function KaderOCRPage() {
   useEffect(() => {
     const loadBalita = async () => {
       try {
-        const data = await fetchRoleDashboardData('/kader/balita')
+        const data = await kaderApi.getBalitaList()
         setBalitaList(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error('Gagal memuat balita:', err)
@@ -78,7 +78,7 @@ export default function KaderOCRPage() {
     try {
       // Kirim setiap baris pengukuran ke API timbang
       for (const row of data) {
-        await postRoleData('/kader/timbang', {
+        await kaderApi.postTimbang({
             balitaId: row.balitaId,
             tanggal: row.tanggal || new Date().toISOString().split('T')[0],
             berat: parseFloat(row.berat),

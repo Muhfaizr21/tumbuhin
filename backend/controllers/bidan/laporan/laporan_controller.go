@@ -23,15 +23,6 @@ func NewController(service laporan.Service) *Controller {
 	return &Controller{service: service}
 }
 
-func villageFromClaims(c *gin.Context) string {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && strings.TrimSpace(claims.VillageName) != "" {
-			return claims.VillageName
-		}
-	}
-	return "Desa Sukamaju"
-}
-
 // HandleExport handles GET /api/v1/bidan/export
 // Query params:
 // - format: xlsx, pdf, csv, or json (preview)
@@ -39,7 +30,7 @@ func villageFromClaims(c *gin.Context) string {
 // - period_year: e.g. 2026
 // - posyandu_id: optional UUID
 func (ctrl *Controller) HandleExport(c *gin.Context) {
-	village := villageFromClaims(c)
+	village := middlewares.VillageFromContext(c, "Desa Sukamaju")
 	format := strings.ToLower(strings.TrimSpace(c.DefaultQuery("format", "xlsx")))
 	month, _ := strconv.Atoi(c.DefaultQuery("period_month", "0"))
 	year, _ := strconv.Atoi(c.DefaultQuery("period_year", "0"))

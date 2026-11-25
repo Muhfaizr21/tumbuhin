@@ -22,14 +22,7 @@ func NewController(service bidanDashService.Service) *Controller {
 
 // HandleGetOverview processes GET /api/v1/bidan/dashboard
 func (ctrl *Controller) HandleGetOverview(c *gin.Context) {
-	villageName := "Desa Sukamaju"
-
-	// Dynamic village extraction from authenticated claims
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && claims.VillageName != "" {
-			villageName = claims.VillageName
-		}
-	}
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 
 	data, err := ctrl.service.GetOverview(c.Request.Context(), villageName)
 	if err != nil {

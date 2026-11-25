@@ -101,3 +101,58 @@ func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
 		c.Abort()
 	}
 }
+
+// ClaimsFromContext returns the authenticated JWTClaims from Gin context if available.
+func ClaimsFromContext(c *gin.Context) *JWTClaims {
+	if c == nil {
+		return nil
+	}
+	if claimsVal, exists := c.Get("user_claims"); exists {
+		if claims, ok := claimsVal.(*JWTClaims); ok && claims != nil {
+			return claims
+		}
+	}
+	return nil
+}
+
+// VillageFromContext extracts the authenticated user's village_name or returns fallback.
+func VillageFromContext(c *gin.Context, fallback string) string {
+	if claims := ClaimsFromContext(c); claims != nil && strings.TrimSpace(claims.VillageName) != "" {
+		return strings.TrimSpace(claims.VillageName)
+	}
+	return fallback
+}
+
+// PosyanduFromContext extracts the authenticated user's posyandu_name or returns fallback.
+func PosyanduFromContext(c *gin.Context, fallback string) string {
+	if claims := ClaimsFromContext(c); claims != nil && strings.TrimSpace(claims.PosyanduName) != "" {
+		return strings.TrimSpace(claims.PosyanduName)
+	}
+	return fallback
+}
+
+// UserIDFromContext extracts the authenticated user's numeric ID.
+func UserIDFromContext(c *gin.Context) int64 {
+	if claims := ClaimsFromContext(c); claims != nil && claims.UserID > 0 {
+		return claims.UserID
+	}
+	if value, exists := c.Get("user_id"); exists {
+		switch typed := value.(type) {
+		case int64:
+			return typed
+		case int:
+			return int64(typed)
+		case float64:
+			return int64(typed)
+		}
+	}
+	return 0
+}
+
+// UserNameFromContext extracts the authenticated user's full name or returns fallback.
+func UserNameFromContext(c *gin.Context, fallback string) string {
+	if claims := ClaimsFromContext(c); claims != nil && strings.TrimSpace(claims.FullName) != "" {
+		return strings.TrimSpace(claims.FullName)
+	}
+	return fallback
+}

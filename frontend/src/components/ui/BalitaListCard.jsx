@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 
 export default function BalitaListCard({
   onSelectBalita,
@@ -14,7 +14,7 @@ export default function BalitaListCard({
     async function loadBalita() {
       try {
         setLoading(true)
-        const data = await fetchRoleDashboardData('/kader/balita')
+        const data = await kaderApi.getBalitaList()
         if (Array.isArray(data)) {
           setBalitaList(data)
         }

@@ -58,6 +58,7 @@ const ORTU_MENUS = [
 export default function OrtuDashboard({
   user,
   magicToken,
+  tts,
   onLogout,
   onSwitchRole,
 }) {
@@ -112,11 +113,31 @@ export default function OrtuDashboard({
   }
 
   const handleSpeakNow = () => {
+    const text = getContextualSpeechText()
+    if (tts?.speak) {
+      tts.speak(text)
+      return
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel()
-      const utter = new SpeechSynthesisUtterance(getContextualSpeechText())
+      const utter = new SpeechSynthesisUtterance(text)
       utter.lang = 'id-ID'
       window.speechSynthesis.speak(utter)
+    }
+  }
+
+  const handleSearchChange = (q) => {
+    setSearchQuery(q)
+    const lower = (q || '').toLowerCase()
+    if (!lower) return
+    if (lower.includes('kurva') || lower.includes('kms') || lower.includes('grafik') || lower.includes('berat') || lower.includes('tinggi')) {
+      setActiveTab('kurva')
+    } else if (lower.includes('resep') || lower.includes('mpasi') || lower.includes('makan') || lower.includes('protein')) {
+      setActiveTab('resep')
+    } else if (lower.includes('bidan') || lower.includes('jadwal') || lower.includes('pesan') || lower.includes('posyandu')) {
+      setActiveTab('pesan')
+    } else if (lower.includes('ringkasan') || lower.includes('status')) {
+      setActiveTab('ringkasan')
     }
   }
 
@@ -257,7 +278,7 @@ export default function OrtuDashboard({
             currentMenu.shortLabel || currentMenu.label,
           ]}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Cari panduan gizi, bahan MPASI, atau jadwal Posyandu..."
           greenBadgeText={
             childData

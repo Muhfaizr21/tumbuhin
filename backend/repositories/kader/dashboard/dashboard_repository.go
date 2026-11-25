@@ -47,7 +47,7 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetSummary(_ context.Context, posyanduName string) (*SummaryData, error) {
+func (r *repository) GetSummary(ctx context.Context, posyanduName string) (*SummaryData, error) {
 	if posyanduName == "" {
 		posyanduName = "Posyandu Melati 04"
 	}
@@ -58,7 +58,9 @@ func (r *repository) GetSummary(_ context.Context, posyanduName string) (*Summar
 		return summary, nil
 	}
 
-	ctx := context.Background()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	// Total balita aktif
 	_ = r.db.QueryRow(ctx,

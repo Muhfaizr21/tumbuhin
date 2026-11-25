@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * Custom Hook for Bahasa Indonesia Text-to-Speech (PRD FR-16 Accessibility)
+ * Custom Hook for Bahasa Indonesia Text-to-Speech (Web Speech API Accessibility)
  */
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false)

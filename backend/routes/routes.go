@@ -15,7 +15,6 @@ import (
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
-	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
 	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
@@ -38,7 +37,6 @@ import (
 // RouteDependencies bundles all role-based controllers for clean dependency injection
 type RouteDependencies struct {
 	HealthCtrl             *controllers.HealthController
-	UserCtrl               *controllers.UserController
 	AuthLoginCtrl          *authLoginCtrl.Controller
 	AuthRegisterCtrl       *authRegisterCtrl.Controller
 	KaderDashCtrl          *kaderDashCtrl.Controller
@@ -49,7 +47,6 @@ type RouteDependencies struct {
 	BidanDashCtrl          *bidanDashCtrl.Controller
 	BidanGISCtrl           *bidanGISCtrl.Controller
 	BidanPrioritasCtrl     *bidanPrioritasCtrl.Controller
-	BidanIntervensiCtrl    *bidanIntervensiCtrl.Controller
 	BidanInterventionsCtrl *bidanInterventionsCtrl.Controller
 	BidanPMTEvalCtrl       *bidanPMTEvalCtrl.Controller
 	BidanSupervisiCtrl     *bidanSupervisiCtrl.Controller
@@ -130,26 +127,23 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 			bidanGroup.POST("/priority-list", deps.BidanPrioritasCtrl.HandleCreatePriorityChild)
 			bidanGroup.PUT("/priority-list/:id", deps.BidanPrioritasCtrl.HandleUpdatePriorityChild)
 			bidanGroup.DELETE("/priority-list/:id", deps.BidanPrioritasCtrl.HandleDeletePriorityChild)
-			bidanGroup.GET("/intervensi", deps.BidanIntervensiCtrl.HandleGetInterventionList)
-			bidanGroup.POST("/intervensi", deps.BidanIntervensiCtrl.HandleCreateIntervention)
-			bidanGroup.PUT("/intervensi/:id", deps.BidanIntervensiCtrl.HandleUpdateIntervention)
-			bidanGroup.DELETE("/intervensi/:id", deps.BidanIntervensiCtrl.HandleDeleteIntervention)
-
-			// Batch 2: Home Visit (SOAP + PMT), fitur.md 2.4
+			// Home Visit (SOAP + PMT) unified endpoints
 			bidanGroup.GET("/interventions", deps.BidanInterventionsCtrl.HandleListHomeVisits)
 			bidanGroup.POST("/interventions", deps.BidanInterventionsCtrl.HandleCreateHomeVisit)
+			bidanGroup.PUT("/interventions/:id", deps.BidanInterventionsCtrl.HandleUpdateHomeVisit)
 			bidanGroup.PATCH("/interventions/:id/status", deps.BidanInterventionsCtrl.HandleUpdateHomeVisitStatus)
+			bidanGroup.DELETE("/interventions/:id", deps.BidanInterventionsCtrl.HandleDeleteHomeVisit)
 
-			// Batch 2: Evaluasi Program PMT 90 hari, fitur.md 2.5
+			// Evaluasi Program PMT 90 hari
 			bidanGroup.GET("/pmt-evaluations", deps.BidanPMTEvalCtrl.HandleListEvaluations)
 			bidanGroup.GET("/pmt-evaluations/:id", deps.BidanPMTEvalCtrl.HandleGetEvaluationDetail)
 			bidanGroup.PATCH("/pmt-evaluations/:id/compliance", deps.BidanPMTEvalCtrl.HandleUpdateCompliance)
 
-			// Batch 3: Supervisi Posyandu & Audit Data, fitur.md 2.6
+			// Supervisi Posyandu & Audit Data
 			bidanGroup.GET("/supervision", deps.BidanSupervisiCtrl.HandleGetSupervision)
 			bidanGroup.POST("/supervision/lock", deps.BidanSupervisiCtrl.HandleLockSupervision)
 
-			// Batch 3: Laporan & Ekspor e-PPGBM, fitur.md 2.7
+			// Laporan & Ekspor e-PPGBM
 			bidanGroup.GET("/export", deps.BidanLaporanCtrl.HandleExport)
 		}
 
@@ -207,16 +201,6 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		ortuGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleOrtu, models.RoleKader, models.RoleBidan, models.RoleAdmin))
 		{
 			ortuGroup.GET("/dashboard", deps.OrtuDashCtrl.HandleGetPortal)
-		}
-
-		// Legacy User CRUD Routes
-		users := v1.Group("/users")
-		{
-			users.GET("", deps.UserCtrl.GetAll)
-			users.GET("/:id", deps.UserCtrl.GetByID)
-			users.POST("", deps.UserCtrl.Create)
-			users.PUT("/:id", deps.UserCtrl.Update)
-			users.DELETE("/:id", deps.UserCtrl.Delete)
 		}
 	}
 

@@ -22,14 +22,7 @@ func NewController(service petagisService.Service) *Controller {
 
 // HandleGetGISClusters processes GET /api/v1/bidan/gis-clusters
 func (ctrl *Controller) HandleGetGISClusters(c *gin.Context) {
-	villageName := "Desa Sukamaju"
-
-	// Extract village_name dynamically from JWT claims
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && claims.VillageName != "" {
-			villageName = claims.VillageName
-		}
-	}
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
 
 	clusters, err := ctrl.service.GetGISClusters(c.Request.Context(), villageName)
 	if err != nil {

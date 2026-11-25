@@ -11,7 +11,7 @@ import {
   BookOpen,
   Info
 } from 'lucide-react'
-import { postRoleData, fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 
 // Helper kirim WA
 const sendWhatsApp = (balita, recipe) => {
@@ -70,8 +70,8 @@ export default function KaderNutriChefPage() {
       try {
         setLoading(true)
         const [data, foodRows] = await Promise.all([
-          fetchRoleDashboardData('/kader/balita'),
-          fetchRoleDashboardData('/kader/local-foods').catch(() => null),
+          kaderApi.getBalitaList(),
+          kaderApi.getLocalFoods().catch(() => null),
         ])
         if (Array.isArray(data)) {
           setBalitaList(data)
@@ -112,7 +112,7 @@ export default function KaderNutriChefPage() {
     setIsGenerating(true)
     
     try {
-        const result = await postRoleData('/kader/nutrichef/generate', {
+        const result = await kaderApi.generateRecipe({
             balitaId: selectedBalitaId,
             budget: budget,
             foods: selectedFoods

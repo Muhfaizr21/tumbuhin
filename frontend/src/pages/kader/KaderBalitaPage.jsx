@@ -19,9 +19,9 @@ import BalitaRegistrationForm from '../../components/ui/BalitaRegistrationForm'
 import BalitaDetailModal from '../../components/ui/BalitaDetailModal'
 import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
 import PaginationBar from '../../components/ui/PaginationBar'
-import { fetchRoleDashboardData, deleteRoleData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 
-export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
+export default function KaderBalitaPage({ user, onLogout, onNavigate, searchQuery = '' }) {
   const [balitaList, setBalitaList] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
@@ -39,7 +39,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     setLoading(true)
     setErrorMsg('')
     try {
-      const data = await fetchRoleDashboardData('/kader/balita')
+      const data = await kaderApi.getBalitaList()
       if (Array.isArray(data)) {
         setBalitaList(data)
       } else {
@@ -56,11 +56,13 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     loadBalitaData()
   }, [])
 
-  // Filter Logic (Sesuai fitur.md 1.2)
+  const effectiveSearch = (searchTerm || searchQuery || '').toLowerCase()
+
+  // Filter Logic
   const filteredList = balitaList.filter(b => {
-    const nameMatch = b.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || false
-    const parentMatch = b.nama_ibu?.toLowerCase().includes(searchTerm.toLowerCase()) || false
-    const matchesSearch = nameMatch || parentMatch
+    const nameMatch = b.nama?.toLowerCase().includes(effectiveSearch) || false
+    const parentMatch = b.nama_ibu?.toLowerCase().includes(effectiveSearch) || false
+    const matchesSearch = !effectiveSearch || nameMatch || parentMatch
     
     if (activeFilter === 'Semua') return matchesSearch
     if (activeFilter === 'RT 02') return matchesSearch && b.rt_rw?.includes('RT 02')
@@ -91,7 +93,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     if (!selectedBalita) return
     try {
       setLoading(true)
-      await deleteRoleData(`/kader/balita/${selectedBalita.id}`)
+      await kaderApi.deleteBalita(selectedBalita.id)
       setBalitaList(prev => prev.filter(b => b.id !== selectedBalita.id))
       setShowDeleteConfirm(false)
       setSelectedBalita(null)
@@ -112,6 +114,11 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate }) {
     statusGizi: balita.status_gizi,
     statusTimbang: balita.status_timbang,
     magicToken: balita.magic_token,
+    zScore: {
+      bbU: balita.zscore_wfa,
+      tbU: balita.zscore_hfa,
+      bbTb: balita.zscore_wfh,
+    },
   })
 
   const handleEditBalita = (balita) => {

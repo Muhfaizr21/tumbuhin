@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Save
 } from 'lucide-react'
-import { postRoleData, putRoleData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import { enqueueItem, isBrowserOffline, isOfflineError } from '../../lib/offlineQueue'
 
 export default function BalitaRegistrationForm({ onClose, onSuccess, initialBalita }) {
@@ -106,7 +106,7 @@ export default function BalitaRegistrationForm({ onClose, onSuccess, initialBali
       let result
       if (initialBalita?.id) {
         // Update existing
-        result = await putRoleData(`/kader/balita/${initialBalita.id}`, payload)
+        result = await kaderApi.updateBalita(initialBalita.id, payload)
       } else if (isBrowserOffline()) {
         const queued = await enqueueItem({
           type: 'balita',
@@ -117,7 +117,7 @@ export default function BalitaRegistrationForm({ onClose, onSuccess, initialBali
         result = { ...payload, nama: formData.nama, offline: true, clientId: queued.clientId }
       } else {
         // Create new
-        result = await postRoleData('/kader/balita', payload)
+        result = await kaderApi.createBalita(payload)
       }
 
       onSuccess(result)

@@ -18,7 +18,7 @@ import {
   Unlock,
   X,
 } from 'lucide-react'
-import { fetchRoleDashboardData, postRoleData } from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 import BidanNavigationShell from './components/BidanNavigationShell'
 import { BIDAN_MENUS } from './bidanMenuItems'
 
@@ -64,7 +64,7 @@ export default function SupervisiPage({ user, onLogout, onSwitchRole }) {
         params.set('posyandu_id', selectedPosyanduId)
       }
 
-      const res = await fetchRoleDashboardData(`/bidan/supervision?${params.toString()}`)
+      const res = await bidanApi.getSupervisionOverview(params.toString())
       setOverview(res)
     } catch (err) {
       setLoadError(err.message || 'Gagal memuat data supervisi posyandu.')
@@ -114,7 +114,7 @@ export default function SupervisiPage({ user, onLogout, onSwitchRole }) {
         audit_notes: auditNotes.trim(),
       }
 
-      await postRoleData('/bidan/supervision/lock', payload)
+      await bidanApi.togglePeriodLock(payload)
       setLockModalOpen(false)
       setNotice(
         isLockAction

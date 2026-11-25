@@ -24,24 +24,6 @@ func NewController(service svcPkg.Service) *Controller {
 	return &Controller{service: service}
 }
 
-func villageFromClaims(c *gin.Context) string {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && strings.TrimSpace(claims.VillageName) != "" {
-			return claims.VillageName
-		}
-	}
-	return "Desa Sukamaju"
-}
-
-func userIDFromClaims(c *gin.Context) int64 {
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok {
-			return claims.UserID
-		}
-	}
-	return 0
-}
-
 func respondValidationError(c *gin.Context, err error) bool {
 	var verr *svcPkg.ValidationError
 	if errors.As(err, &verr) {
@@ -67,7 +49,7 @@ func (ctrl *Controller) HandleListEvaluations(c *gin.Context) {
 		Offset:   offset,
 	}
 
-	result, err := ctrl.service.ListEvaluations(c.Request.Context(), villageFromClaims(c), query)
+	result, err := ctrl.service.ListEvaluations(c.Request.Context(), middlewares.VillageFromContext(c, "Desa Sukamaju"), query)
 	if err != nil {
 		if respondValidationError(c, err) {
 			return
@@ -88,7 +70,7 @@ func (ctrl *Controller) HandleGetEvaluationDetail(c *gin.Context) {
 		return
 	}
 
-	detail, err := ctrl.service.GetDetail(c.Request.Context(), villageFromClaims(c), childID)
+	detail, err := ctrl.service.GetDetail(c.Request.Context(), middlewares.VillageFromContext(c, "Desa Sukamaju"), childID)
 	if err != nil {
 		if respondValidationError(c, err) {
 			return
@@ -120,10 +102,10 @@ func (ctrl *Controller) HandleUpdateCompliance(c *gin.Context) {
 
 	updated, err := ctrl.service.UpdateCompliance(
 		c.Request.Context(),
-		villageFromClaims(c),
+		middlewares.VillageFromContext(c, "Desa Sukamaju"),
 		childID,
 		input,
-		userIDFromClaims(c),
+		middlewares.UserIDFromContext(c),
 	)
 	if err != nil {
 		if respondValidationError(c, err) {

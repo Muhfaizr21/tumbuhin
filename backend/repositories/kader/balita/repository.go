@@ -191,6 +191,22 @@ func generateMagicToken() string {
 	return "magic-" + hex.EncodeToString(buf)
 }
 
+func parseRTRW(raw string) (string, string) {
+	rtCode := "01"
+	rwCode := "04"
+	if parts := strings.Split(raw, "/"); len(parts) == 2 {
+		rtClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[0])), "RT"))
+		rwClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[1])), "RW"))
+		if rtClean != "" {
+			rtCode = rtClean
+		}
+		if rwClean != "" {
+			rwCode = rwClean
+		}
+	}
+	return rtCode, rwCode
+}
+
 func (r *repository) CreateChild(ctx context.Context, input ChildInput) (string, error) {
 	posyanduName := strings.TrimSpace(input.PosyanduName)
 	if posyanduName == "" {
@@ -201,18 +217,7 @@ func (r *repository) CreateChild(ctx context.Context, input ChildInput) (string,
 		villageName = "Desa Sukamaju"
 	}
 
-	rtCode := "01"
-	rwCode := "04"
-	if parts := strings.Split(input.RTRw, "/"); len(parts) == 2 {
-		rtClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[0])), "RT"))
-		rwClean := strings.TrimSpace(strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(parts[1])), "RW"))
-		if rtClean != "" {
-			rtCode = rtClean
-		}
-		if rwClean != "" {
-			rwCode = rwClean
-		}
-	}
+	rtCode, rwCode := parseRTRW(input.RTRw)
 
 	query := `
 	INSERT INTO children (
@@ -249,18 +254,20 @@ func (r *repository) CreateChild(ctx context.Context, input ChildInput) (string,
 }
 
 func (r *repository) UpdateChild(ctx context.Context, id string, input ChildInput) error {
+	rtCode, rwCode := parseRTRW(input.RTRw)
 	query := `
 	UPDATE children SET 
 		full_name=$1, gender=$2, birth_date=$3, birth_weight=$4, birth_height=$5, 
 		parent_name=$6, parent_father_name=$7, parent_phone=$8, notes=$9,
-		latitude = CASE WHEN $11 <> 0 THEN $11 ELSE latitude END,
-		longitude = CASE WHEN $12 <> 0 THEN $12 ELSE longitude END
+		rt_code=$11, rw_code=$12,
+		latitude = CASE WHEN $13 <> 0 THEN $13 ELSE latitude END,
+		longitude = CASE WHEN $14 <> 0 THEN $14 ELSE longitude END
 	WHERE id=$10;
 	`
 	_, err := r.db.Exec(ctx, query,
 		input.Nama, input.JenisKelamin, input.TanggalLahir, input.BeratLahir, input.PanjangLahir,
 		input.NamaIbu, input.NamaAyah, input.NoWa, input.Alergi, id,
-		input.Latitude, input.Longitude,
+		rtCode, rwCode, input.Latitude, input.Longitude,
 	)
 	return err
 }

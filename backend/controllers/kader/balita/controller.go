@@ -1,7 +1,6 @@
 package balita
 
 import (
-	"fmt"
 	"net/http"
 	"tumbuhin-backend/middlewares"
 	kaderBalitaRepo "tumbuhin-backend/repositories/kader/balita"
@@ -20,18 +19,13 @@ func NewController(service kaderBalitaSvc.Service) *Controller {
 }
 
 func (ctrl *Controller) HandleGetChildren(c *gin.Context) {
-	// Village Name bisa diambil dari user context jika sudah ada middleware-nya, 
-    // untuk sekarang default "Desa Sukamaju"
-	villageName := "Desa Sukamaju"
-	
+	villageName := middlewares.VillageFromContext(c, "Desa Sukamaju")
+
 	data, err := ctrl.service.GetChildren(c.Request.Context(), villageName)
 	if err != nil {
 		views.InternalServerError(c, "Gagal memuat data balita")
 		return
 	}
-    
-    // Log the data length
-    fmt.Printf("[KADER CTRL] Returning %d children\n", len(data))
 
 	views.Success(c, http.StatusOK, "Data balita berhasil dimuat", data)
 }
@@ -43,16 +37,11 @@ func (ctrl *Controller) HandleCreateChild(c *gin.Context) {
 		return
 	}
 
-	// Bind Posyandu & Village from RBAC JWT Claims configured by Super Admin
-	if claimsVal, exists := c.Get("user_claims"); exists {
-		if claims, ok := claimsVal.(*middlewares.JWTClaims); ok && claims != nil {
-			if input.PosyanduName == "" && claims.PosyanduName != "" {
-				input.PosyanduName = claims.PosyanduName
-			}
-			if input.VillageName == "" && claims.VillageName != "" {
-				input.VillageName = claims.VillageName
-			}
-		}
+	if input.PosyanduName == "" {
+		input.PosyanduName = middlewares.PosyanduFromContext(c, "Posyandu Melati 04")
+	}
+	if input.VillageName == "" {
+		input.VillageName = middlewares.VillageFromContext(c, "Desa Sukamaju")
 	}
 
 	data, err := ctrl.service.CreateChild(c.Request.Context(), input)

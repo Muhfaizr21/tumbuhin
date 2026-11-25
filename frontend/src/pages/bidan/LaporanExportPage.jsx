@@ -17,7 +17,7 @@ import {
   Stethoscope,
   X,
 } from 'lucide-react'
-import { downloadRoleFile, fetchRoleDashboardData } from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 import BidanNavigationShell from './components/BidanNavigationShell'
 import { BIDAN_MENUS } from './bidanMenuItems'
 
@@ -35,6 +35,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
   const [selectedPosyanduId, setSelectedPosyanduId] = useState('')
 
   const [previewData, setPreviewData] = useState(null)
+  const [posyanduOptions, setPosyanduOptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [downloadingFormat, setDownloadingFormat] = useState('')
@@ -49,6 +50,20 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  useEffect(() => {
+    let active = true
+    bidanApi.getGisClusters()
+      .then((list) => {
+        if (active && Array.isArray(list)) {
+          setPosyanduOptions(list)
+        }
+      })
+      .catch(() => { })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const loadPreview = useCallback(async () => {
     setLoading(true)
     setLoadError('')
@@ -61,7 +76,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
         params.set('posyandu_id', selectedPosyanduId)
       }
 
-      const res = await fetchRoleDashboardData(`/bidan/export?${params.toString()}`)
+      const res = await bidanApi.previewExport(params.toString())
       setPreviewData(res)
       setCurrentPage(1)
     } catch (err) {
@@ -94,7 +109,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
 
       const ext = format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx'
       const fallback = `ePPGBM_Surveilans_${selectedYear}_${selectedMonth}.${ext}`
-      const savedName = await downloadRoleFile(`/bidan/export?${params.toString()}`, fallback)
+      const savedName = await bidanApi.downloadExport(params.toString(), fallback)
       setNotice(`Berkas ${savedName} berhasil diunduh.`)
     } catch (err) {
       setNotice(`Gagal mengunduh berkas ${format.toUpperCase()}: ${err.message}`)
@@ -362,11 +377,11 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
                   className="px-3 py-2 rounded-xl border border-[#e4e4eb] bg-white text-[13px] font-medium text-[#070709] focus:outline-none focus:border-[#2597d0] cursor-pointer min-w-[190px]"
                 >
                   <option value="">Semua Posyandu Desa</option>
-                  <option value="melati-1">Posyandu Melati 01 (RW 01)</option>
-                  <option value="melati-2">Posyandu Melati 02 (RW 02)</option>
-                  <option value="melati-3">Posyandu Melati 03 (RW 03)</option>
-                  <option value="melati-4">Posyandu Melati 04 (RW 04)</option>
-                  <option value="mawar-5">Posyandu Mawar 05 (RW 05)</option>
+                  {posyanduOptions.map((pos) => (
+                    <option key={pos.posyandu_id} value={pos.posyandu_id}>
+                      {pos.posyandu_name} ({pos.rw_code})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -481,11 +496,10 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
                     setStatusFilter(tab.id)
                     setCurrentPage(1)
                   }}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11.5px] font-medium border transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-[#070709] text-white border-[#070709]'
-                      : 'bg-white text-[#60606c] border-[#e4e4eb] hover:border-[#2597d0]'
-                  }`}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11.5px] font-medium border transition-colors cursor-pointer ${active
+                    ? 'bg-[#070709] text-white border-[#070709]'
+                    : 'bg-white text-[#60606c] border-[#e4e4eb] hover:border-[#2597d0]'
+                    }`}
                 >
                   <span>{tab.label}</span>
                 </button>
@@ -570,8 +584,8 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
                               r.zscore_hfa <= -3.0
                                 ? 'text-rose-600'
                                 : r.zscore_hfa <= -2.0
-                                ? 'text-amber-600'
-                                : 'text-slate-700'
+                                  ? 'text-amber-600'
+                                  : 'text-slate-700'
                             }
                           >
                             {r.zscore_hfa ? `${r.zscore_hfa.toFixed(1)} SD` : '-'}
@@ -580,13 +594,12 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
 
                         <td className="py-3 px-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                              isStunted
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : isWasted
+                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${isStunted
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : isWasted
                                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            }`}
+                              }`}
                           >
                             {(r.nutrition_status || 'normal').replace('_', ' ')}
                           </span>

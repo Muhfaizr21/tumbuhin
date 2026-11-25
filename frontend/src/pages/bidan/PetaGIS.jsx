@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { fetchRoleDashboardData } from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 
 const FALLBACK_CLUSTERS = [
   {
@@ -160,7 +160,7 @@ export default function PetaGIS({ user, embedded = false }) {
     setLoading(true)
     setErrorMessage('')
     try {
-      const data = await fetchRoleDashboardData('/bidan/gis-clusters')
+      const data = await bidanApi.getGisClusters()
       if (Array.isArray(data) && data.length > 0) {
         setClusters(data)
         setDataSource('Basis Data Klinis PostgreSQL')

@@ -60,6 +60,8 @@ type CreateRequest struct {
 	SupplementGiven string
 	ClinicalNotes   string
 	FollowUpDate    string
+	WeightKg        *float64
+	HeightCm        *float64
 }
 
 // ListFilter scopes a home visit listing inside one village.
@@ -81,6 +83,8 @@ type Repository interface {
 	StatusCounts(ctx context.Context, villageName string) (map[string]int, error)
 	GetHomeVisitByID(ctx context.Context, villageName, id string) (*Record, error)
 	UpdateStatus(ctx context.Context, villageName, id, status string) (*Record, error)
+	UpdateHomeVisit(ctx context.Context, villageName, id string, req CreateRequest) (*Record, error)
+	DeleteHomeVisit(ctx context.Context, villageName, id string) error
 }
 
 type repository struct {
@@ -233,6 +237,29 @@ func (r *repository) CreateHomeVisit(ctx context.Context, villageName string, bi
 		return nil, fmt.Errorf("menyimpan home visit: %w", err)
 	}
 
+	// If weight and height are provided during the home visit, record them in measurements.
+	if req.WeightKg != nil && req.HeightCm != nil && *req.WeightKg > 0 && *req.HeightCm > 0 {
+		_, _ = r.db.Exec(ctx, `
+			INSERT INTO measurements (
+				child_id, age_months, measured_at, weight_kg, height_cm,
+				measurement_pos, nutrition_status
+			)
+			SELECT
+				c.id,
+				GREATEST(0, (EXTRACT(YEAR FROM AGE($2::date, c.birth_date))*12 + EXTRACT(MONTH FROM AGE($2::date, c.birth_date)))::int),
+				$2::date,
+				$3,
+				$4,
+				'berdiri',
+				COALESCE(
+					(SELECT mm.nutrition_status FROM measurements mm WHERE mm.child_id = c.id ORDER BY mm.measured_at DESC LIMIT 1),
+					'normal'
+				)
+			FROM children c
+			WHERE c.id = $1::uuid
+		`, req.ChildID, visitDate, *req.WeightKg, *req.HeightCm)
+	}
+
 	return r.GetHomeVisitByID(ctx, villageName, id)
 }
 
@@ -359,4 +386,54 @@ func (r *repository) UpdateStatus(ctx context.Context, villageName, id, status s
 	}
 
 	return r.GetHomeVisitByID(ctx, villageName, updatedID)
+}
+
+func (r *repository) UpdateHomeVisit(ctx context.Context, villageName, id string, req CreateRequest) (*Record, error) {
+	var updatedID string
+	err := r.db.QueryRow(ctx, `
+		UPDATE interventions i
+		SET
+			visit_date       = COALESCE(NULLIF($3, '')::date, i.visit_date),
+			visit_status     = COALESCE(NULLIF($4, ''), i.visit_status),
+			soap_subjective  = $5,
+			soap_objective   = $6,
+			soap_assessment  = $7,
+			soap_plan        = $8,
+			pmt_given        = $9,
+			pmt_type         = $10,
+			supplement_given = $11,
+			clinical_notes   = $12,
+			follow_up_date   = NULLIF($13, '')::date,
+			updated_at       = NOW()
+		FROM children c
+		WHERE c.id = i.child_id AND i.id::text = $1 AND c.village_name = $2
+		RETURNING i.id::text;
+	`,
+		id, villageName, req.VisitDate, req.FollowUpStatus,
+		req.SOAPSubjective, req.SOAPObjective, req.SOAPAssessment, req.SOAPPlan,
+		req.PMTGiven, req.PMTType, req.SupplementGiven, req.ClinicalNotes, req.FollowUpDate,
+	).Scan(&updatedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("memperbarui kunjungan rumah: %w", err)
+	}
+
+	return r.GetHomeVisitByID(ctx, villageName, updatedID)
+}
+
+func (r *repository) DeleteHomeVisit(ctx context.Context, villageName, id string) error {
+	tag, err := r.db.Exec(ctx, `
+		DELETE FROM interventions i
+		USING children c
+		WHERE c.id = i.child_id AND i.id::text = $1 AND c.village_name = $2;
+	`, id, villageName)
+	if err != nil {
+		return fmt.Errorf("menghapus kunjungan rumah: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

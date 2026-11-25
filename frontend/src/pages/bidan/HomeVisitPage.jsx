@@ -6,13 +6,15 @@ import {
   ClipboardList,
   HeartPulse,
   Menu,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
   Stethoscope,
+  Trash2,
   X,
 } from 'lucide-react'
-import { fetchRoleDashboardData, patchRoleData, postRoleData } from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 import BidanNavigationShell from './components/BidanNavigationShell'
 import { BIDAN_MENUS } from './bidanMenuItems'
 
@@ -114,6 +116,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
   const [saving, setSaving] = useState(false)
 
   const [detail, setDetail] = useState(null)
+  const [editingId, setEditingId] = useState('')
   const [statusBusyId, setStatusBusyId] = useState('')
   const formFirstFieldRef = useRef(null)
 
@@ -139,7 +142,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
     setLoading(true)
     setLoadError('')
     try {
-      const data = await fetchRoleDashboardData(`/bidan/interventions?${buildQuery(filters, page)}`)
+      const data = await bidanApi.listHomeVisits(buildQuery(filters, page))
       setItems(Array.isArray(data?.items) ? data.items : [])
       setTotal(Number(data?.total) || 0)
       setStatusCounts(data?.status_counts || {})
@@ -164,7 +167,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
 
   useEffect(() => {
     let cancelled = false
-    fetchRoleDashboardData('/bidan/priority-list')
+    bidanApi.getPriorityList()
       .then((data) => {
         if (!cancelled) setChildren(Array.isArray(data) ? data : [])
       })
@@ -205,10 +208,51 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
   }, [notice])
 
   const openCreateForm = () => {
+    setEditingId('')
     setForm({ ...EMPTY_FORM, visit_date: todayISO() })
     setFormErrors({})
     setFormServerError('')
     setIsFormOpen(true)
+  }
+
+  const openEditForm = (record) => {
+    setEditingId(record.id)
+    setForm({
+      child_id: record.child_id || '',
+      visit_date: record.visit_date || todayISO(),
+      follow_up_status: record.follow_up_status || 'SCHEDULED',
+      soap_subjective: record.soap_subjective || '',
+      soap_objective: record.soap_objective || '',
+      soap_assessment: record.soap_assessment || '',
+      soap_plan: record.soap_plan || '',
+      pmt_given: Boolean(record.pmt_given),
+      pmt_type: record.pmt_type || '',
+      supplement_given: record.supplement_given || '',
+      clinical_notes: record.clinical_notes || '',
+      follow_up_date: record.follow_up_date || '',
+      weight_kg: record.weight_kg != null ? String(record.weight_kg) : '',
+      height_cm: record.height_cm != null ? String(record.height_cm) : '',
+    })
+    setFormErrors({})
+    setFormServerError('')
+    setDetail(null)
+    setIsFormOpen(true)
+  }
+
+  const handleDeleteVisit = async (record) => {
+    if (!record?.id) return
+    if (!window.confirm(`Hapus catatan kunjungan rumah ${record.child_name || ''}?`)) return
+    setStatusBusyId(record.id)
+    try {
+      await bidanApi.deleteHomeVisit(record.id)
+      setDetail(null)
+      setNotice(`Catatan kunjungan ${record.child_name || ''} berhasil dihapus.`)
+      await loadVisits()
+    } catch (err) {
+      setLoadError(err.message || 'Gagal menghapus kunjungan rumah.')
+    } finally {
+      setStatusBusyId('')
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -217,7 +261,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
     if (!nextStatus || nextStatus === record.follow_up_status) return
     setStatusBusyId(record.id)
     try {
-      await patchRoleData(`/bidan/interventions/${record.id}/status`, { follow_up_status: nextStatus })
+      await bidanApi.updateHomeVisitStatus(record.id, nextStatus)
       setNotice(`Status kunjungan ${record.child_name} diubah menjadi ${STATUS_META[nextStatus]?.label || nextStatus}.`)
       await loadVisits()
     } catch (err) {
@@ -241,10 +285,16 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
         weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
         height_cm: form.height_cm === '' ? null : Number(form.height_cm),
       }
-      await postRoleData('/bidan/interventions', payload)
+      if (editingId) {
+        await bidanApi.updateHomeVisit(editingId, payload)
+        setNotice('Catatan kunjungan rumah berhasil diperbarui.')
+      } else {
+        await bidanApi.createHomeVisit(payload)
+        setNotice('Catatan kunjungan rumah berhasil disimpan.')
+        setPage(1)
+      }
+      setEditingId('')
       setIsFormOpen(false)
-      setNotice('Catatan kunjungan rumah berhasil disimpan.')
-      setPage(1)
       await loadVisits()
     } catch (err) {
       setFormServerError(err.message || 'Gagal menyimpan kunjungan rumah.')
@@ -1054,7 +1104,25 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
               </div>
             </div>
 
-            <div className="px-5 sm:px-6 py-4 border-t border-[#f0f0f4] flex justify-end">
+            <div className="px-5 sm:px-6 py-4 border-t border-[#f0f0f4] flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openEditForm(detail)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full border border-[#e4e4eb] text-[12.5px] font-semibold text-[#0d5f8a] hover:border-[#2597d0] cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Edit SOAP</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteVisit(detail)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full border border-rose-200 bg-rose-50 text-[12.5px] font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Hapus</span>
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={() => setDetail(null)}

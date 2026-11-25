@@ -15,7 +15,6 @@ import (
 	authLoginCtrl "tumbuhin-backend/controllers/auth/login"
 	authRegisterCtrl "tumbuhin-backend/controllers/auth/register"
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
-	bidanIntervensiCtrl "tumbuhin-backend/controllers/bidan/intervensi"
 	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
@@ -29,7 +28,6 @@ import (
 	kaderTimbangCtrl "tumbuhin-backend/controllers/kader/timbang"
 	ortuDashCtrl "tumbuhin-backend/controllers/ortu/dashboard"
 	"tumbuhin-backend/database"
-	"tumbuhin-backend/repositories"
 	adminDashRepo "tumbuhin-backend/repositories/admin/dashboard"
 	adminKnowledgeRepo "tumbuhin-backend/repositories/admin/knowledge"
 	adminPanganRepo "tumbuhin-backend/repositories/admin/pangan"
@@ -39,7 +37,6 @@ import (
 	adminWilayahRepo "tumbuhin-backend/repositories/admin/wilayah"
 	authRepo "tumbuhin-backend/repositories/auth"
 	bidanDashRepo "tumbuhin-backend/repositories/bidan/dashboard"
-	bidanIntervensiRepo "tumbuhin-backend/repositories/bidan/intervensi"
 	bidanInterventionsRepo "tumbuhin-backend/repositories/bidan/interventions"
 	bidanLaporanRepo "tumbuhin-backend/repositories/bidan/laporan"
 	bidanGISRepo "tumbuhin-backend/repositories/bidan/petagis"
@@ -53,7 +50,6 @@ import (
 	kaderTimbangRepo "tumbuhin-backend/repositories/kader/timbang"
 	ortuDashRepo "tumbuhin-backend/repositories/ortu/dashboard"
 	"tumbuhin-backend/routes"
-	"tumbuhin-backend/services"
 	adminDashService "tumbuhin-backend/services/admin/dashboard"
 	adminKnowledgeService "tumbuhin-backend/services/admin/knowledge"
 	adminPanganService "tumbuhin-backend/services/admin/pangan"
@@ -64,7 +60,6 @@ import (
 	authLoginService "tumbuhin-backend/services/auth/login"
 	authRegisterService "tumbuhin-backend/services/auth/register"
 	bidanDashService "tumbuhin-backend/services/bidan/dashboard"
-	bidanIntervensiService "tumbuhin-backend/services/bidan/intervensi"
 	bidanInterventionsService "tumbuhin-backend/services/bidan/interventions"
 	bidanLaporanService "tumbuhin-backend/services/bidan/laporan"
 	bidanGISService "tumbuhin-backend/services/bidan/petagis"
@@ -90,7 +85,6 @@ func main() {
 	}
 
 	// 3. Initialize Repositories (Data Layer)
-	userRepository := repositories.NewInMemoryUserRepository()
 	authRepository := authRepo.NewPostgresAuthRepository(cfg.DBPool)
 	kaderBalitaRepository := kaderBalitaRepo.NewRepository(cfg.DBPool)
 	kaderTimbangRepository := kaderTimbangRepo.NewRepository(cfg.DBPool)
@@ -99,7 +93,6 @@ func main() {
 	kaderDashRepository := kaderDashRepo.NewRepository(cfg.DBPool)
 	bidanDashRepository := bidanDashRepo.NewRepository(cfg.DBPool)
 	bidanGISRepository := bidanGISRepo.NewRepository(cfg.DBPool)
-	bidanIntervensiRepository := bidanIntervensiRepo.NewRepository(cfg.DBPool)
 	bidanInterventionsRepository := bidanInterventionsRepo.NewRepository(cfg.DBPool)
 	bidanPMTEvalRepository := bidanPMTEvalRepo.NewRepository(cfg.DBPool)
 	bidanPrioritasRepository := bidanPrioritasRepo.NewRepository(cfg.DBPool)
@@ -115,7 +108,6 @@ func main() {
 	ortuDashRepository := ortuDashRepo.NewRepository(cfg.DBPool)
 
 	// 4. Initialize Services (Business Logic Layer)
-	userService := services.NewUserService(userRepository)
 	loginSvc := authLoginService.NewService(authRepository, cfg.JWTSecret)
 	registerSvc := authRegisterService.NewService(authRepository, cfg.JWTSecret)
 	kaderBalitaSvc := kaderBalitaService.NewService(kaderBalitaRepository)
@@ -125,7 +117,6 @@ func main() {
 	kaderDashSvc := kaderDashService.NewService(kaderDashRepository)
 	bidanDashSvc := bidanDashService.NewService(bidanDashRepository)
 	bidanGISSvc := bidanGISService.NewService(bidanGISRepository)
-	bidanIntervensiSvc := bidanIntervensiService.NewService(bidanIntervensiRepository)
 	bidanInterventionsSvc := bidanInterventionsService.NewService(bidanInterventionsRepository)
 	bidanPMTEvalSvc := bidanPMTEvalService.NewService(bidanPMTEvalRepository)
 	bidanPrioritasSvc := bidanPrioritasService.NewService(bidanPrioritasRepository)
@@ -143,7 +134,6 @@ func main() {
 	// 5. Initialize Controllers (Presentation / Handler Layer)
 	deps := routes.RouteDependencies{
 		HealthCtrl:             controllers.NewHealthController(),
-		UserCtrl:               controllers.NewUserController(userService),
 		AuthLoginCtrl:          authLoginCtrl.NewController(loginSvc),
 		AuthRegisterCtrl:       authRegisterCtrl.NewController(registerSvc),
 		KaderDashCtrl:          kaderDashCtrl.NewController(kaderDashSvc),
@@ -154,7 +144,6 @@ func main() {
 		BidanDashCtrl:          bidanDashCtrl.NewController(bidanDashSvc),
 		BidanGISCtrl:           bidanGISCtrl.NewController(bidanGISSvc),
 		BidanPrioritasCtrl:     bidanPrioritasCtrl.NewController(bidanPrioritasSvc),
-		BidanIntervensiCtrl:    bidanIntervensiCtrl.NewController(bidanIntervensiSvc),
 		BidanInterventionsCtrl: bidanInterventionsCtrl.NewController(bidanInterventionsSvc),
 		BidanPMTEvalCtrl:       bidanPMTEvalCtrl.NewController(bidanPMTEvalSvc),
 		BidanSupervisiCtrl:     bidanSupervisiCtrl.NewController(bidanSupervisiSvc),

@@ -55,6 +55,8 @@ type Service interface {
 	ListHomeVisits(ctx context.Context, villageName string, f interventions.ListFilter) (*ListResult, error)
 	CreateHomeVisit(ctx context.Context, villageName string, bidanID int64, in CreateInput) (*interventions.Record, error)
 	UpdateStatus(ctx context.Context, villageName, id string, in StatusInput) (*interventions.Record, error)
+	UpdateHomeVisit(ctx context.Context, villageName, id string, in CreateInput) (*interventions.Record, error)
+	DeleteHomeVisit(ctx context.Context, villageName, id string) error
 }
 
 type service struct {
@@ -226,7 +228,55 @@ func (s *service) CreateHomeVisit(ctx context.Context, villageName string, bidan
 		SupplementGiven: strings.TrimSpace(in.SupplementGiven),
 		ClinicalNotes:   strings.TrimSpace(in.ClinicalNotes),
 		FollowUpDate:    strings.TrimSpace(in.FollowUpDate),
+		WeightKg:        in.WeightKg,
+		HeightCm:        in.HeightCm,
 	})
+}
+
+func (s *service) UpdateHomeVisit(ctx context.Context, villageName, id string, in CreateInput) (*interventions.Record, error) {
+	id = strings.TrimSpace(id)
+	if id == "" || !isUUID(id) {
+		return nil, &ValidationError{Message: "Format ID kunjungan tidak valid."}
+	}
+
+	visitDate, err := time.Parse("2006-01-02", strings.TrimSpace(in.VisitDate))
+	if err != nil {
+		return nil, &ValidationError{Message: "Format tanggal kunjungan harus YYYY-MM-DD."}
+	}
+	if err := dateWithinWindow(visitDate); err != nil {
+		return nil, err
+	}
+
+	status := normalizeStatus(in.FollowUpStatus)
+	if status == "" {
+		return nil, &ValidationError{Message: "Status tindak lanjut tidak dikenali."}
+	}
+
+	if in.PMTGiven && strings.TrimSpace(in.PMTType) == "" {
+		return nil, &ValidationError{Message: "Jenis PMT wajib diisi bila pemberian PMT dicentang."}
+	}
+
+	return s.repo.UpdateHomeVisit(ctx, villageName, id, interventions.CreateRequest{
+		VisitDate:       visitDate.Format("2006-01-02"),
+		FollowUpStatus:  status,
+		SOAPSubjective:  strings.TrimSpace(in.SOAPSubjective),
+		SOAPObjective:   strings.TrimSpace(in.SOAPObjective),
+		SOAPAssessment:  strings.TrimSpace(in.SOAPAssessment),
+		SOAPPlan:        strings.TrimSpace(in.SOAPPlan),
+		PMTGiven:        in.PMTGiven,
+		PMTType:         strings.TrimSpace(in.PMTType),
+		SupplementGiven: strings.TrimSpace(in.SupplementGiven),
+		ClinicalNotes:   strings.TrimSpace(in.ClinicalNotes),
+		FollowUpDate:    strings.TrimSpace(in.FollowUpDate),
+	})
+}
+
+func (s *service) DeleteHomeVisit(ctx context.Context, villageName, id string) error {
+	id = strings.TrimSpace(id)
+	if id == "" || !isUUID(id) {
+		return &ValidationError{Message: "Format ID kunjungan tidak valid."}
+	}
+	return s.repo.DeleteHomeVisit(ctx, villageName, id)
 }
 
 func (s *service) UpdateStatus(ctx context.Context, villageName, id string, in StatusInput) (*interventions.Record, error) {

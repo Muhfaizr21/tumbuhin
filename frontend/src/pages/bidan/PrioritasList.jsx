@@ -16,12 +16,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import {
-  deleteRoleData,
-  fetchRoleDashboardData,
-  postRoleData,
-  putRoleData,
-} from '../../lib/authApi'
+import { bidanApi } from '../../lib/bidanApi'
 import PaginationBar from '../../components/ui/PaginationBar'
 
 const INITIAL_FORM_STATE = {
@@ -95,7 +90,7 @@ export default function PrioritasList({
     setLoading(true)
     setErrorState('')
     try {
-      const data = await fetchRoleDashboardData('/bidan/priority-list')
+      const data = await bidanApi.getPriorityList()
       if (Array.isArray(data)) {
         const cleanList = dedupeChildren(data)
         setChildrenList(cleanList)
@@ -212,7 +207,7 @@ export default function PrioritasList({
       if (modalMode === 'create') {
         let saved = null
         try {
-          const res = await postRoleData('/bidan/priority-list', payload)
+          const res = await bidanApi.createPriorityChild(payload)
           if (res && res.child_name) {
             saved = res
           }
@@ -248,7 +243,7 @@ export default function PrioritasList({
       } else {
         let updated = null
         try {
-          const res = await putRoleData(`/bidan/priority-list/${selectedChildId}`, payload)
+          const res = await bidanApi.updatePriorityChild(selectedChildId, payload)
           if (res && res.child_name) {
             updated = res
           }
@@ -301,7 +296,7 @@ export default function PrioritasList({
 
     try {
       try {
-        await deleteRoleData(`/bidan/priority-list/${deleteTarget.child_id}`)
+        await bidanApi.deletePriorityChild(deleteTarget.child_id)
       } catch {
         // Fallback local removal
       }
@@ -322,7 +317,7 @@ export default function PrioritasList({
   const handleToggleVisit = async (child) => {
     const nextStatus = !child.pending_intervention
     try {
-      await putRoleData(`/bidan/priority-list/${child.child_id}`, {
+      await bidanApi.updatePriorityChild(child.child_id, {
         pending_intervention: nextStatus,
       })
     } catch {

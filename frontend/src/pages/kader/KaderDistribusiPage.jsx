@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react'
-import { fetchRoleDashboardData } from '../../lib/authApi'
+import { kaderApi } from '../../lib/kaderApi'
 import {
   buildMagicLink,
   buildWhatsAppMessage,
@@ -17,7 +17,7 @@ import {
 import BalitaQRCodeModal from '../../components/ui/BalitaQRCodeModal'
 import PaginationBar from '../../components/ui/PaginationBar'
 
-export default function KaderDistribusiPage() {
+export default function KaderDistribusiPage({ searchQuery = '' }) {
   const [balitaList, setBalitaList] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedBalita, setSelectedBalita] = useState(null)
@@ -33,8 +33,8 @@ export default function KaderDistribusiPage() {
       try {
         setLoading(true)
         const [data, settingsData] = await Promise.all([
-          fetchRoleDashboardData('/kader/balita'),
-          fetchRoleDashboardData('/kader/settings').catch(() => null),
+          kaderApi.getBalitaList(),
+          kaderApi.getSettings().catch(() => null),
         ])
         if (Array.isArray(data) && data.length > 0) {
           setBalitaList(data)
@@ -55,12 +55,12 @@ export default function KaderDistribusiPage() {
   const magicLink = selectedBalita ? buildMagicLink(selectedBalita.magic_token) : ''
   const waMessage = selectedBalita ? buildWhatsAppMessage(selectedBalita, magicLink, waTemplate) : ''
 
+  const effectiveQuery = (searchTerm || searchQuery || '').trim().toLowerCase()
   const filteredBalita = balitaList.filter((b) => {
-    if (!searchTerm.trim()) return true
-    const q = searchTerm.toLowerCase()
+    if (!effectiveQuery) return true
     return (
-      (b.nama || '').toLowerCase().includes(q) ||
-      (b.nama_ibu || b.namaOrtu || '').toLowerCase().includes(q)
+      (b.nama || '').toLowerCase().includes(effectiveQuery) ||
+      (b.nama_ibu || b.namaOrtu || '').toLowerCase().includes(effectiveQuery)
     )
   })
   const safePage = Math.min(currentPage, Math.max(1, Math.ceil(filteredBalita.length / pageSize)))
