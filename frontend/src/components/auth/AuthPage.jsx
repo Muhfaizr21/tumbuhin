@@ -105,6 +105,67 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
     }
   }
 
+  const handleQuickDemo = async (demoRole) => {
+    setMode('login')
+    setSubmittedMessage(null)
+
+    const presets = {
+      kader: {
+        method: 'phone',
+        phone: '081288990011',
+        email: 'kader@tumbuhin.id',
+        pass: 'kadersehat2026',
+      },
+      bidan: {
+        method: 'email',
+        phone: '081288990022',
+        email: 'bidan@tumbuhin.id',
+        pass: 'bidansiaga2026',
+      },
+      admin: {
+        method: 'email',
+        phone: '081288990033',
+        email: 'admin@tumbuhin.id',
+        pass: 'adminsehat2026',
+      },
+      ortu: {
+        method: 'email',
+        phone: '081288990044',
+        email: 'ortu@tumbuhin.id',
+        pass: 'ortusehat2026',
+      },
+    }
+
+    const chosen = presets[demoRole] || presets.kader
+    setLoginMethod(chosen.method)
+    setPhone(chosen.phone)
+    setEmail(chosen.email)
+    setPassword(chosen.pass)
+
+    setIsLoading(true)
+    try {
+      const result = await login({
+        identifier: chosen.method === 'phone' ? chosen.phone : chosen.email,
+        email: chosen.email,
+        phone: chosen.phone,
+        password: chosen.pass,
+      })
+      if (!result.success) throw new Error(result.error)
+
+      if (onAuthSuccess) {
+        onAuthSuccess({ user: result.user, redirect_to: result.redirect_to })
+      }
+    } catch (err) {
+      setSubmittedMessage({
+        type: 'error',
+        title: 'Gagal Login Demo',
+        desc: err?.message || 'Pastikan server Golang berjalan di port 8080.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="relative min-h-dvh w-full bg-linear-to-br from-[#eef5fc] via-[#dcebf9] to-[#c5ddf5] text-[#070709] flex flex-col justify-between overflow-x-hidden selection:bg-[#2597d0] selection:text-white">
       {/* Dynamic 3D Silk Wave Backdrop (Mirroring Reference Image) */}
@@ -530,6 +591,43 @@ export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess
                     </button>
                   </p>
                 )}
+              </div>
+
+              {/* Quick Demo Switcher for all 4 Seeded Roles */}
+              <div className="mt-5 pt-3.5 border-t border-dashed border-black/8">
+                <p className="font-inter text-[11px] text-[#8b8b8b] mb-2">
+                  Masuk Instan Akun Seeder (4 Role):
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('kader')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#2597d0] transition-colors cursor-pointer text-center"
+                  >
+                    1. Petugas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('bidan')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#0f766e] transition-colors cursor-pointer text-center"
+                  >
+                    2. Bidan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('admin')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#1e3a8a] transition-colors cursor-pointer text-center"
+                  >
+                    3. Super Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('ortu')}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#f0f6fc] hover:bg-[#e2eef9] text-[11px] font-runde font-semibold text-[#7c3aed] transition-colors cursor-pointer text-center"
+                  >
+                    4. Ortu
+                  </button>
+                </div>
               </div>
             </div>
           </div>
