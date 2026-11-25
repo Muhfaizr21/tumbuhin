@@ -33,8 +33,7 @@ export default function OrtuDashboard({
   user,
   magicToken,
   isPublicMagicLink = false,
-  onLogout,
-  onSwitchRole
+  onLogout
 }) {
   const [activeTab, setActiveTab] = useState('ringkasan')
   const [loading, setLoading] = useState(true)
@@ -92,15 +91,13 @@ export default function OrtuDashboard({
           setChildData(dashRes.data)
           setIsOffline(listRes.isOffline || dashRes.isOffline || false)
           return
-        } else {
-          // Authenticated parent has no linked children yet
-          setChildData(null)
-          setError('NO_LINKED_CHILDREN')
-          return
         }
+        setChildData(null)
+        setError('NO_LINKED_CHILDREN')
+        return
       }
 
-      // Public Magic Link Mode (or role-preview mode)
+      // Public Magic Link Mode
       setMyChildren([])
       const res = await getChildPortalByToken(effectiveToken)
       setChildData(res.data)
@@ -184,7 +181,7 @@ export default function OrtuDashboard({
               </span>
             )}
 
-            {/* Demo switcher when in Public Magic Link / unlinked preview mode */}
+            {/* Demo switcher when in Public Magic Link mode */}
             {!isAuthenticatedMode && (
               <div className="hidden sm:flex items-center gap-1.5 text-xs">
                 <span className="text-[11px] text-[#8b8b8b]">Contoh:</span>
@@ -223,24 +220,13 @@ export default function OrtuDashboard({
                 <LogOut className="w-3.5 h-3.5" /> Keluar
               </button>
             )}
-
-            {/* Staff role switcher */}
-            {user && user.role !== 'ortu' && onSwitchRole && (
-              <button
-                type="button"
-                onClick={() => onSwitchRole('kader')}
-                className="text-[11px] font-medium px-3 py-1 rounded-full bg-[#f5f5f5] hover:bg-[#e8e8e8] text-[#070709] border border-black/8 transition-all cursor-pointer"
-              >
-                Kembali ke Petugas
-              </button>
-            )}
           </div>
         </div>
       </header>
 
       {/* Main Workspace Container */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Multi-Child Switcher (Authenticated Mode when parent has > 1 children) */}
+        {/* Multi-Child Switcher (Authenticated Mode when parent has children) */}
         {isAuthenticatedMode && myChildren.length > 0 && (
           <section
             aria-label="Pilih Anak"

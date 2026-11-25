@@ -97,7 +97,7 @@ function buildQuery(filters, page) {
   return params.toString()
 }
 
-export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole }) {
+export default function HomeVisitPage({ user, prefill, onLogout }) {
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [statusCounts, setStatusCounts] = useState({})
@@ -373,7 +373,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
               if (item?.route) window.location.hash = `#${item.route}`
             }}
             onOpenQuickAdd={() => { setMobileMenuOpen(false); window.location.hash = '#/bidan/prioritas' }}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={{ totalBalita: 0, stuntingPrevalence: 0, wastingCount: 0, highRiskCount: 0, pendingVisits: 0, redCount: 0 }}
           />
@@ -396,7 +396,7 @@ export default function HomeVisitPage({ user, prefill, onLogout, onSwitchRole })
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
           onSelectMenu={(item) => { if (item?.route) window.location.hash = `#${item.route}` }}
           onOpenQuickAdd={() => { window.location.hash = '#/bidan/prioritas' }}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={{ totalBalita: 0, stuntingPrevalence: 0, wastingCount: 0, highRiskCount: 0, pendingVisits: 0, redCount: 0 }}
         />

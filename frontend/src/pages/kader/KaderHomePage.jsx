@@ -3,11 +3,8 @@ import {
   Activity,
   AlertTriangle,
   Baby,
-  Camera,
   ChefHat,
-  RefreshCw,
   Scale,
-  Send,
   ShieldCheck,
   Wifi,
 } from 'lucide-react'
@@ -17,7 +14,6 @@ import {
   SmartDotProgressCard,
   SmartHeatmapMatrixCard,
   SmartPeakMatrixAndAreaCard,
-  SmartQuickActionsGrid,
   SmartSparkKpiCard,
   SmartStackedDistributionCard,
   SmartTrendAndComplianceCard,
@@ -165,45 +161,6 @@ export default function KaderHomePage({ onMenuChange, stats }) {
     },
   ]
 
-  const quickActions = [
-    {
-      id: 'qa-timbang',
-      label: 'Input Timbang & Z-Score',
-      icon: Scale,
-      onClick: () => onMenuChange('timbang'),
-    },
-    {
-      id: 'qa-ocr',
-      label: 'Scan Foto Buku KIA',
-      icon: Camera,
-      onClick: () => onMenuChange('ocr-kms'),
-    },
-    {
-      id: 'qa-mpasi',
-      label: 'Buat Resep AI MPASI',
-      icon: ChefHat,
-      onClick: () => onMenuChange('nutri-chef'),
-    },
-    {
-      id: 'qa-wa',
-      label: 'Kirim WA Kartu Gizi',
-      icon: Send,
-      onClick: () => onMenuChange('distribusi'),
-    },
-    {
-      id: 'qa-sync',
-      label: 'Sinkronisasi Offline',
-      icon: RefreshCw,
-      onClick: () => onMenuChange('sinkronisasi'),
-    },
-    {
-      id: 'qa-balita',
-      label: 'Registrasi Balita Baru',
-      icon: Baby,
-      onClick: () => onMenuChange('balita'),
-    },
-  ]
-
   const posyanduSessionCells = [
     { label: '08:00 WIB (Meja 1)', valueText: '92%', subText: 'Registrasi', percent: 92 },
     { label: '09:00 WIB (Meja 2)', valueText: '96%', subText: 'Penimbangan', percent: 96 },
@@ -263,7 +220,6 @@ export default function KaderHomePage({ onMenuChange, stats }) {
         />
       </div>
 
-      {/* Row 2: 8-Col Capsule Bar Chart + 4-Col Dot Progress & Quick Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         <div className="xl:col-span-8">
           <SmartCapsuleBarChart
@@ -285,11 +241,6 @@ export default function KaderHomePage({ onMenuChange, stats }) {
             subtitle={`${sudahDitimbang} dari ${totalBalita} wali balita menerima WA`}
             percentage={persentaseDitimbang || 100}
             totalDots={16}
-          />
-          <SmartQuickActionsGrid
-            title="Quick Kader Actions"
-            icon={ChefHat}
-            actions={quickActions}
           />
         </div>
       </div>

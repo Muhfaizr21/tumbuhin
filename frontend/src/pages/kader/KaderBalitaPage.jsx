@@ -402,7 +402,6 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate, searchQuer
         </div>
       )}
 
-      {/* Quick Access Footer Hint */}
       <div className="p-4 rounded-2xl bg-[#f5f8fc] border border-[#2597d0]/10 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />

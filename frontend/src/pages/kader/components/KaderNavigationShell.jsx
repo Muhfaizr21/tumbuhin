@@ -12,13 +12,11 @@ export default function KaderNavigationShell({
   onToggleCollapse,
   onSelectMenu,
   onOpenQuickAdd,
-  onSwitchRole,
   onLogout,
 }) {
   return (
     <SmartSidebarShell
       brandSubtitle="OPERASIONAL POSYANDU RW"
-      roleKey="kader"
       roleTitle="Kader Posyandu"
       menus={menus}
       activeMenuId={activeMenuId}
@@ -28,7 +26,7 @@ export default function KaderNavigationShell({
       onSelectMenu={onSelectMenu}
       onOpenQuickAdd={onOpenQuickAdd || (() => onSelectMenu({ id: 'balita' }))}
       quickAddLabel="Registrasi Balita Baru"
-      onSwitchRole={onSwitchRole}
+
       onLogout={onLogout}
     />
   )

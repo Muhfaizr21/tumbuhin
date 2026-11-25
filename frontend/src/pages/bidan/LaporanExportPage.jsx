@@ -28,7 +28,7 @@ const MONTH_NAMES = [
 
 const PAGE_SIZE = 50
 
-export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
+export default function LaporanExportPage({ user, onLogout }) {
   const currentDate = new Date()
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
@@ -204,7 +204,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
               setMobileMenuOpen(false)
               window.location.hash = '#/bidan/prioritas'
             }}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={{
               totalBalita: summary.total_children || 342,
@@ -238,7 +238,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
           onOpenQuickAdd={() => {
             window.location.hash = '#/bidan/prioritas'
           }}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={{
             totalBalita: summary.total_children || 342,

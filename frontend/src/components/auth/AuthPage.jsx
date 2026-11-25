@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 import { BRAND_INFO } from '../../constants/landingData'
 import { LettersStethoscopeIcon } from '../ui/LettersIcons'
-import { loginWithBackend, registerWithBackend } from '../../lib/authApi'
-import { isMockEnabled, isSupabaseConfigured, supabase } from '../../lib/supabaseClient'
+import { registerWithBackend } from '../../lib/authApi'
+import { isMockEnabled, isSupabaseConfigured } from '../../lib/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
 
 export default function AuthPage({ initialMode = 'login', onClose, onAuthSuccess }) {

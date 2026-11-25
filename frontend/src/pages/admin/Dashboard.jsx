@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MapPin,
   Settings,
+  ShieldCheck,
   ShoppingBasket,
   Users,
 } from 'lucide-react'
@@ -18,6 +19,7 @@ import AdminOverviewPage from './AdminOverviewPage'
 import AdminPanganLokalPage from './AdminPanganLokalPage'
 import AdminPengaturanPage from './AdminPengaturanPage'
 import AdminPenggunaPage from './AdminPenggunaPage'
+import AdminRbacPage from './AdminRbacPage'
 import AdminStandarWhoPage from './AdminStandarWhoPage'
 import AdminWilayahPage from './AdminWilayahPage'
 
@@ -41,11 +43,20 @@ const ADMIN_MENUS = [
   },
   {
     id: 'pengguna',
-    label: 'Manajemen Akun & RBAC',
-    shortLabel: 'Akun & RBAC',
+    label: 'Manajemen Data User',
+    shortLabel: 'Data User',
     route: '/admin/pengguna',
     backendPath: 'admin/pengguna/pengguna_controller.go',
     icon: Users,
+    badge: 'USER',
+  },
+  {
+    id: 'rbac',
+    label: 'Manajemen Role & RBAC',
+    shortLabel: 'Manajemen RBAC',
+    route: '/admin/rbac',
+    backendPath: 'admin/pengguna/pengguna_controller.go',
+    icon: ShieldCheck,
     badge: 'RBAC',
   },
   {
@@ -92,7 +103,7 @@ function resolveMenuFromHash() {
   return found ? found.id : 'dashboard'
 }
 
-export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
+export default function AdminDashboard({ user, onLogout }) {
   const [activeMenuId, setActiveMenuId] = useState(() => resolveMenuFromHash())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -193,6 +204,14 @@ export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
             searchQuery={globalSearch}
             externalAddTrigger={quickAddUserTrigger}
             onDataChanged={loadOverview}
+            onNavigateRbac={() => handleSelectMenu('rbac')}
+          />
+        )
+      case 'rbac':
+        return (
+          <AdminRbacPage
+            searchQuery={globalSearch}
+            onDataChanged={loadOverview}
           />
         )
       case 'pangan-lokal':
@@ -240,7 +259,7 @@ export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
             onToggleCollapse={() => setMobileMenuOpen(false)}
             onSelectMenu={handleSelectMenu}
             onOpenQuickAdd={handleQuickAddAccount}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={stats}
           />
@@ -263,7 +282,7 @@ export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           onSelectMenu={handleSelectMenu}
           onOpenQuickAdd={handleQuickAddAccount}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={stats}
         />

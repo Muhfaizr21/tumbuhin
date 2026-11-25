@@ -4,12 +4,10 @@ import {
   BookOpen,
   CheckCircle2,
   Clock3,
-  Cpu,
   Database,
   Lock,
   MapPin,
   RefreshCw,
-  Settings,
   ShieldCheck,
   ShoppingBasket,
   Users,
@@ -20,7 +18,6 @@ import {
   SmartDotProgressCard,
   SmartHeatmapMatrixCard,
   SmartPeakMatrixAndAreaCard,
-  SmartQuickActionsGrid,
   SmartSparkKpiCard,
   SmartStackedDistributionCard,
   SmartTrendAndComplianceCard,
@@ -35,7 +32,6 @@ export default function AdminOverviewPage({
   loading,
   searchQuery = '',
   onNavigate,
-  onQuickAddAccount,
   onRefresh,
 }) {
   const [currentPage, setCurrentPage] = useState(1)
@@ -78,8 +74,8 @@ export default function AdminOverviewPage({
     },
     {
       id: 'pengguna',
-      label: 'Akun RBAC',
-      valueLabel: `${stats?.active_users ?? 4} Akun`,
+      label: 'Data User',
+      valueLabel: `${stats?.active_users ?? 4} User`,
       percent: 82,
       tone: 'teal',
     },
@@ -123,10 +119,17 @@ export default function AdminOverviewPage({
     },
     {
       id: 'pengguna',
-      title: 'Otorisasi RBAC & JWT',
-      metric: `${stats?.active_users ?? 4} Petugas Aktif`,
+      title: 'Manajemen Data User',
+      metric: `${stats?.active_users ?? 4} Pengguna Terdaftar`,
       status: 'healthy',
       onClick: () => onNavigate && onNavigate('pengguna'),
+    },
+    {
+      id: 'rbac',
+      title: 'Otorisasi RBAC & Token',
+      metric: '4 Role & Row-Level Scope',
+      status: 'healthy',
+      onClick: () => onNavigate && onNavigate('rbac'),
     },
     {
       id: 'pangan-lokal',
@@ -157,45 +160,6 @@ export default function AdminOverviewPage({
           ? `${stats.pending_sync_items} Konflik Antrean`
           : 'Uptime: 100% Bersih',
       status: (stats?.pending_sync_items || 0) > 0 ? 'alert' : 'healthy',
-      onClick: () => onNavigate && onNavigate('pengaturan'),
-    },
-  ]
-
-  const quickActions = [
-    {
-      id: 'qa-wilayah',
-      label: 'Tambah Unit Posyandu',
-      icon: MapPin,
-      onClick: () => onNavigate && onNavigate('wilayah'),
-    },
-    {
-      id: 'qa-rbac',
-      label: 'Buat Akun Petugas RBAC',
-      icon: Users,
-      onClick: () => (onQuickAddAccount ? onQuickAddAccount() : onNavigate('pengguna')),
-    },
-    {
-      id: 'qa-pangan',
-      label: 'Update Harga Pangan Desa',
-      icon: ShoppingBasket,
-      onClick: () => onNavigate && onNavigate('pangan-lokal'),
-    },
-    {
-      id: 'qa-rag',
-      label: 'Uji & Re-Index RAG AI',
-      icon: Cpu,
-      onClick: () => onNavigate && onNavigate('knowledge-base'),
-    },
-    {
-      id: 'qa-who',
-      label: 'Simulator Z-Score WHO',
-      icon: Database,
-      onClick: () => onNavigate && onNavigate('standar-who'),
-    },
-    {
-      id: 'qa-settings',
-      label: 'Konfigurasi & Log Desa',
-      icon: Settings,
       onClick: () => onNavigate && onNavigate('pengaturan'),
     },
   ]
@@ -288,9 +252,9 @@ export default function AdminOverviewPage({
           onClick={() => onNavigate && onNavigate('pangan-lokal')}
         />
         <SmartSparkKpiCard
-          title="Otorisasi RBAC & Sync"
+          title="Data User & Otorisasi RBAC"
           value="Running"
-          subtitle={`${stats?.active_users ?? 4} Akun RBAC • ${stats?.pending_sync_items ?? 0} Pending`}
+          subtitle={`${stats?.active_users ?? 4} Data User • 4 Role RBAC`}
           icon={Users}
           visualType="pulse"
           accentColor="#f26522"
@@ -298,7 +262,6 @@ export default function AdminOverviewPage({
         />
       </div>
 
-      {/* Row 2: 8-Col Capsule Bar Chart + 4-Col Dot Progress & Quick Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         <div className="xl:col-span-8">
           <SmartCapsuleBarChart
@@ -320,11 +283,6 @@ export default function AdminOverviewPage({
             subtitle={`${stats?.total_children ?? 2} dari ${stats?.total_children ?? 2} profil balita terenkripsi`}
             percentage={100}
             totalDots={16}
-          />
-          <SmartQuickActionsGrid
-            title="Quick Super Admin Actions"
-            icon={Settings}
-            actions={quickActions}
           />
         </div>
       </div>
@@ -356,9 +314,9 @@ export default function AdminOverviewPage({
               {
                 id: 'comp-sha',
                 value: '100%',
-                title: 'Anonimisasi NIK (SHA-256)',
+                title: 'Anonimisasi NIK (SHA-256) & RBAC',
                 subtitle: 'Zero Raw-NIK Exposure di PostgreSQL',
-                onClick: () => onNavigate && onNavigate('pengguna'),
+                onClick: () => onNavigate && onNavigate('rbac'),
               },
               {
                 id: 'comp-who',

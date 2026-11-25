@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useCallback } from 'react';
 import {
   getStoredUser,
   loginWithBackend,
-  saveAuthSession,
   clearAuthSession,
   getRoleDashboardPath,
 } from '../lib/authApi';
