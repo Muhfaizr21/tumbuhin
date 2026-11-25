@@ -9,13 +9,7 @@ import RoleEcosystemSection from './components/sections/RoleEcosystemSection'
 import SaveHoursSection from './components/sections/SaveHoursSection'
 import WhyChooseUsSection from './components/sections/WhyChooseUsSection'
 import { useTextToSpeech } from './hooks/useTextToSpeech'
-import {
-  clearAuthSession,
-  getRoleDashboardPath,
-  getStoredUser,
-  loginWithBackend,
-  saveAuthSession,
-} from './lib/authApi'
+import { clearAuthSession, getRoleDashboardPath, getStoredUser } from './lib/authApi'
 
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const BidanDashboard = lazy(() => import('./pages/bidan/BidanDashboard'))
@@ -132,77 +126,6 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleSwitchRole = (targetRole) => {
-    const rolePresets = {
-      kader: {
-        id: 1,
-        full_name: 'Siti Aminah (Petugas Posyandu Melati 04)',
-        email: 'kader@tumbuhin.id',
-        phone: '081288990011',
-        role: 'kader',
-        posyandu_name: 'Posyandu Melati 04',
-        village_name: 'Desa Sukamaju',
-      },
-      bidan: {
-        id: 2,
-        full_name: 'Bidan Rina Kartika, A.Md.Keb',
-        email: 'bidan@tumbuhin.id',
-        phone: '081288990022',
-        role: 'bidan',
-        posyandu_name: 'Puskesmas Sukamaju',
-        village_name: 'Desa Sukamaju',
-      },
-      admin: {
-        id: 3,
-        full_name: 'Hendra Wijaya (Super Admin Desa)',
-        email: 'admin@tumbuhin.id',
-        phone: '081288990033',
-        role: 'admin',
-        posyandu_name: 'Pusat Data Desa Sukamaju',
-        village_name: 'Desa Sukamaju',
-      },
-      ortu: {
-        id: 4,
-        full_name: 'Ibu Dewi Lestari (Ortu Balita Andi)',
-        email: 'ortu@tumbuhin.id',
-        phone: '081288990044',
-        role: 'ortu',
-        posyandu_name: 'Posyandu Melati 04',
-        village_name: 'Desa Sukamaju',
-      },
-    }
-
-    const rolePasswords = {
-      kader: 'kadersehat2026',
-      bidan: 'bidansiaga2026',
-      admin: 'adminsehat2026',
-      ortu: 'ortusehat2026',
-    }
-
-    const nextUser = rolePresets[targetRole] || rolePresets.kader
-    saveAuthSession(null, nextUser)
-    setCurrentUser(nextUser)
-    const targetPath = getRoleDashboardPath(targetRole)
-    window.location.hash = `#${targetPath}`
-    setViewState(parseViewFromHash(`#${targetPath}`))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-
-    // Transparently obtain a matching JWT token from the backend for the switched role
-    loginWithBackend({
-      identifier: nextUser.email,
-      email: nextUser.email,
-      password: rolePasswords[targetRole] || 'kadersehat2026',
-    })
-      .then((authData) => {
-        if (authData?.user) {
-          setCurrentUser(authData.user)
-        }
-      })
-      .catch(() => {
-        // Offline or backend not running; keep preset user in state
-      })
-  }
-
   const handleScrollToSimulation = () => {
     const el = document.getElementById('letters')
     if (el) {
@@ -230,7 +153,7 @@ function AppContent() {
               user={currentUser}
               prefill={viewState.query}
               onLogout={handleLogout}
-              onSwitchRole={handleSwitchRole}
+
             />
           )
         }
@@ -239,7 +162,7 @@ function AppContent() {
             <PMTEvaluationPage
               user={currentUser}
               onLogout={handleLogout}
-              onSwitchRole={handleSwitchRole}
+
             />
           )
         }
@@ -248,7 +171,7 @@ function AppContent() {
             <SupervisiPage
               user={currentUser}
               onLogout={handleLogout}
-              onSwitchRole={handleSwitchRole}
+
             />
           )
         }
@@ -257,7 +180,7 @@ function AppContent() {
             <LaporanExportPage
               user={currentUser}
               onLogout={handleLogout}
-              onSwitchRole={handleSwitchRole}
+
             />
           )
         }
@@ -266,7 +189,7 @@ function AppContent() {
             user={currentUser}
             currentSubPage={viewState.subPage}
             onLogout={handleLogout}
-            onSwitchRole={handleSwitchRole}
+
           />
         )
       }
@@ -275,7 +198,7 @@ function AppContent() {
           <AdminDashboard
             user={currentUser}
             onLogout={handleLogout}
-            onSwitchRole={handleSwitchRole}
+
           />
         )
       }
@@ -285,7 +208,7 @@ function AppContent() {
             user={currentUser}
             magicToken={viewState.magicToken}
             onLogout={handleLogout}
-            onSwitchRole={handleSwitchRole}
+
             tts={tts}
           />
         )
@@ -294,7 +217,7 @@ function AppContent() {
         <KaderDashboard
           user={currentUser}
           onLogout={handleLogout}
-          onSwitchRole={handleSwitchRole}
+
         />
       )
     }

@@ -4,9 +4,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ClipboardCheck,
-  FileSpreadsheet,
   HeartPulse,
-  LayoutDashboard,
   MapPin,
   ShieldCheck,
   Stethoscope,
@@ -16,7 +14,6 @@ import {
   SmartDotProgressCard,
   SmartHeatmapMatrixCard,
   SmartPeakMatrixAndAreaCard,
-  SmartQuickActionsGrid,
   SmartSparkKpiCard,
   SmartStackedDistributionCard,
   SmartTopHeader,
@@ -32,7 +29,6 @@ export default function BidanDashboard({
   user,
   currentSubPage = 'dashboard',
   onLogout,
-  onSwitchRole,
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -199,45 +195,6 @@ export default function BidanDashboard({
     },
   ]
 
-  const quickClinicalActions = [
-    {
-      id: 'b-act-gis',
-      label: 'Buka Peta GIS Klaster',
-      icon: MapPin,
-      onClick: () => handleSelectMenu('peta-gis'),
-    },
-    {
-      id: 'b-act-triage',
-      label: 'Tambah Kasus Triase',
-      icon: AlertTriangle,
-      onClick: handleOpenQuickAdd,
-    },
-    {
-      id: 'b-act-soap',
-      label: 'Catat Home Visit SOAP',
-      icon: HeartPulse,
-      onClick: () => handleSelectMenu('intervensi'),
-    },
-    {
-      id: 'b-act-pmt',
-      label: 'Evaluasi Kohor PMT',
-      icon: Activity,
-      onClick: () => handleSelectMenu('pmt-evaluasi'),
-    },
-    {
-      id: 'b-act-sup',
-      label: 'Kunci Supervisi RW',
-      icon: ClipboardCheck,
-      onClick: () => handleSelectMenu('supervisi'),
-    },
-    {
-      id: 'b-act-exp',
-      label: 'Ekspor PDF e-PPGBM',
-      icon: FileSpreadsheet,
-      onClick: () => handleSelectMenu('laporan'),
-    },
-  ]
-
   const skdnMatrixCells = [
     { label: 'Indikator D/S (Hadir)', valueText: '89.4%', subText: 'Target 85%', percent: 89 },
     { label: 'Indikator N/D (Naik BB)', valueText: '84.2%', subText: 'Target 80%', percent: 84 },
@@ -288,7 +245,7 @@ export default function BidanDashboard({
             onToggleCollapse={() => setMobileMenuOpen(false)}
             onSelectMenu={handleSelectMenu}
             onOpenQuickAdd={handleOpenQuickAdd}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={statsSummary}
           />
@@ -311,7 +268,7 @@ export default function BidanDashboard({
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
           onSelectMenu={handleSelectMenu}
           onOpenQuickAdd={handleOpenQuickAdd}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={statsSummary}
         />
@@ -423,7 +380,6 @@ export default function BidanDashboard({
                 />
               </div>
 
-              {/* Row 2: 8-Col Capsule Bar Chart + 4-Col Dot Progress & Quick Actions */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
                 <div className="xl:col-span-8">
                   <SmartCapsuleBarChart
@@ -445,11 +401,6 @@ export default function BidanDashboard({
                     subtitle="17 dari 19 balita kohor PMT patuh >85%"
                     percentage={89}
                     totalDots={16}
-                  />
-                  <SmartQuickActionsGrid
-                    title="Quick Clinical Bidan Actions"
-                    icon={Stethoscope}
-                    actions={quickClinicalActions}
                   />
                 </div>
               </div>

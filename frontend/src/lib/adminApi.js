@@ -13,9 +13,6 @@ let adminAuthPromise = null
 
 /**
  * Ensures the active session holds a valid JWT with role 'admin'.
- * When an examiner uses "Pindah Role Cepat" from Kader/Bidan to Super Admin,
- * this transparently authenticates the seeded Super Admin account so all
- * /api/v1/admin/* endpoints succeed with proper RBAC authorization.
  */
 export async function ensureAdminSession() {
   const token = getStoredToken()

@@ -12,13 +12,11 @@ export default function AdminNavigationShell({
   onToggleCollapse,
   onSelectMenu,
   onOpenQuickAdd,
-  onSwitchRole,
   onLogout,
 }) {
   return (
     <SmartSidebarShell
       brandSubtitle="TATA KELOLA & AI DESA"
-      roleKey="admin"
       roleTitle="Super Admin Desa"
       menus={menus}
       activeMenuId={activeMenuId}
@@ -28,7 +26,6 @@ export default function AdminNavigationShell({
       onSelectMenu={onSelectMenu}
       onOpenQuickAdd={onOpenQuickAdd}
       quickAddLabel="Tambah Akun / Unit"
-      onSwitchRole={onSwitchRole}
       onLogout={onLogout}
     />
   )

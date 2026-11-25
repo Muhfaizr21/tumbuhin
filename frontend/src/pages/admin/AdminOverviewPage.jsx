@@ -4,12 +4,10 @@ import {
   BookOpen,
   CheckCircle2,
   Clock3,
-  Cpu,
   Database,
   Lock,
   MapPin,
   RefreshCw,
-  Settings,
   ShieldCheck,
   ShoppingBasket,
   Users,
@@ -20,7 +18,6 @@ import {
   SmartDotProgressCard,
   SmartHeatmapMatrixCard,
   SmartPeakMatrixAndAreaCard,
-  SmartQuickActionsGrid,
   SmartSparkKpiCard,
   SmartStackedDistributionCard,
   SmartTrendAndComplianceCard,
@@ -35,7 +32,6 @@ export default function AdminOverviewPage({
   loading,
   searchQuery = '',
   onNavigate,
-  onQuickAddAccount,
   onRefresh,
 }) {
   const [currentPage, setCurrentPage] = useState(1)
@@ -161,45 +157,6 @@ export default function AdminOverviewPage({
     },
   ]
 
-  const quickActions = [
-    {
-      id: 'qa-wilayah',
-      label: 'Tambah Unit Posyandu',
-      icon: MapPin,
-      onClick: () => onNavigate && onNavigate('wilayah'),
-    },
-    {
-      id: 'qa-rbac',
-      label: 'Buat Akun Petugas RBAC',
-      icon: Users,
-      onClick: () => (onQuickAddAccount ? onQuickAddAccount() : onNavigate('pengguna')),
-    },
-    {
-      id: 'qa-pangan',
-      label: 'Update Harga Pangan Desa',
-      icon: ShoppingBasket,
-      onClick: () => onNavigate && onNavigate('pangan-lokal'),
-    },
-    {
-      id: 'qa-rag',
-      label: 'Uji & Re-Index RAG AI',
-      icon: Cpu,
-      onClick: () => onNavigate && onNavigate('knowledge-base'),
-    },
-    {
-      id: 'qa-who',
-      label: 'Simulator Z-Score WHO',
-      icon: Database,
-      onClick: () => onNavigate && onNavigate('standar-who'),
-    },
-    {
-      id: 'qa-settings',
-      label: 'Konfigurasi & Log Desa',
-      icon: Settings,
-      onClick: () => onNavigate && onNavigate('pengaturan'),
-    },
-  ]
-
   const posyanduMatrixCells = [
     ...(posyandus.slice(0, 8).map((p, idx) => ({
       id: p.id || idx,
@@ -298,7 +255,6 @@ export default function AdminOverviewPage({
         />
       </div>
 
-      {/* Row 2: 8-Col Capsule Bar Chart + 4-Col Dot Progress & Quick Actions */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         <div className="xl:col-span-8">
           <SmartCapsuleBarChart
@@ -320,11 +276,6 @@ export default function AdminOverviewPage({
             subtitle={`${stats?.total_children ?? 2} dari ${stats?.total_children ?? 2} profil balita terenkripsi`}
             percentage={100}
             totalDots={16}
-          />
-          <SmartQuickActionsGrid
-            title="Quick Super Admin Actions"
-            icon={Settings}
-            actions={quickActions}
           />
         </div>
       </div>

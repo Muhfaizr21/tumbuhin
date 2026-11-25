@@ -92,7 +92,7 @@ function resolveMenuFromHash() {
   return found ? found.id : 'dashboard'
 }
 
-export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
+export default function AdminDashboard({ user, onLogout }) {
   const [activeMenuId, setActiveMenuId] = useState(() => resolveMenuFromHash())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -240,7 +240,7 @@ export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
             onToggleCollapse={() => setMobileMenuOpen(false)}
             onSelectMenu={handleSelectMenu}
             onOpenQuickAdd={handleQuickAddAccount}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={stats}
           />
@@ -263,7 +263,7 @@ export default function AdminDashboard({ user, onLogout, onSwitchRole }) {
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           onSelectMenu={handleSelectMenu}
           onOpenQuickAdd={handleQuickAddAccount}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={stats}
         />

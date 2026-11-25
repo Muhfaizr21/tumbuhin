@@ -72,7 +72,7 @@ function buildQuery(filters, page, pageSize) {
   return params.toString()
 }
 
-export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
+export default function PMTEvaluationPage({ user, onLogout }) {
   const pageSize = 100
 
   const [items, setItems] = useState([])
@@ -336,7 +336,7 @@ export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
               if (item?.route) window.location.hash = `#${item.route}`
             }}
             onOpenQuickAdd={() => { setMobileMenuOpen(false); window.location.hash = '#/bidan/prioritas' }}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={{ totalBalita: 0, stuntingPrevalence: 0, wastingCount: 0, highRiskCount: 0, pendingVisits: 0, redCount: 0 }}
           />
@@ -359,7 +359,7 @@ export default function PMTEvaluationPage({ user, onLogout, onSwitchRole }) {
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
           onSelectMenu={(item) => { if (item?.route) window.location.hash = `#${item.route}` }}
           onOpenQuickAdd={() => { window.location.hash = '#/bidan/prioritas' }}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={{ totalBalita: 0, stuntingPrevalence: 0, wastingCount: 0, highRiskCount: 0, pendingVisits: 0, redCount: 0 }}
         />

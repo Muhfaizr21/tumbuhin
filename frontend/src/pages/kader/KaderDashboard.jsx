@@ -92,7 +92,7 @@ const KADER_MENUS = [
   },
 ]
 
-export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
+export default function KaderDashboard({ user, onLogout }) {
   const [activeMenuId, setActiveMenuId] = useState('dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -253,7 +253,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
           <KaderBalitaPage
             user={user}
             onLogout={onLogout}
-            onSwitchRole={onSwitchRole}
+
             onNavigate={setActiveMenuId}
             searchQuery={globalSearch}
           />
@@ -291,7 +291,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
             sidebarCollapsed={false}
             onToggleCollapse={() => setMobileMenuOpen(false)}
             onSelectMenu={handleSelectMenu}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
           />
           <button
@@ -312,7 +312,7 @@ export default function KaderDashboard({ user, onLogout, onSwitchRole }) {
           sidebarCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           onSelectMenu={handleSelectMenu}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
         />
       </div>

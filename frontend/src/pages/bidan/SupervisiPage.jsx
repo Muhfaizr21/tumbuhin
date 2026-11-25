@@ -27,7 +27,7 @@ const MONTH_NAMES = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ]
 
-export default function SupervisiPage({ user, onLogout, onSwitchRole }) {
+export default function SupervisiPage({ user, onLogout }) {
   const currentDate = new Date()
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear())
@@ -203,7 +203,7 @@ export default function SupervisiPage({ user, onLogout, onSwitchRole }) {
               setMobileMenuOpen(false)
               window.location.hash = '#/bidan/prioritas'
             }}
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
             statsSummary={{
               totalBalita: stats.total_enrolled || 342,
@@ -237,7 +237,7 @@ export default function SupervisiPage({ user, onLogout, onSwitchRole }) {
           onOpenQuickAdd={() => {
             window.location.hash = '#/bidan/prioritas'
           }}
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
           statsSummary={{
             totalBalita: stats.total_enrolled || 342,

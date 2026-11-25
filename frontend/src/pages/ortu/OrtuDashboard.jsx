@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Scale,
   ShieldCheck,
-  Volume2,
 } from 'lucide-react'
 import BidanNotesAndSchedule from '../../components/ortu/BidanNotesAndSchedule'
 import FloatingAccessibilityBar from '../../components/ortu/FloatingAccessibilityBar'
@@ -17,7 +16,6 @@ import MpasiRecipeCard from '../../components/ortu/MpasiRecipeCard'
 import OrtuSummaryTab from '../../components/ortu/OrtuSummaryTab'
 import {
   SmartDotProgressCard,
-  SmartQuickActionsGrid,
   SmartSidebarShell,
   SmartSparkKpiCard,
   SmartTopHeader,
@@ -59,7 +57,6 @@ export default function OrtuDashboard({
   magicToken,
   tts,
   onLogout,
-  onSwitchRole,
 }) {
   const [activeTab, setActiveTab] = useState('ringkasan')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -149,39 +146,6 @@ export default function OrtuDashboard({
     ? 'Siti (Pita Kuning)'
     : 'Andi (Pita Hijau)'
 
-  const quickOrtuActions = [
-    {
-      id: 'o-act-1',
-      label: 'Ringkasan Gizi Anak',
-      icon: Baby,
-      onClick: () => setActiveTab('ringkasan'),
-    },
-    {
-      id: 'o-act-2',
-      label: 'Kurva KMS Digital',
-      icon: LineChart,
-      onClick: () => setActiveTab('kurva'),
-    },
-    {
-      id: 'o-act-3',
-      label: 'Resep MPASI Lokal',
-      icon: ChefHat,
-      onClick: () => setActiveTab('resep'),
-    },
-    {
-      id: 'o-act-4',
-      label: 'Pesan Bidan & Jadwal',
-      icon: CalendarCheck,
-      onClick: () => setActiveTab('pesan'),
-    },
-    {
-      id: 'o-act-5',
-      label: 'Bacakan Suara (TTS)',
-      icon: Volume2,
-      onClick: handleSpeakNow,
-    },
-  ]
-
   return (
     <div
       style={{ fontSize: `${fontSizeScale}%` }}
@@ -196,7 +160,7 @@ export default function OrtuDashboard({
         <div className="lg:hidden fixed inset-0 z-50 flex bg-slate-900/40 backdrop-blur-xs">
           <SmartSidebarShell
             brandSubtitle="KARTU GIZI DIGITAL ORTU"
-            roleKey="ortu"
+
             roleTitle="Orang Tua Balita"
             menus={ORTU_MENUS}
             activeMenuId={activeTab}
@@ -214,7 +178,7 @@ export default function OrtuDashboard({
             }}
             onOpenQuickAdd={handleSpeakNow}
             quickAddLabel="Bacakan Kartu Gizi (TTS)"
-            onSwitchRole={onSwitchRole}
+
             onLogout={onLogout}
           />
           <button
@@ -230,7 +194,7 @@ export default function OrtuDashboard({
       <div className="hidden lg:flex">
         <SmartSidebarShell
           brandSubtitle="KARTU GIZI DIGITAL ORTU"
-          roleKey="ortu"
+
           roleTitle="Orang Tua Balita"
           menus={ORTU_MENUS}
           activeMenuId={activeTab}
@@ -245,7 +209,7 @@ export default function OrtuDashboard({
           onSelectMenu={(item) => setActiveTab(item.id)}
           onOpenQuickAdd={handleSpeakNow}
           quickAddLabel="Bacakan Kartu Gizi (TTS)"
-          onSwitchRole={onSwitchRole}
+
           onLogout={onLogout}
         />
       </div>
@@ -387,7 +351,6 @@ export default function OrtuDashboard({
               />
             </div>
 
-            {/* Row 2: Identity Banner + Quick Navigation Tabs + Right Dot Progress & Quick Actions */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
               {/* Left 8 Cols: Child Profile Header + Active Tab Content */}
               <div className="xl:col-span-8 space-y-5">
@@ -498,7 +461,6 @@ export default function OrtuDashboard({
                 </div>
               </div>
 
-              {/* Right 4 Cols: Compliance Dot Progress + Quick Actions + Next Posyandu Summary */}
               <div className="xl:col-span-4 space-y-5">
                 <SmartDotProgressCard
                   title="Kepatuhan Timbang & Imunisasi"
@@ -506,12 +468,6 @@ export default function OrtuDashboard({
                   subtitle={`Kehadiran rutin Ananda ${childData.child_name} di Posyandu`}
                   percentage={childData.color_pita === 'hijau' ? 94 : 82}
                   totalDots={16}
-                />
-
-                <SmartQuickActionsGrid
-                  title="Aksi Cepat Kartu Gizi Ortu"
-                  icon={Baby}
-                  actions={quickOrtuActions}
                 />
 
                 {/* Next Posyandu Schedule Card */}

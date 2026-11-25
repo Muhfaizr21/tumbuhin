@@ -13,15 +13,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
-  Users,
 } from 'lucide-react'
-
-export const ROLE_SWITCH_OPTIONS = [
-  { key: 'kader', label: '1. Kader', fullLabel: 'Kader Posyandu' },
-  { key: 'bidan', label: '2. Bidan', fullLabel: 'Bidan Desa' },
-  { key: 'admin', label: '3. Admin', fullLabel: 'Super Admin' },
-  { key: 'ortu', label: '4. Ortu', fullLabel: 'Orang Tua' },
-]
 
 /**
  * Helper: builds an SVG polyline + closed area path from an array of numbers
@@ -78,7 +70,6 @@ function buildSmoothBezierPaths(values = [], width = 360, height = 120, padTop =
  */
 export function SmartSidebarShell({
   brandSubtitle = 'SIGAPGIZI DESA',
-  roleKey = 'admin',
   roleTitle = 'Super Admin Desa',
   menus = [],
   activeMenuId = 'dashboard',
@@ -88,7 +79,6 @@ export function SmartSidebarShell({
   onSelectMenu,
   onOpenQuickAdd,
   quickAddLabel = 'Tambah Data Baru',
-  onSwitchRole,
   onLogout,
 }) {
   const userInitials = (user?.full_name || roleTitle || 'TB')
@@ -227,39 +217,8 @@ export function SmartSidebarShell({
         </div>
       </div>
 
-      {/* Bottom Section: Compact 2x2 Role Switcher + Quick Add CTA + User Profile Footer */}
+      {/* Bottom Section: Quick Add CTA + User Profile Footer */}
       <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 space-y-2.5 shrink-0">
-        {!sidebarCollapsed && (
-          <div className="p-2.5 rounded-xl bg-white border border-slate-200/70 space-y-1.5">
-            <div className="flex items-center justify-between px-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Users className="w-3 h-3 text-[#f26522]" />
-                <span>Pindah Role Cepat</span>
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {ROLE_SWITCH_OPTIONS.map((opt) => {
-                const isCurrent = String(roleKey).toLowerCase() === opt.key
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    title={opt.fullLabel}
-                    onClick={() => onSwitchRole && onSwitchRole(opt.key)}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer truncate ${
-                      isCurrent
-                        ? 'bg-[#1b2537] text-white shadow-2xs'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {!sidebarCollapsed && onOpenQuickAdd && (
           <button
             type="button"
@@ -787,50 +746,6 @@ export function SmartDotProgressCard({
                 isFilled ? 'bg-[#f26522]' : 'bg-slate-200'
               }`}
             />
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-/**
- * 6. SmartQuickActionsGrid
- */
-export function SmartQuickActionsGrid({
-  title = 'Aksi Cepat Operasional',
-  icon: Icon,
-  actions = [],
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4 flex-1">
-      <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-        {Icon && <Icon className="w-4 h-4 text-[#f26522]" />}
-        <h3 className="text-[15px] font-extrabold text-[#1b2537] tracking-tight">{title}</h3>
-      </div>
-
-      <div className="grid grid-cols-3 gap-y-4 gap-x-2 pt-1">
-        {actions.map((act, idx) => {
-          const ActIcon = act.icon || Sparkles
-          return (
-            <button
-              key={act.id || idx}
-              type="button"
-              onClick={act.onClick}
-              className="flex flex-col items-center text-center gap-2 group cursor-pointer"
-            >
-              <div className="relative w-12 h-12 rounded-full bg-[#1b2537] group-hover:bg-[#f26522] text-white flex items-center justify-center shadow-xs transition-colors">
-                <ActIcon className="w-4 h-4" />
-                {act.badge && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#f26522] group-hover:bg-[#1b2537] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white">
-                    {act.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] font-semibold text-slate-600 group-hover:text-[#1b2537] leading-tight line-clamp-2">
-                {act.label}
-              </span>
-            </button>
           )
         })}
       </div>

@@ -13,13 +13,11 @@ export default function BidanNavigationShell({
   onToggleCollapse,
   onSelectMenu,
   onOpenQuickAdd,
-  onSwitchRole,
   onLogout,
 }) {
   return (
     <SmartSidebarShell
       brandSubtitle="SURVEILANS KLINIS BIDAN"
-      roleKey="bidan"
       roleTitle="Bidan Desa"
       menus={menus}
       activeMenuId={activeMenuId}
@@ -29,7 +27,7 @@ export default function BidanNavigationShell({
       onSelectMenu={onSelectMenu}
       onOpenQuickAdd={onOpenQuickAdd}
       quickAddLabel="Tambah Data Triase"
-      onSwitchRole={onSwitchRole}
+      
       onLogout={onLogout}
     />
   )
