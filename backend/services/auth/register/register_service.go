@@ -20,6 +20,36 @@ var (
 	ErrMissingIdentity = errors.New("nama lengkap serta email atau nomor telepon wajib diisi")
 )
 
+// HashPassword uses the shared bcrypt cost for every account creation path.
+func HashPassword(password string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashed), nil
+}
+
+// NormalizeContact fills the missing login field so email and phone stay unique.
+func NormalizeContact(email, phone string) (string, string) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	phone = strings.TrimSpace(phone)
+
+	if email == "" && phone != "" {
+		cleanDigits := strings.ReplaceAll(phone, "+", "")
+		email = fmt.Sprintf("%s@posyandu.tumbuhin.id", cleanDigits)
+	}
+	if phone == "" && email != "" {
+		phone = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
+	}
+	return email, phone
+}
+
+// BuildOrtuMagicToken builds a unique magic link token for an ortu account.
+func BuildOrtuMagicToken(email, phone string) string {
+	hash := sha256.Sum256([]byte(fmt.Sprintf("%s-%s-%d", email, phone, time.Now().UnixNano())))
+	return "magic-" + hex.EncodeToString(hash[:16])
+}
+
 // Service defines the business contract for account registration
 type Service interface {
 	Register(ctx context.Context, req models.RegisterRequest) (*models.AuthResponse, error)
@@ -51,16 +81,9 @@ func (s *registerService) Register(ctx context.Context, req models.RegisterReque
 		return nil, ErrMissingIdentity
 	}
 
-	// Ensure both email and phone have unique values for database constraints
-	if email == "" && phone != "" {
-		cleanDigits := strings.ReplaceAll(phone, "+", "")
-		email = fmt.Sprintf("%s@posyandu.tumbuhin.id", cleanDigits)
-	}
-	if phone == "" && email != "" {
-		phone = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
-	}
+	email, phone = NormalizeContact(email, phone)
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPass, err := HashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +100,7 @@ func (s *registerService) Register(ctx context.Context, req models.RegisterReque
 
 	magicToken := ""
 	if normalizedRole == models.RoleOrtu {
-		hash := sha256.Sum256([]byte(fmt.Sprintf("%s-%s-%d", email, phone, time.Now().UnixNano())))
-		magicToken = "magic-" + hex.EncodeToString(hash[:16])
+		magicToken = BuildOrtuMagicToken(email, phone)
 	}
 
 	newUser := &models.User{
