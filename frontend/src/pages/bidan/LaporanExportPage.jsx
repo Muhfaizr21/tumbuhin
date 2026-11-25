@@ -144,7 +144,7 @@ export default function LaporanExportPage({ user, onLogout, onSwitchRole }) {
   }, [filteredItems, currentPage])
 
   return (
-    <div className="min-h-dvh bg-[#f6f9fc] text-slate-800 flex flex-col lg:flex-row font-runde selection:bg-[#2597d0] selection:text-white">
+    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden bg-[#f6f9fc] text-slate-800 flex flex-col lg:flex-row font-runde selection:bg-[#2597d0] selection:text-white">
       {/* Mobile Header Bar */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
