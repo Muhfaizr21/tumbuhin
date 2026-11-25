@@ -116,4 +116,12 @@ export const bidanApi = {
     const qs = queryString ? `?${queryString.replace(/^\?/, '')}` : ''
     return withBidanAuth(() => downloadRoleFile(`/bidan/export${qs}`, fallbackFilename))
   },
+
+  // 2.8 Manajemen & Registrasi Akun Orang Tua
+  listParents: () =>
+    withBidanAuth(() => fetchRoleDashboardData('/bidan/parents')),
+  registerParent: (payload) =>
+    withBidanAuth(() => postRoleData('/bidan/parents/register', payload)),
+  updateParentChildren: (parentId, childIds) =>
+    withBidanAuth(() => putRoleData(`/bidan/parents/${parentId}/children`, { child_ids: childIds })),
 }

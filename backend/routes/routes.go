@@ -17,6 +17,7 @@ import (
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
 	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
+	bidanParentsCtrl "tumbuhin-backend/controllers/bidan/parents"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPMTEvalCtrl "tumbuhin-backend/controllers/bidan/pmt_evaluations"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
@@ -51,6 +52,7 @@ type RouteDependencies struct {
 	BidanPMTEvalCtrl       *bidanPMTEvalCtrl.Controller
 	BidanSupervisiCtrl     *bidanSupervisiCtrl.Controller
 	BidanLaporanCtrl       *bidanLaporanCtrl.Controller
+	BidanParentsCtrl       *bidanParentsCtrl.Controller
 	AdminDashCtrl          *adminDashCtrl.Controller
 	AdminWilayahCtrl       *adminWilayahCtrl.Controller
 	AdminPenggunaCtrl      *adminPenggunaCtrl.Controller
@@ -145,6 +147,11 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 
 			// Laporan & Ekspor e-PPGBM
 			bidanGroup.GET("/export", deps.BidanLaporanCtrl.HandleExport)
+
+			// Manajemen & Registrasi Akun Orang Tua (terhubung ke children.parent_user_id)
+			bidanGroup.GET("/parents", deps.BidanParentsCtrl.HandleListParents)
+			bidanGroup.POST("/parents/register", deps.BidanParentsCtrl.HandleRegisterParent)
+			bidanGroup.PUT("/parents/:parentId/children", deps.BidanParentsCtrl.HandleUpdateParentChildren)
 		}
 
 		// Role 3: Super Admin Desa Routes (/api/v1/admin/...)
@@ -201,6 +208,8 @@ func SetupRouter(cfg *config.Config, deps RouteDependencies) *gin.Engine {
 		ortuGroup.Use(middlewares.RequireAuth(cfg.JWTSecret), middlewares.RequireRoles(models.RoleOrtu, models.RoleKader, models.RoleBidan, models.RoleAdmin))
 		{
 			ortuGroup.GET("/dashboard", deps.OrtuDashCtrl.HandleGetPortal)
+			ortuGroup.GET("/children", deps.OrtuDashCtrl.HandleListMyChildren)
+			ortuGroup.GET("/children/:childId/dashboard", deps.OrtuDashCtrl.HandleGetChildDashboard)
 		}
 	}
 

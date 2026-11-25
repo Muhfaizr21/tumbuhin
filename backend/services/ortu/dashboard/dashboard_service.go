@@ -9,6 +9,8 @@ import (
 // Service defines the business operations for the Orang Tua portal.
 type Service interface {
 	GetChildCard(ctx context.Context, magicToken string) (*ortuDashRepo.ChildGrowthCard, error)
+	GetMyChildren(ctx context.Context, parentUserID int64) ([]ortuDashRepo.OrtuChildItem, error)
+	GetChildCardByID(ctx context.Context, childID string, parentUserID int64, allowBypass bool) (*ortuDashRepo.ChildGrowthCard, error)
 }
 
 type service struct {
@@ -26,6 +28,24 @@ func (s *service) GetChildCard(ctx context.Context, magicToken string) (*ortuDas
 	if err != nil {
 		return nil, err
 	}
+	return s.enrichChildCard(card), nil
+}
+
+// GetMyChildren returns all children linked to the authenticated parent account.
+func (s *service) GetMyChildren(ctx context.Context, parentUserID int64) ([]ortuDashRepo.OrtuChildItem, error) {
+	return s.repo.GetChildrenByParentUserID(ctx, parentUserID)
+}
+
+// GetChildCardByID retrieves a child's full growth card after verifying ownership.
+func (s *service) GetChildCardByID(ctx context.Context, childID string, parentUserID int64, allowBypass bool) (*ortuDashRepo.ChildGrowthCard, error) {
+	card, err := s.repo.GetChildByIDForParent(ctx, childID, parentUserID, allowBypass)
+	if err != nil {
+		return nil, err
+	}
+	return s.enrichChildCard(card), nil
+}
+
+func (s *service) enrichChildCard(card *ortuDashRepo.ChildGrowthCard) *ortuDashRepo.ChildGrowthCard {
 
 	// 1. Determine KBM Target according to Buku KIA Kemenkes RI
 	targetKBM := getKBMTarget(card.AgeMonths)
@@ -83,7 +103,7 @@ func (s *service) GetChildCard(ctx context.Context, magicToken string) (*ortuDas
 		}
 	}
 
-	return card, nil
+	return card
 }
 
 func getKBMTarget(ageMonths int) int {

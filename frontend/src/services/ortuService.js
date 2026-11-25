@@ -1,6 +1,87 @@
+import { getStoredToken } from '../lib/authApi'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
 
 const CACHE_KEY_PREFIX = 'sigapgizi_ortu_cache_'
+const CHILDREN_LIST_CACHE_KEY = 'sigapgizi_ortu_children_list'
+
+/**
+ * Fetch list of children owned by the logged-in parent account.
+ */
+export async function getAuthenticatedParentChildren() {
+  const token = getStoredToken()
+  if (!token) throw new Error('UNAUTHENTICATED')
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/ortu/children`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    if (!res.ok) {
+      throw new Error(`HTTP_${res.status}`)
+    }
+    const json = await res.json()
+    if (json.success && Array.isArray(json.data)) {
+      try {
+        localStorage.setItem(CHILDREN_LIST_CACHE_KEY, JSON.stringify(json.data))
+      } catch {
+        // ignore storage quota errors
+      }
+      return { children: json.data, isOffline: false }
+    }
+    throw new Error(json.message || 'Gagal memuat daftar anak')
+  } catch (err) {
+    try {
+      const cachedRaw = localStorage.getItem(CHILDREN_LIST_CACHE_KEY)
+      if (cachedRaw) {
+        return { children: JSON.parse(cachedRaw), isOffline: true }
+      }
+    } catch {
+      // ignore parse errors
+    }
+    throw err
+  }
+}
+
+/**
+ * Fetch specific child dashboard by childId for the logged-in parent account.
+ */
+export async function getAuthenticatedChildDashboard(childId) {
+  const token = getStoredToken()
+  if (!token) throw new Error('UNAUTHENTICATED')
+
+  const cacheKey = `child_${childId}`
+  try {
+    const res = await fetch(`${API_BASE_URL}/ortu/children/${encodeURIComponent(childId)}/dashboard`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    if (!res.ok) {
+      if (res.status === 403) throw new Error('FORBIDDEN')
+      if (res.status === 404) throw new Error('NOT_FOUND')
+      throw new Error(`HTTP_${res.status}`)
+    }
+    const json = await res.json()
+    if (json.success && json.data) {
+      saveLocalCachedCard(cacheKey, json.data)
+      return { data: json.data, isOffline: false }
+    }
+    throw new Error(json.message || 'Gagal memuat dashboard anak')
+  } catch (err) {
+    if (err.message === 'FORBIDDEN' || err.message === 'NOT_FOUND') throw err
+    const cached = getLocalCachedCard(cacheKey)
+    if (cached) {
+      return { data: cached.data, isOffline: true, cachedAt: cached.cachedAt }
+    }
+    throw err
+  }
+}
 
 /**
  * Fetch child growth card by magic token with automatic localStorage caching.

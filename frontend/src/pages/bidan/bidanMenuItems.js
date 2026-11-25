@@ -6,6 +6,7 @@ import {
   HeartPulse,
   LayoutDashboard,
   MapPin,
+  Users,
 } from 'lucide-react'
 
 /**
@@ -87,6 +88,17 @@ export const BIDAN_MENUS = [
     backendPath: 'bidan/laporan/laporan_controller.go',
     description:
       'Generator laporan gizi bulanan resmi tingkat desa yang siap diekspor ke format kompatibel e-PPGBM Kemenkes.',
+  },
+  {
+    id: 'orang-tua',
+    label: 'Akun Orang Tua',
+    shortLabel: 'Akun Orang Tua',
+    route: '/bidan/orang-tua',
+    icon: Users,
+    badge: 'Multi-Anak',
+    backendPath: 'bidan/parents/parents_controller.go',
+    description:
+      'Pendaftaran akun portal orang tua dan penautan ke satu atau beberapa balita agar ibu dapat login serta memantau KMS anak.',
   },
 ]
 

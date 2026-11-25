@@ -23,6 +23,7 @@ const HomeVisitPage = lazy(() => import('./pages/bidan/HomeVisitPage'))
 const PMTEvaluationPage = lazy(() => import('./pages/bidan/PMTEvaluationPage'))
 const SupervisiPage = lazy(() => import('./pages/bidan/SupervisiPage'))
 const LaporanExportPage = lazy(() => import('./pages/bidan/LaporanExportPage'))
+const BidanParentsPage = lazy(() => import('./pages/bidan/BidanParentsPage'))
 const KaderDashboard = lazy(() => import('./pages/kader/KaderDashboard'))
 const OrtuDashboard = lazy(() => import('./pages/ortu/OrtuDashboard'))
 
@@ -55,8 +56,9 @@ function parseViewFromHash(hash) {
   if (clean.startsWith('admin')) return { type: 'dashboard', role: 'admin' }
   if (clean.startsWith('ortu') || clean.startsWith('p/')) {
     const [pathPart, queryPart] = clean.split('?')
+    const isPublicMagicLink = pathPart.startsWith('p/')
     let token = ''
-    if (pathPart.startsWith('p/')) {
+    if (isPublicMagicLink) {
       token = pathPart.replace(/^p\/?/, '')
     } else {
       token = pathPart.replace(/^ortu\/?/, '')
@@ -67,7 +69,8 @@ function parseViewFromHash(hash) {
     return {
       type: 'dashboard',
       role: 'ortu',
-      magicToken: token || 'magic-balita-andi-2026-tumbuhin-sehat',
+      isPublicMagicLink,
+      magicToken: token || (isPublicMagicLink ? 'magic-balita-andi-2026-tumbuhin-sehat' : ''),
       query: parseQueryString(queryPart),
     }
   }
@@ -261,6 +264,15 @@ function AppContent() {
             />
           )
         }
+        if (viewState.subPage === 'orang-tua') {
+          return (
+            <BidanParentsPage
+              user={currentUser}
+              onLogout={handleLogout}
+              onSwitchRole={handleSwitchRole}
+            />
+          )
+        }
         return (
           <BidanDashboard
             user={currentUser}
@@ -284,6 +296,7 @@ function AppContent() {
           <OrtuDashboard
             user={currentUser}
             magicToken={viewState.magicToken}
+            isPublicMagicLink={Boolean(viewState.isPublicMagicLink)}
             onLogout={handleLogout}
             onSwitchRole={handleSwitchRole}
             tts={tts}

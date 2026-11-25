@@ -69,6 +69,17 @@ func RunExtendedMigrations(db *pgxpool.Pool) error {
 
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION DEFAULT -6.5950378;
 	ALTER TABLE children ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION DEFAULT 106.816635;
+	ALTER TABLE children ADD COLUMN IF NOT EXISTS parent_user_id BIGINT REFERENCES tumbuhin_users(id) ON DELETE SET NULL;
+	CREATE INDEX IF NOT EXISTS idx_children_parent_user_id ON children(parent_user_id);
+
+	-- Ensure tumbuhin_users role constraint supports 'ortu' safely
+	DO $$
+	BEGIN
+		ALTER TABLE tumbuhin_users DROP CONSTRAINT IF EXISTS tumbuhin_users_role_check;
+		ALTER TABLE tumbuhin_users ADD CONSTRAINT tumbuhin_users_role_check CHECK (role IN ('kader', 'bidan', 'admin', 'ortu'));
+	EXCEPTION WHEN OTHERS THEN
+		NULL;
+	END $$;
 	ALTER TABLE children ALTER COLUMN magic_token SET DEFAULT ('magic-' || replace(gen_random_uuid()::text, '-', ''));
 	UPDATE children
 	SET magic_token = 'magic-' || replace(gen_random_uuid()::text, '-', '')

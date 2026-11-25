@@ -16,6 +16,23 @@ import (
 // ErrNotFound indicates that the magic token was not found in the database.
 var ErrNotFound = errors.New("balita dengan magic link tersebut tidak ditemukan")
 
+// ErrForbidden indicates that the requested child does not belong to the authenticated parent.
+var ErrForbidden = errors.New("akses ditolak: balita ini tidak tertaut ke akun Anda")
+
+// OrtuChildItem represents a child summary owned by an authenticated parent user.
+type OrtuChildItem struct {
+	ChildID         string `json:"child_id"`
+	FullName        string `json:"full_name"`
+	Gender          string `json:"gender"`
+	BirthDate       string `json:"birth_date"`
+	AgeMonths       int    `json:"age_months"`
+	PosyanduName    string `json:"posyandu_name"`
+	VillageName     string `json:"village_name"`
+	MagicToken      string `json:"magic_token"`
+	NutritionStatus string `json:"nutrition_status"`
+	ColorPita       string `json:"color_pita"`
+}
+
 // ChildGrowthCard is the comprehensive data model for the Orang Tua portal.
 type ChildGrowthCard struct {
 	// Profil Balita
@@ -135,6 +152,8 @@ type NextPosyanduDetail struct {
 // Repository defines operations for retrieving child portal data.
 type Repository interface {
 	GetChildByMagicToken(ctx context.Context, magicToken string) (*ChildGrowthCard, error)
+	GetChildrenByParentUserID(ctx context.Context, parentUserID int64) ([]OrtuChildItem, error)
+	GetChildByIDForParent(ctx context.Context, childID string, parentUserID int64, allowBypass bool) (*ChildGrowthCard, error)
 }
 
 type repository struct {
@@ -191,6 +210,112 @@ func (r *repository) GetChildByMagicToken(ctx context.Context, magicToken string
 		log.Printf("[ORTU REPO ERROR] Query child failed: %v", err)
 		return nil, err
 	}
+
+	return r.populateChildCardDetails(ctx, childID, fullName, nikHash, gender, birthDate, parentName, parentPhone, posyanduName, villageName, rwCode, rtCode, cleanToken)
+}
+
+// GetChildrenByParentUserID returns all active children linked to parentUserID.
+func (r *repository) GetChildrenByParentUserID(ctx context.Context, parentUserID int64) ([]OrtuChildItem, error) {
+	items := []OrtuChildItem{}
+	if r.db == nil {
+		return items, nil
+	}
+
+	query := `
+		SELECT
+			c.id::text,
+			c.full_name,
+			c.gender,
+			c.birth_date,
+			COALESCE(c.posyandu_name, 'Posyandu Melati 04'),
+			COALESCE(c.village_name, 'Desa Sukamaju'),
+			COALESCE(c.magic_token, ''),
+			COALESCE(
+				(SELECT m.nutrition_status FROM measurements m WHERE m.child_id = c.id ORDER BY m.age_months DESC, m.measured_at DESC LIMIT 1),
+				'normal'
+			) AS nutrition_status
+		FROM children c
+		WHERE c.parent_user_id = $1 AND COALESCE(c.is_active, TRUE) = TRUE
+		ORDER BY c.birth_date DESC, c.full_name ASC
+	`
+	rows, err := r.db.Query(ctx, query, parentUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	now := time.Now()
+	for rows.Next() {
+		var item OrtuChildItem
+		var bDate time.Time
+		if scanErr := rows.Scan(
+			&item.ChildID, &item.FullName, &item.Gender, &bDate,
+			&item.PosyanduName, &item.VillageName, &item.MagicToken, &item.NutritionStatus,
+		); scanErr == nil {
+			item.BirthDate = bDate.Format("02 Jan 2006")
+			item.AgeMonths = calculateAgeInMonths(bDate, now)
+			st := strings.ToLower(item.NutritionStatus)
+			if strings.Contains(st, "sever") || strings.Contains(st, "buruk") {
+				item.ColorPita = "merah"
+			} else if strings.Contains(st, "stunt") || strings.Contains(st, "wast") || strings.Contains(st, "risiko") || strings.Contains(st, "kurang") {
+				item.ColorPita = "kuning"
+			} else {
+				item.ColorPita = "hijau"
+			}
+			items = append(items, item)
+		}
+	}
+	return items, nil
+}
+
+// GetChildByIDForParent validates parent ownership and returns the full ChildGrowthCard.
+func (r *repository) GetChildByIDForParent(ctx context.Context, childID string, parentUserID int64, allowBypass bool) (*ChildGrowthCard, error) {
+	if r.db == nil {
+		return r.generateMockCard("magic-balita-andi-2026-tumbuhin-sehat"), nil
+	}
+
+	queryChild := `
+		SELECT 
+			c.id, c.full_name, c.nik_hash, c.gender, c.birth_date,
+			COALESCE(c.parent_name, ''), COALESCE(c.parent_phone, ''),
+			COALESCE(c.posyandu_name, ''), COALESCE(c.village_name, 'Desa Sukamaju'),
+			COALESCE(c.rw_code, '001'), COALESCE(c.rt_code, '001'), COALESCE(c.magic_token, ''),
+			c.parent_user_id
+		FROM children c
+		WHERE c.id::text = $1 AND COALESCE(c.is_active, TRUE) = TRUE
+		LIMIT 1;
+	`
+	var cID, fullName, nikHash, gender, parentName, parentPhone, posyanduName, villageName, rwCode, rtCode, token string
+	var birthDate time.Time
+	var ownerID *int64
+
+	err := r.db.QueryRow(ctx, queryChild, strings.TrimSpace(childID)).Scan(
+		&cID, &fullName, &nikHash, &gender, &birthDate,
+		&parentName, &parentPhone, &posyanduName, &villageName,
+		&rwCode, &rtCode, &token, &ownerID,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	if !allowBypass {
+		if ownerID == nil || *ownerID != parentUserID {
+			return nil, ErrForbidden
+		}
+	}
+
+	return r.populateChildCardDetails(ctx, cID, fullName, nikHash, gender, birthDate, parentName, parentPhone, posyanduName, villageName, rwCode, rtCode, token)
+}
+
+func (r *repository) populateChildCardDetails(
+	ctx context.Context,
+	childID, fullName, nikHash, gender string,
+	birthDate time.Time,
+	parentName, parentPhone, posyanduName, villageName, rwCode, rtCode, cleanToken string,
+) (*ChildGrowthCard, error) {
 
 	now := time.Now()
 	ageMonths := calculateAgeInMonths(birthDate, now)

@@ -17,6 +17,7 @@ import (
 	bidanDashCtrl "tumbuhin-backend/controllers/bidan/dashboard"
 	bidanInterventionsCtrl "tumbuhin-backend/controllers/bidan/interventions"
 	bidanLaporanCtrl "tumbuhin-backend/controllers/bidan/laporan"
+	bidanParentsCtrl "tumbuhin-backend/controllers/bidan/parents"
 	bidanGISCtrl "tumbuhin-backend/controllers/bidan/petagis"
 	bidanPMTEvalCtrl "tumbuhin-backend/controllers/bidan/pmt_evaluations"
 	bidanPrioritasCtrl "tumbuhin-backend/controllers/bidan/prioritas"
@@ -39,6 +40,7 @@ import (
 	bidanDashRepo "tumbuhin-backend/repositories/bidan/dashboard"
 	bidanInterventionsRepo "tumbuhin-backend/repositories/bidan/interventions"
 	bidanLaporanRepo "tumbuhin-backend/repositories/bidan/laporan"
+	bidanParentsRepo "tumbuhin-backend/repositories/bidan/parents"
 	bidanGISRepo "tumbuhin-backend/repositories/bidan/petagis"
 	bidanPMTEvalRepo "tumbuhin-backend/repositories/bidan/pmt_evaluations"
 	bidanPrioritasRepo "tumbuhin-backend/repositories/bidan/prioritas"
@@ -66,6 +68,7 @@ import (
 	bidanPMTEvalService "tumbuhin-backend/services/bidan/pmt_evaluations"
 	bidanPrioritasService "tumbuhin-backend/services/bidan/prioritas"
 	bidanSupervisiService "tumbuhin-backend/services/bidan/supervisi"
+	bidanParentsService "tumbuhin-backend/services/bidan/parents"
 	kaderBalitaService "tumbuhin-backend/services/kader/balita"
 	kaderDashService "tumbuhin-backend/services/kader/dashboard"
 	kaderNutriChefService "tumbuhin-backend/services/kader/nutrichef"
@@ -98,6 +101,7 @@ func main() {
 	bidanPrioritasRepository := bidanPrioritasRepo.NewRepository(cfg.DBPool)
 	bidanSupervisiRepository := bidanSupervisiRepo.NewRepository(cfg.DBPool)
 	bidanLaporanRepository := bidanLaporanRepo.NewRepository(cfg.DBPool)
+	bidanParentsRepository := bidanParentsRepo.NewRepository(cfg.DBPool)
 	adminDashRepository := adminDashRepo.NewRepository(cfg.DBPool)
 	adminWilayahRepository := adminWilayahRepo.NewRepository(cfg.DBPool)
 	adminPenggunaRepository := adminPenggunaRepo.NewRepository(cfg.DBPool)
@@ -122,6 +126,7 @@ func main() {
 	bidanPrioritasSvc := bidanPrioritasService.NewService(bidanPrioritasRepository)
 	bidanSupervisiSvc := bidanSupervisiService.NewService(bidanSupervisiRepository)
 	bidanLaporanSvc := bidanLaporanService.NewService(bidanLaporanRepository)
+	bidanParentsSvc := bidanParentsService.NewService(bidanParentsRepository)
 	adminDashSvc := adminDashService.NewService(adminDashRepository)
 	adminWilayahSvc := adminWilayahService.NewService(adminWilayahRepository)
 	adminPenggunaSvc := adminPenggunaService.NewService(adminPenggunaRepository)
@@ -148,6 +153,7 @@ func main() {
 		BidanPMTEvalCtrl:       bidanPMTEvalCtrl.NewController(bidanPMTEvalSvc),
 		BidanSupervisiCtrl:     bidanSupervisiCtrl.NewController(bidanSupervisiSvc),
 		BidanLaporanCtrl:       bidanLaporanCtrl.NewController(bidanLaporanSvc),
+		BidanParentsCtrl:       bidanParentsCtrl.NewController(bidanParentsSvc),
 		AdminDashCtrl:          adminDashCtrl.NewController(adminDashSvc),
 		AdminWilayahCtrl:       adminWilayahCtrl.NewController(adminWilayahSvc),
 		AdminPenggunaCtrl:      adminPenggunaCtrl.NewController(adminPenggunaSvc),
