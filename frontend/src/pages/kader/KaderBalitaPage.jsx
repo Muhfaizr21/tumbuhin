@@ -174,7 +174,7 @@ export default function KaderBalitaPage({ user, onLogout, onNavigate, searchQuer
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={() => onNavigate?.('orang-tua')}
+            onClick={() => { window.location.hash = '#/kader/orang-tua' }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[#f26522]/20 bg-[#fff7f2] text-[#f26522] text-sm font-bold hover:bg-[#ffeddf] transition-all"
           >
             <Users className="w-4 h-4" />

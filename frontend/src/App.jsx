@@ -19,6 +19,7 @@ const SupervisiPage = lazy(() => import('./pages/bidan/SupervisiPage'))
 const LaporanExportPage = lazy(() => import('./pages/bidan/LaporanExportPage'))
 const BidanParentsPage = lazy(() => import('./pages/bidan/BidanParentsPage'))
 const KaderDashboard = lazy(() => import('./pages/kader/KaderDashboard'))
+const KaderParentsPage = lazy(() => import('./pages/kader/KaderParentsPage'))
 const OrtuDashboard = lazy(() => import('./pages/ortu/OrtuDashboard'))
 
 function parseQueryString(raw) {
@@ -208,6 +209,15 @@ function AppContent() {
           <BidanDashboard
             user={currentUser}
             currentSubPage={viewState.subPage}
+            onLogout={handleLogout}
+
+          />
+        )
+      }
+      if (viewState.role === 'kader' && viewState.subPage === 'orang-tua') {
+        return (
+          <KaderParentsPage
+            user={currentUser}
             onLogout={handleLogout}
 
           />

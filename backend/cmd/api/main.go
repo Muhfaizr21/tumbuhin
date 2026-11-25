@@ -51,7 +51,6 @@ import (
 	kaderNutriChefRepo "tumbuhin-backend/repositories/kader/nutrichef"
 	kaderSyncRepo "tumbuhin-backend/repositories/kader/sinkronisasi"
 	kaderTimbangRepo "tumbuhin-backend/repositories/kader/timbang"
-	ortuAccountsRepo "tumbuhin-backend/repositories/ortu/accounts"
 	ortuDashRepo "tumbuhin-backend/repositories/ortu/dashboard"
 	"tumbuhin-backend/routes"
 	adminDashService "tumbuhin-backend/services/admin/dashboard"
@@ -76,7 +75,6 @@ import (
 	kaderNutriChefService "tumbuhin-backend/services/kader/nutrichef"
 	kaderSyncService "tumbuhin-backend/services/kader/sinkronisasi"
 	kaderTimbangService "tumbuhin-backend/services/kader/timbang"
-	kaderParentService "tumbuhin-backend/services/ortu/accounts"
 	ortuDashService "tumbuhin-backend/services/ortu/dashboard"
 )
 
@@ -97,7 +95,6 @@ func main() {
 	kaderSyncRepository := kaderSyncRepo.NewRepository(cfg.DBPool)
 	kaderNutriChefRepository := kaderNutriChefRepo.NewRepository(cfg.DBPool)
 	kaderDashRepository := kaderDashRepo.NewRepository(cfg.DBPool)
-	ortuAccountsRepository := ortuAccountsRepo.NewRepository(cfg.DBPool)
 	bidanDashRepository := bidanDashRepo.NewRepository(cfg.DBPool)
 	bidanGISRepository := bidanGISRepo.NewRepository(cfg.DBPool)
 	bidanInterventionsRepository := bidanInterventionsRepo.NewRepository(cfg.DBPool)
@@ -123,7 +120,6 @@ func main() {
 	kaderSyncSvc := kaderSyncService.NewService(kaderSyncRepository, kaderTimbangSvc, kaderBalitaSvc)
 	kaderNutriChefSvc := kaderNutriChefService.NewService(kaderNutriChefRepository)
 	kaderDashSvc := kaderDashService.NewService(kaderDashRepository)
-	kaderParentSvc := kaderParentService.NewService(ortuAccountsRepository)
 	bidanDashSvc := bidanDashService.NewService(bidanDashRepository)
 	bidanGISSvc := bidanGISService.NewService(bidanGISRepository)
 	bidanInterventionsSvc := bidanInterventionsService.NewService(bidanInterventionsRepository)
@@ -148,7 +144,7 @@ func main() {
 		AuthRegisterCtrl:       authRegisterCtrl.NewController(registerSvc),
 		KaderDashCtrl:          kaderDashCtrl.NewController(kaderDashSvc),
 		KaderBalitaCtrl:        kaderBalitaCtrl.NewController(kaderBalitaSvc),
-		KaderParentCtrl:        kaderParentCtrl.NewController(kaderParentSvc),
+		KaderParentCtrl:        kaderParentCtrl.NewController(bidanParentsSvc),
 		KaderTimbangCtrl:       kaderTimbangCtrl.NewController(kaderTimbangSvc),
 		KaderSyncCtrl:          kaderSyncCtrl.NewController(kaderSyncSvc),
 		KaderNutriChefCtrl:     kaderNutriChefCtrl.NewController(kaderNutriChefSvc),

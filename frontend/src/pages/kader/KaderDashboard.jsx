@@ -1,16 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
-  Baby,
-  Camera,
   CheckCircle2,
-  ChefHat,
   Clock3,
-  LayoutDashboard,
   RefreshCw,
-  Scale,
-  Send,
-  UserPlus,
 } from 'lucide-react'
 import { SmartTopHeader } from '../../components/ui/SmartDashboardWidgets'
 import { kaderApi } from '../../lib/kaderApi'
@@ -20,88 +13,10 @@ import KaderDistribusiPage from './KaderDistribusiPage'
 import KaderHomePage from './KaderHomePage'
 import KaderNutriChefPage from './KaderNutriChefPage'
 import KaderOCRPage from './KaderOCRPage'
-import KaderParentAccountsPage from './KaderParentAccountsPage'
 import KaderSinkronisasiPage from './KaderSinkronisasiPage'
 import KaderTimbangPage from './KaderTimbangPage'
 import KaderNavigationShell from './components/KaderNavigationShell'
-
-const KADER_MENUS = [
-  {
-    id: 'dashboard',
-    label: 'Beranda Posyandu',
-    shortLabel: 'Posyandu Dashboard',
-    route: '/kader/dashboard',
-    icon: LayoutDashboard,
-    description: 'Ringkasan hari buka Posyandu, kehadiran balita, dan instruksi bidan.',
-    features: ['Kehadiran balita bulan ini', 'Status jaringan & PWA', 'Instruksi bidan'],
-  },
-  {
-    id: 'balita',
-    label: 'Data & Profil Balita',
-    shortLabel: 'Direktori Balita',
-    route: '/kader/balita',
-    icon: Baby,
-    description: 'Direktori profil balita RW, registrasi anak baru, dan profil kesehatan.',
-    features: ['Enkripsi NIK SHA-256', 'Pencarian & filter RT/RW', 'Magic Token ortu'],
-  },
-  {
-    id: 'orang-tua',
-    label: 'Akun Orang Tua',
-    shortLabel: 'Akun Orang Tua',
-    route: '/kader/orang-tua',
-    icon: UserPlus,
-    description: 'Buat akun login orang tua dan tautkan balita di posyandu Anda.',
-    features: ['Registrasi akun ortu', 'Tautkan banyak balita', 'Bagikan kredensial via WA'],
-  },
-  {
-    id: 'timbang',
-    label: 'Input Timbangan & Z-Score',
-    shortLabel: 'Input Timbang WHO',
-    route: '/kader/timbang',
-    icon: Scale,
-    badge: 'LMS',
-    description: 'Kalkulator Z-Score WHO LMS dan deteksi dini Growth Faltering.',
-    features: ['Z-Score WHO LMS', 'Koreksi posisi ukur', 'Predictive Trajectory'],
-  },
-  {
-    id: 'ocr-kms',
-    label: 'Smart KMS OCR',
-    shortLabel: 'Smart Scan KIA',
-    route: '/kader/ocr-kms',
-    icon: Camera,
-    badge: 'AI',
-    description: 'Pemindaian foto Buku KIA fisik menjadi data digital siap simpan.',
-    features: ['Multimodal Vision AI', 'Ekstraksi otomatis tabel', 'Verifikasi data'],
-  },
-  {
-    id: 'nutri-chef',
-    label: 'AI Nutri-Chef',
-    shortLabel: 'AI Nutri-Chef MPASI',
-    route: '/kader/nutri-chef',
-    icon: ChefHat,
-    badge: 'AI',
-    description: 'Generator resep MPASI lokal sesuai anggaran keluarga dan gizi anak.',
-    features: ['RAG Kemenkes RI', 'Bahan pangan desa', 'Target anggaran'],
-  },
-  {
-    id: 'sinkronisasi',
-    label: 'Sinkronisasi Offline',
-    shortLabel: 'Sinkronisasi PWA',
-    route: '/kader/sinkronisasi',
-    icon: RefreshCw,
-    description: 'Manajemen antrean data lokal saat Posyandu tanpa sinyal internet.',
-    features: ['IndexedDB Queue', 'Batch Sync satu klik', 'Log status pengiriman'],
-  },
-  {
-    id: 'distribusi',
-    label: 'Distribusi WhatsApp',
-    shortLabel: 'Broadcast WA Ortu',
-    route: '/kader/distribusi',
-    icon: Send,
-    description: 'Pengiriman hasil timbang dan Magic Link ke WhatsApp orang tua.',
-    features: ['One-Click WhatsApp', 'QR Code Buku KIA', 'Magic Link Personal'],
-  },
-]
+import { KADER_MENUS } from './kaderMenuItems'
 
 export default function KaderDashboard({ user, onLogout, currentSubPage = 'dashboard' }) {
   const [activeMenuId, setActiveMenuId] = useState(() =>
@@ -281,8 +196,6 @@ export default function KaderDashboard({ user, onLogout, currentSubPage = 'dashb
             searchQuery={globalSearch}
           />
         )
-      case 'orang-tua':
-        return <KaderParentAccountsPage user={user} searchQuery={globalSearch} />
       case 'timbang':
         return <KaderTimbangPage user={user} />
       case 'ocr-kms':

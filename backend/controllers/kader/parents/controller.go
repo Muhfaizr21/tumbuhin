@@ -7,103 +7,83 @@ import (
 	"strings"
 
 	"tumbuhin-backend/middlewares"
-	accountsRepo "tumbuhin-backend/repositories/ortu/accounts"
-	accountsSvc "tumbuhin-backend/services/ortu/accounts"
+	bidanParentsRepo "tumbuhin-backend/repositories/bidan/parents"
+	bidanParentsSvc "tumbuhin-backend/services/bidan/parents"
 	"tumbuhin-backend/views"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Controller struct {
-	service accountsSvc.Service
+	service bidanParentsSvc.Service
 }
 
-func NewController(service accountsSvc.Service) *Controller {
+func NewController(service bidanParentsSvc.Service) *Controller {
 	return &Controller{service: service}
 }
 
-type updateChildrenRequest struct {
-	ChildIDs []string `json:"child_ids"`
-}
-
 func (ctrl *Controller) HandleListParents(c *gin.Context) {
-	scope := accountsRepo.Scope{
-		PosyanduName: middlewares.PosyanduFromContext(c, ""),
-		VillageName:  middlewares.VillageFromContext(c, ""),
-	}
-
-	data, err := ctrl.service.List(c.Request.Context(), scope)
+	villageName := middlewares.VillageFromContext(c, "")
+	data, err := ctrl.service.ListParentsAndUnlinkedChildren(c.Request.Context(), villageName)
 	if err != nil {
-		views.InternalServerError(c, "Gagal memuat akun orang tua")
+		views.InternalServerError(c, "Gagal memuat daftar akun orang tua: "+err.Error())
 		return
 	}
-
 	views.Success(c, http.StatusOK, "Daftar akun orang tua berhasil dimuat", data)
 }
 
 func (ctrl *Controller) HandleRegisterParent(c *gin.Context) {
-	var input accountsRepo.NewParent
-	if err := c.ShouldBindJSON(&input); err != nil {
-		views.BadRequest(c, "Data akun orang tua belum valid", err.Error())
+	var in bidanParentsRepo.RegisterParentInput
+	if err := c.ShouldBindJSON(&in); err != nil {
+		views.BadRequest(c, "Payload pendaftaran akun orang tua tidak valid: "+err.Error(), nil)
 		return
 	}
 
-	scope := accountsRepo.Scope{
-		PosyanduName: middlewares.PosyanduFromContext(c, ""),
-		VillageName:  middlewares.VillageFromContext(c, ""),
+	claims := middlewares.ClaimsFromContext(c)
+	if claims != nil {
+		if strings.TrimSpace(in.VillageName) == "" {
+			in.VillageName = claims.VillageName
+		}
+		if strings.TrimSpace(in.PosyanduName) == "" {
+			in.PosyanduName = claims.PosyanduName
+		}
 	}
 
-	parent, err := ctrl.service.Register(c.Request.Context(), input, scope)
+	data, err := ctrl.service.RegisterParent(c.Request.Context(), in)
 	if err != nil {
-		writeServiceError(c, err)
+		if errors.Is(err, bidanParentsRepo.ErrInvalidInput) || errors.Is(err, bidanParentsRepo.ErrDuplicateIdentity) {
+			views.BadRequest(c, err.Error(), nil)
+			return
+		}
+		views.InternalServerError(c, "Gagal mendaftarkan akun orang tua: "+err.Error())
 		return
 	}
 
-	views.Success(c, http.StatusCreated, "Akun orang tua berhasil dibuat dan anak berhasil ditautkan", parent)
+	views.Success(c, http.StatusCreated, "Akun orang tua berhasil didaftarkan & ditautkan ke balita", data)
 }
 
 func (ctrl *Controller) HandleUpdateParentChildren(c *gin.Context) {
-	parentID, err := strconv.ParseInt(strings.TrimSpace(c.Param("parentId")), 10, 64)
-	if err != nil || parentID <= 0 {
+	parentID, err := strconv.ParseInt(c.Param("parentId"), 10, 64)
+	if err != nil {
 		views.BadRequest(c, "ID akun orang tua tidak valid", nil)
 		return
 	}
 
-	var body updateChildrenRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		views.BadRequest(c, "Daftar anak belum valid", err.Error())
+	var in bidanParentsRepo.UpdateParentChildrenInput
+	if err := c.ShouldBindJSON(&in); err != nil {
+		views.BadRequest(c, "Payload pembaruan balita tidak valid: "+err.Error(), nil)
 		return
 	}
 
-	scope := accountsRepo.Scope{
-		PosyanduName: middlewares.PosyanduFromContext(c, ""),
-		VillageName:  middlewares.VillageFromContext(c, ""),
-	}
-
-	parent, err := ctrl.service.UpdateChildren(c.Request.Context(), parentID, body.ChildIDs, scope)
+	data, err := ctrl.service.UpdateParentChildren(c.Request.Context(), parentID, in.ChildIDs)
 	if err != nil {
-		writeServiceError(c, err)
+		if errors.Is(err, bidanParentsRepo.ErrParentNotFound) {
+			views.NotFound(c, err.Error())
+			return
+		}
+		views.InternalServerError(c, "Gagal memperbarui daftar anak orang tua: "+err.Error())
 		return
 	}
 
-	views.Success(c, http.StatusOK, "Anak yang tertaut berhasil diperbarui", parent)
-}
-
-func writeServiceError(c *gin.Context, err error) {
-	switch {
-	case errors.Is(err, accountsSvc.ErrValidation):
-		views.BadRequest(c, err.Error(), nil)
-	case errors.Is(err, accountsRepo.ErrChildOutOfScope):
-		views.Forbidden(c, err.Error())
-	case errors.Is(err, accountsRepo.ErrParentNotFound):
-		views.NotFound(c, err.Error())
-	case errors.Is(err, accountsRepo.ErrChildNotFound):
-		views.NotFound(c, err.Error())
-	case errors.Is(err, accountsRepo.ErrUserAlreadyExists):
-		views.Error(c, http.StatusConflict, err.Error(), nil)
-	case errors.Is(err, accountsRepo.ErrChildAlreadyLinked):
-		views.Error(c, http.StatusConflict, err.Error(), nil)
-	default:
-		views.InternalServerError(c, "Gagal memproses akun orang tua")
-	}
+	views.Success(c, http.StatusOK, "Daftar anak pada akun orang tua berhasil diperbarui", data)
 }
