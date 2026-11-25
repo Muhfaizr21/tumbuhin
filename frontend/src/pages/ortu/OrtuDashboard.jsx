@@ -4,7 +4,6 @@ import {
   Baby,
   CalendarCheck,
   ChefHat,
-  Eye,
   LineChart,
   RefreshCw,
   Scale,
@@ -180,12 +179,6 @@ export default function OrtuDashboard({
       label: 'Bacakan Suara (TTS)',
       icon: Volume2,
       onClick: handleSpeakNow,
-    },
-    {
-      id: 'o-act-6',
-      label: isHighContrast ? 'Mode Warna Normal' : 'Mode Kontras Tinggi',
-      icon: Eye,
-      onClick: () => setIsHighContrast((v) => !v),
     },
   ]
 

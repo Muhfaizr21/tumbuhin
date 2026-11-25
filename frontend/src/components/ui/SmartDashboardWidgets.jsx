@@ -821,9 +821,11 @@ export function SmartQuickActionsGrid({
             >
               <div className="relative w-12 h-12 rounded-full bg-[#1b2537] group-hover:bg-[#f26522] text-white flex items-center justify-center shadow-xs transition-colors">
                 <ActIcon className="w-4 h-4" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#f26522] group-hover:bg-[#1b2537] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white">
-                  +
-                </span>
+                {act.badge && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#f26522] group-hover:bg-[#1b2537] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white">
+                    {act.badge}
+                  </span>
+                )}
               </div>
               <span className="text-[11px] font-semibold text-slate-600 group-hover:text-[#1b2537] leading-tight line-clamp-2">
                 {act.label}
