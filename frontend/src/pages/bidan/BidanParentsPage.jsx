@@ -174,7 +174,7 @@ export default function BidanParentsPage({ user, onLogout, onSwitchRole }) {
   const currentMenu = BIDAN_MENUS.find((m) => m.id === 'orang-tua') || BIDAN_MENUS[0]
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#070709] flex font-inter">
+    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden bg-[#f8fafc] text-[#070709] flex font-inter">
       <div className="hidden lg:flex">
         <BidanNavigationShell
           menus={BIDAN_MENUS}
@@ -207,18 +207,23 @@ export default function BidanParentsPage({ user, onLogout, onSwitchRole }) {
         </div>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
         <SmartTopHeader
-          title={currentMenu.label}
-          subtitle={currentMenu.description}
           user={user}
+          roleLabel="Bidan Desa / Nakes"
+          pageTitle={currentMenu.label}
+          breadcrumbs={[
+            'Dashboard',
+            user?.posyandu_name || 'UPTD Puskesmas Sukamaju',
+            currentMenu.shortLabel || currentMenu.label,
+          ]}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Cari nama ibu, nomor WA, atau nama balita..."
-          onToggleMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
           {notice && (
             <div
               className={`p-4 rounded-2xl border text-xs sm:text-sm font-medium flex items-center justify-between gap-3 ${
